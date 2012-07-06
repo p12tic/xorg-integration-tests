@@ -1,0 +1,64 @@
+# Copyright (C) 2012 Canonical, Ltd.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice (including the next
+# paragraph) shall be included in all copies or substantial portions of the
+# Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+XORG_GTEST_BUILD_LIBS = \
+	libgtest.a \
+	libgtest_main.a \
+	libxorg-gtest.a \
+	libxorg-gtest_main.a
+
+# Here and below we compile without warnings (-w) because the projects using
+# xorg-gtest will not want to see warnings or fail to build due to warnings in
+# gtest or xorg-gtest.
+nodist_libgtest_a_SOURCES = $(GTEST_SOURCE)/src/gtest-all.cc
+libgtest_a_CPPFLAGS = $(GTEST_CPPFLAGS) $(AM_CPPFLAGS) -w
+libgtest_a_CXXFLAGS = $(GTEST_CXXFLAGS) $(AM_CXXFLAGS)
+
+nodist_libgtest_main_a_SOURCES = $(GTEST_SOURCE)/src/gtest_main.cc
+libgtest_main_a_CPPFLAGS = $(GTEST_CPPFLAGS) $(AM_CPPFLAGS) -w
+libgtest_main_a_CXXFLAGS = $(GTEST_CXXFLAGS) $(AM_CXXFLAGS)
+
+nodist_libxorg_gtest_a_SOURCES = $(XORG_GTEST_SOURCE)/src/xorg-gtest-all.cpp
+libxorg_gtest_a_CPPFLAGS = \
+	$(XORG_GTEST_CPPFLAGS) \
+	$(GTEST_CPPFLAGS) \
+	$(AM_CPPFLAGS) \
+	-w
+libxorg_gtest_a_CXXFLAGS = \
+	$(XORG_GTEST_CXXFLAGS) \
+	$(GTEST_CXXFLAGS) \
+	$(AM_CPPFLAGS)
+
+nodist_libxorg_gtest_main_a_SOURCES = \
+	$(XORG_GTEST_SOURCE)/src/xorg-gtest_main.cpp
+libxorg_gtest_main_a_CPPFLAGS = \
+	$(XORG_GTEST_CPPFLAGS) \
+	$(GTEST_CPPFLAGS) \
+	$(AM_CPPFLAGS) \
+	-w
+libxorg_gtest_main_a_CXXFLAGS = \
+	$(XORG_GTEST_CXXFLAGS) \
+	$(GTEST_CXXFLAGS) \
+	$(AM_CXXFLAGS)
+
+XORG_GTEST_LIBS = libxorg-gtest.a libgtest.a -lpthread $(X11_LIBS)
+XORG_GTEST_MAIN_LIBS = libxorg-gtest_main.a
