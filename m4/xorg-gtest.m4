@@ -47,7 +47,8 @@ AC_DEFUN([_CHECK_GTEST],
 
   AS_IF([test "x$have_gtest" = xyes],
         [AC_SUBST(GTEST_CPPFLAGS)]
-        [AC_SUBST(GTEST_SOURCE)])
+        [AC_SUBST(GTEST_SOURCE)] [:],
+        [:])
 ]) # _CHECK_GTEST
 
 # CHECK_XORG_GTEST([ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
