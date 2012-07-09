@@ -45,7 +45,7 @@ AC_DEFUN([_CHECK_GTEST],
                  [have_gtest=yes],
                  [have_gtest=no])
 
-  AS_IF([test "x$have_gtest_source" = xyes],
+  AS_IF([test "x$have_gtest" = xyes],
         [AC_SUBST(GTEST_CPPFLAGS)]
         [AC_SUBST(GTEST_SOURCE)])
 ]) # _CHECK_GTEST
