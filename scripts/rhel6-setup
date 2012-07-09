@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# Grab a bunch of rhel6 yum repos, install them, update the box to some basic
+# set of packages that we'll need
+#
+echo "This scrip will install a whole bunch of packages so that you"
+echo "can build the X server tree."
+echo 
+
+if [ `whoami` != "root" ]; then
+        echo "Run me as root."
+        exit 1
+fi
+
+echo "Installing internal RHEL6 yum repos"
+baseurl=http://yum.engineering.redhat.com/pub/yum/repo_files/
+repos="rhel6-base rhel6-debuginfo rhel6-supplementary rhel6-updates rhel6-optional"
+
+pushd /etc/yum.repos.d/
+for repo in $repos; do
+        if ! test -e $repo.repo; then
+            curl $baseurl/$repo.repo > $repo.repo
+        fi
+done
+popd
+
+# install source repo. read this and weep: https://gist.github.com/870043
+# https://bugzilla.redhat.com/show_bug.cgi?id=652783 and
+# https://bugzilla.redhat.com/show_bug.cgi?id=710469
+echo "Installing source repo"
+cat > /etc/yum.repos.d/rhel-source-repo-working.repo << EOF
+[rhel-src]
+name=Red Hat Enterprise Linux \$releasever - \$basearch - Src
+baseurl=ftp://ftp.redhat.com/pub/redhat/linux/enterprise/\$releasever/en/os/SRPMS/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+EOF
+
+echo "Installing some base packages"
+packages="vim python libX* xorg-x11-* gdb automake autoconf git rsync rpmdevtools make bzr screen svn expat-devel imake"
+yum install -y $packages
+
+# install build deps for X packages. yum-builddep is broken, even with the
+# fixed repo up there so do it manually
+src_packages="xorg-x11-drv-evdev xorg-x11-drv-intel xorg-x11-drv-synaptics xorg-x11-drv-wacom xorg-x11-server mesa-libGL mesa-dri-drivers"
+tmp_dir=/tmp/yum-builddep-sources
+mkdir -p $tmp_dir
+pushd  $tmp_dir > /dev/null
+yumdownloader --disablerepo="*" --enablerepo=rhel-src --source $src_packages
+for file in `ls *.src.rpm`; do
+    yum-builddep -y $file
+done
+popd > /dev/null
+rm -rf $tmp_dir
+
