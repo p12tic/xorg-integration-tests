@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# install the aux libraries we need and that aren't part of the xorg scripts
+# or packages in RHEL
+#
+
+destdir=$HOME/code
+echo "Helper programs sources: $destdir"
+
+mkdir -p $destdir
+pushd $destdir > /dev/null
+
+echo "installing evemu"
+if ! [ -e "evemu" ]; then
+    bzr branch lp:evemu
+    pushd evemu > /dev/null
+    autoreconf -ivf
+    ./configure --prefix=/usr --libdir=/usr/lib64 --enable-maintainer-mode
+    make 
+    echo "sudo password may be required:"
+    sudo make install
+    popd > /dev/null
+fi
+
+echo "installing googletest"
+if ! [ -e "googletest" ]; then
+    svn co http://googletest.googlecode.com/svn/trunk/ googletest
+fi
+
+echo "installing xorg-gtest"
+if ! [ -e "xorg-gtest" ]; then
+    git clone git://anongit.freedesktop.org/git/xorg/test/xorg-gtest
+    pushd xorg-gtest > /dev/null
+    autoreconf -ivf
+    ./configure --prefix=/usr --libdir=/usr/lib64 --with-gtest-source-path=$HOME/code/googletest --enable-maintainer-mode
+    make
+    echo "sudo password may be required:"
+    sudo make install
+    popd > /dev/null
+fi
+
+popd > /dev/null
