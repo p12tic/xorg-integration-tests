@@ -121,9 +121,10 @@ TEST_P(InputDriverTest, DriverDevice)
 
 INSTANTIATE_TEST_CASE_P(, InputDriverTest,
         ::testing::Values("acecad", "aiptek", "elographics",
-                          "fpit", "hyperpen",  "mutouch", 
-                          "penmount", "wacom", "synaptics", 
-                          "keyboard", "mouse", "vmmouse"));
+                          "fpit", "hyperpen",  "mutouch",
+                          "penmount", "wacom", "synaptics",
+                          "keyboard", "mouse", "vmmouse",
+                          "evdev"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
