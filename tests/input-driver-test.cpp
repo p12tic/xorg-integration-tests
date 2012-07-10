@@ -2,6 +2,9 @@
 #include <fstream>
 #include <xorg/gtest/xorg-gtest.h>
 
+#include <X11/extensions/XInput.h>
+#include <X11/extensions/XInput2.h>
+
 #include "input-driver-test.h"
 
 void InputDriverTest::WriteConfig(const char *param) {
@@ -60,6 +63,17 @@ void InputDriverTest::StartServer() {
         xorg::testing::Test::SetDisplayString(server.GetDisplayString());
 
         ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
+
+        int event_start;
+        int error_start;
+
+        ASSERT_TRUE(XQueryExtension(Display(), "XInputExtension", &xi2_opcode,
+                                    &event_start, &error_start));
+
+        int major = 2;
+        int minor = 0;
+
+        ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
     }
 
 void InputDriverTest::SetUp() {

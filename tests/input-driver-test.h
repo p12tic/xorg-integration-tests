@@ -42,6 +42,7 @@ protected:
     virtual void SetUp();
     virtual void TearDown();
 
+    int xi2_opcode;
     std::string config_file;
     std::string log_file;
     xorg::testing::XServer server;
