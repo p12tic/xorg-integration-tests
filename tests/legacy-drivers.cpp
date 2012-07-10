@@ -25,7 +25,7 @@ public:
     }
 };
 
-TEST_P(LegacyInputDriverTest, DriverDevice)
+TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
 {
     std::string param;
     int ndevices;
