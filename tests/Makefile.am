@@ -20,8 +20,10 @@ GTEST_LDADDS = \
 	       $(EVEMU_LIBS) \
 	       $(XORG_GTEST_MAIN_LIBS)
 
-acecad_SOURCES = acecad.cpp input-driver-test.cpp
+common_sources = input-driver-test.cpp input-driver-test.h
+
+acecad_SOURCES = acecad.cpp $(common_sources)
 acecad_LDADD = $(GTEST_LDADDS)
 
-test_input_load_SOURCES = test-input-load.cpp input-driver-test.cpp
+test_input_load_SOURCES = test-input-load.cpp $(common_sources)
 test_input_load_LDADD = $(GTEST_LDADDS)
