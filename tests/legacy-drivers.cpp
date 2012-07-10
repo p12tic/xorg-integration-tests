@@ -121,25 +121,31 @@ INSTANTIATE_TEST_CASE_P(, AcecadInputDriverTest, ::testing::Values(std::string("
  *                                                                     *
  ***********************************************************************/
 
-class AiptekInputDriverTest : public LegacyInputDriverTest {
-    public:
-        virtual void ConfigureInputDevice(std::string &driver) {
-            config.AddInputSection(driver, "--device--",
-                                   "Option \"CorePointer\" \"on\"\n"
-                                   "Option \"Device\" \"/dev/input/event0\"\n"
-                                   "Option \"Type\" \"stylus\"");
-        }
-};
-
-TEST_P(AiptekInputDriverTest, WithOptionDevice)
+TEST(AiptekInputDriver, TypeStylus)
 {
-    std::string param;
+    XOrgConfig config;
+    xorg::testing::XServer server;
+
+    config.AddInputSection("aiptek", "--device--",
+                           "Option \"CorePointer\" \"on\"\n"
+                           "Option \"Device\" \"/dev/input/event0\"\n"
+                           "Option \"Type\" \"stylus\"");
+    StartServer("aiptek-type-stylus", server, config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
+
     int ndevices;
     XIDeviceInfo *info;
 
-    param = GetParam();
-    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
+    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
 
+    KillServer(server, config);
+
+    /* VCP, VCK, xtest, mouse, keyboard, aiptek */
+    ASSERT_EQ(ndevices, 7);
     bool found = false;
     while(ndevices--) {
         if (strcmp(info[ndevices].name, "--device--") == 0) {
@@ -147,12 +153,9 @@ TEST_P(AiptekInputDriverTest, WithOptionDevice)
             found = true;
         }
     }
-
     ASSERT_EQ(found, true);
     XIFreeDeviceInfo(info);
 }
-
-INSTANTIATE_TEST_CASE_P(, AiptekInputDriverTest, ::testing::Values(std::string("aiptek")));
 
 TEST(AiptekInputDriver, TypeCursor)
 {
