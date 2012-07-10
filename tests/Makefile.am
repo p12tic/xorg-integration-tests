@@ -21,7 +21,8 @@ GTEST_LDADDS = \
 	       $(XORG_GTEST_MAIN_LIBS)
 
 common_sources = input-driver-test.cpp input-driver-test.h \
-		 xorg-conf.cpp xorg-conf.h
+		 xorg-conf.cpp xorg-conf.h \
+		 helpers.cpp helpers.h
 
 legacy_drivers_SOURCES = legacy-drivers.cpp $(common_sources)
 legacy_drivers_LDADD = $(GTEST_LDADDS)
