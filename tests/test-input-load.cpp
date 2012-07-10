@@ -47,15 +47,13 @@ protected:
         server.SetOption("-config", config_file);
     }
 
-    void AddInputSection(const char *param, const char *options = "") {
+    void AddInputSection(std::string driver, std::string identifier = "--device--", std::string options = "") {
         std::ofstream conffile(config_file.c_str(), std::ios_base::app);
         conffile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
-        std::string driver(param);
-
         conffile << ""
 "            Section \"InputDevice\"\n"
-"                Identifier \"--device--\"\n"
+"                Identifier \"" << identifier << "\"\n"
 "                Driver \"" << driver << "\"\n"
                  << options <<
 "            EndSection\n";
