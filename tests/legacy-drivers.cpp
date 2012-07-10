@@ -71,6 +71,48 @@ INSTANTIATE_TEST_CASE_P(, LegacyInputDriverTest,
                           "fpit", "hyperpen",  "mutouch",
                           "penmount"));
 
+/***********************************************************************
+ *                                                                     *
+ *                               ACECAD                                *
+ *                                                                     *
+ ***********************************************************************/
+
+class AcecadInputDriverTest : public LegacyInputDriverTest {
+    public:
+        virtual void ConfigureInputDevice(std::string &driver) {
+            config.AddInputSection(driver, "--device--",
+                                   "Option \"CorePointer\" \"on\"\n"
+                                   "Option \"Device\" \"/dev/input/event0\"\n");
+        }
+};
+
+TEST_P(AcecadInputDriverTest, WithOptionDevice)
+{
+    std::string param;
+    int ndevices;
+    XIDeviceInfo *info;
+
+    param = GetParam();
+    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
+
+    /* when the acecad driver succeeds (even with bogus device)
+     * mouse and keyboard load too */
+    ASSERT_EQ(ndevices, 7);
+
+    bool found = false;
+    while(ndevices--) {
+        if (strcmp(info[ndevices].name, "--device--") == 0) {
+            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
+            found = true;
+        }
+    }
+
+    ASSERT_EQ(found, true);
+    XIFreeDeviceInfo(info);
+}
+
+INSTANTIATE_TEST_CASE_P(, AcecadInputDriverTest, ::testing::Values(std::string("acecad")));
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
