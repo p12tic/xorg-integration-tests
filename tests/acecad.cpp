@@ -32,7 +32,10 @@ TEST_P(InputDriverTest, DriverDevice)
     XIFreeDeviceInfo(info);
 }
 
-INSTANTIATE_TEST_CASE_P(, InputDriverTest, ::testing::Values("acecad"));
+INSTANTIATE_TEST_CASE_P(, InputDriverTest,
+        ::testing::Values("acecad", "aiptek", "elographics",
+                          "fpit", "hyperpen",  "mutouch",
+                          "penmount"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
