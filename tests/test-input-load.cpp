@@ -10,6 +10,7 @@
  *
  */
 class InputDriverTest : public xorg::testing::Test,
+                        public ::testing::EmptyTestEventListener,
                         public ::testing::WithParamInterface<const char*> {
 protected:
     void WriteConfig(const char *param) {
@@ -72,6 +73,11 @@ protected:
 
     virtual void SetUp()
     {
+        failed = false;
+
+        testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
+        listeners.Append(this);
+
         std::stringstream s;
         s << "/tmp/Xorg-" << GetParam() << ".log";
         log_file = s.str();
@@ -87,16 +93,26 @@ protected:
             if (!server.Terminate())
                 server.Kill();
 
-        if (config_file.size())
-            unlink(config_file.c_str());
+        if (!failed) {
+            if (config_file.size())
+                unlink(config_file.c_str());
 
-        if (log_file.size())
-            unlink(log_file.c_str());
+            if (log_file.size())
+                unlink(log_file.c_str());
+        }
+
+        testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
+        listeners.Release(this);
+    }
+
+    virtual void OnTestPartResult(const ::testing::TestPartResult &test_part_result) {
+        failed = test_part_result.failed();
     }
 
     std::string config_file;
     std::string log_file;
     xorg::testing::XServer server;
+    bool failed;
 };
 
 TEST_P(InputDriverTest, DriverDevice)
