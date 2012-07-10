@@ -7,15 +7,13 @@
 
 #include "input-driver-test.h"
 
-void InputDriverTest::WriteConfig(const char *param) {
+void InputDriverTest::WriteConfig(const std::string &param) {
         std::stringstream s;
         s << "/tmp/" << param << ".conf";
         config_file = s.str();
 
         std::ofstream conffile(config_file.c_str());
         conffile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-        std::string driver(param);
 
         conffile << ""
 "            Section \"ServerFlags\"\n"

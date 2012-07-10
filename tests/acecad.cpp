@@ -9,7 +9,7 @@
 
 TEST_P(InputDriverTest, DriverDevice)
 {
-    const char *param;
+    std::string param;
     int ndevices;
     XIDeviceInfo *info;
 

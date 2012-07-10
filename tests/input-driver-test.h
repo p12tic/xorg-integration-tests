@@ -9,7 +9,7 @@
  */
 class InputDriverTest : public xorg::testing::Test,
                         public ::testing::EmptyTestEventListener,
-                        public ::testing::WithParamInterface<const char*> {
+                        public ::testing::WithParamInterface<std::string> {
 protected:
     /**
      * Write a temporary config file prefixed with the given argument,
@@ -19,7 +19,7 @@ protected:
      *
      * @param prefix The config file name prefix
      */
-    virtual void WriteConfig(const char *prefix);
+    virtual void WriteConfig(const std::string &prefix);
 
 
     /**
