@@ -7,7 +7,25 @@
 
 #include "input-driver-test.h"
 
-TEST_P(InputDriverTest, DriverDevice)
+class LegacyInputDriverTest : public InputDriverTest {
+public:
+    virtual void SetUpConfigAndLog() {
+        std::stringstream s;
+        s << "/tmp/Xorg-" << GetParam() << ".log";
+        log_file = s.str();
+        server.SetOption("-logfile",log_file);
+
+        s.str(std::string());
+        s << "/tmp/" << GetParam() << ".conf";
+        config_file = s.str();
+
+        config.AddInputSection(GetParam(), "--device--", "Option \"CorePointer\" \"on\"\n");
+        config.WriteConfig(config_file);
+        server.SetOption("-config", config_file);
+    }
+};
+
+TEST_P(LegacyInputDriverTest, DriverDevice)
 {
     std::string param;
     int ndevices;
@@ -32,7 +50,7 @@ TEST_P(InputDriverTest, DriverDevice)
     XIFreeDeviceInfo(info);
 }
 
-INSTANTIATE_TEST_CASE_P(, InputDriverTest,
+INSTANTIATE_TEST_CASE_P(, LegacyInputDriverTest,
         ::testing::Values("acecad", "aiptek", "elographics",
                           "fpit", "hyperpen",  "mutouch",
                           "penmount"));
