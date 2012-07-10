@@ -23,26 +23,26 @@ protected:
         std::string driver(param);
 
         conffile << ""
-"            Section \"ServerFlags\""
-"                Option \"Log\" \"flush\""
-"            EndSection"
-""
-"            Section \"ServerLayout\""
-"                Identifier \"Dummy layout\""
-"                Screen 0 \"Dummy screen\" 0 0"
-"                Option \"AutoAddDevices\" \"off\""
-"                InputDevice \"--device--\""
-"            EndSection"
-""
-"            Section \"Screen\""
-"                Identifier \"Dummy screen\""
-"                Device \"Dummy video device\""
-"            EndSection"
-""
-"            Section \"Device\""
-"                Identifier \"Dummy video device\""
-"                Driver \"dummy\""
-"            EndSection";
+"            Section \"ServerFlags\"\n"
+"                Option \"Log\" \"flush\"\n"
+"            EndSection\n"
+"\n"
+"            Section \"ServerLayout\"\n"
+"                Identifier \"Dummy layout\"\n"
+"                Screen 0 \"Dummy screen\" 0 0\n"
+"                Option \"AutoAddDevices\" \"off\"\n"
+"                InputDevice \"--device--\"\n"
+"            EndSection\n"
+"\n"
+"            Section \"Screen\"\n"
+"                Identifier \"Dummy screen\"\n"
+"                Device \"Dummy video device\"\n"
+"            EndSection\n"
+"\n"
+"            Section \"Device\"\n"
+"                Identifier \"Dummy video device\"\n"
+"                Driver \"dummy\"\n"
+"            EndSection\n";
         server.SetOption("-config", config_file);
     }
 
@@ -53,11 +53,11 @@ protected:
         std::string driver(param);
 
         conffile << ""
-"            Section \"InputDevice\""
-"                Identifier \"--device--\""
-"                Driver \"" << driver << "\""
+"            Section \"InputDevice\"\n"
+"                Identifier \"--device--\"\n"
+"                Driver \"" << driver << "\"\n"
                  << options <<
-"            EndSection";
+"            EndSection\n";
         server.SetOption("-config", config_file);
     }
 
