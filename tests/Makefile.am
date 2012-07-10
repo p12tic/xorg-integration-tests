@@ -23,5 +23,5 @@ GTEST_LDADDS = \
 acecad_SOURCES = acecad.cpp
 acecad_LDADD = $(GTEST_LDADDS)
 
-test_input_load_SOURCES = test-input-load.cpp
+test_input_load_SOURCES = test-input-load.cpp input-driver-test.cpp
 test_input_load_LDADD = $(GTEST_LDADDS)
