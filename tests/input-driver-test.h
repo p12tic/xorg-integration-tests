@@ -17,6 +17,13 @@ protected:
      */
     virtual void OnTestPartResult(const ::testing::TestPartResult &test_part_result);
 
+    /**
+     * Set up the config and log file. Called from SetUp, before the server
+     * is started so for custom configurations, overwrite this method in a
+     * subclass.
+     */
+    virtual void SetUpConfigAndLog();
+
     virtual void StartServer();
     virtual void SetUp();
     virtual void TearDown();

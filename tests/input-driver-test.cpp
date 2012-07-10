@@ -27,12 +27,7 @@ void InputDriverTest::StartServer() {
     ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
 }
 
-void InputDriverTest::SetUp() {
-    failed = false;
-
-    testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    listeners.Append(this);
-
+void InputDriverTest::SetUpConfigAndLog() {
     std::stringstream s;
     s << "/tmp/Xorg-" << GetParam() << ".log";
     log_file = s.str();
@@ -44,6 +39,16 @@ void InputDriverTest::SetUp() {
     config.AddInputSection(GetParam());
     config.WriteConfig(config_file);
     server.SetOption("-config", config_file);
+}
+
+void InputDriverTest::SetUp() {
+    failed = false;
+
+    testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
+    listeners.Append(this);
+
+    SetUpConfigAndLog();
+
     StartServer();
 }
 
