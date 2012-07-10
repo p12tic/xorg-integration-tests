@@ -8,7 +8,6 @@
 #include "input-driver-test.h"
 
 void InputDriverTest::StartServer() {
-    server.SetOption("-logfile",log_file);
     server.Start();
     server.WaitForConnections();
     xorg::testing::Test::SetDisplayString(server.GetDisplayString());
@@ -31,6 +30,7 @@ void InputDriverTest::SetUpConfigAndLog() {
     std::stringstream s;
     s << "/tmp/Xorg-" << GetParam() << ".log";
     log_file = s.str();
+    server.SetOption("-logfile",log_file);
 
     s.str(std::string());
     s << "/tmp/" << GetParam() << ".conf";
