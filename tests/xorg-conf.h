@@ -28,10 +28,13 @@ public:
      * @param identifier Device identifier, or "--device--" if left out
      * @param driver The driver used for this device
      * @param options "Option foo " directives.
+     * @param reference_from_layout True to reference the device from the
+     * server layout (default)
      */
     virtual void AddInputSection(std::string driver,
                                  std::string identifier = "--device--",
-                                 std::string options = "");
+                                 std::string options = "",
+                                 bool reference_from_layout = true);
 
     /**
      * @return the path of the config file.
@@ -46,6 +49,7 @@ public:
 protected:
     std::string config_file;
     std::vector<std::string> sections;
+    std::vector<std::string> input_devices;
 };
 
 #endif

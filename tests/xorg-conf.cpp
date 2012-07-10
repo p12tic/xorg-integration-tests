@@ -42,18 +42,23 @@ void XOrgConfig::WriteConfig(const std::string &param) {
         "Section \"ServerLayout\"\n"
         "    Identifier \"Dummy layout\"\n"
         "    Screen 0 \"Dummy screen\" 0 0\n"
-        "    Option \"AutoAddDevices\" \"off\"\n"
-        "    InputDevice \"--device--\"\n"
-        "EndSection\n";
-
+        "    Option \"AutoAddDevices\" \"off\"\n";
     std::vector<std::string>::const_iterator it;
+    for (it = input_devices.begin(); it != input_devices.end(); it++)
+        conffile << "    InputDevice \"" << *it << "\"\n";
+
+    conffile << "EndSection\n";
+
     for (it = sections.begin(); it != sections.end(); it++)
         conffile << "\n" << *it;
 }
 
 void XOrgConfig::AddInputSection(std::string driver,
                                       std::string identifier,
-                                      std::string options) {
+                                      std::string options,
+                                      bool reference_from_layout) {
+    if (reference_from_layout)
+        input_devices.push_back(identifier);
 
     std::stringstream section;
     section << "Section \"InputDevice\"\n"
