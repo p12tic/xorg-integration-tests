@@ -9,7 +9,13 @@
 
 class LegacyInputDriverTest : public InputDriverTest {
 public:
+    virtual void ConfigureInputDevice(std::string &driver) {
+        config.AddInputSection(driver, "--device--", "Option \"CorePointer\" \"on\"\n");
+    }
+
     virtual void SetUpConfigAndLog() {
+        std::string param = GetParam();
+
         std::stringstream s;
         s << "/tmp/Xorg-" << GetParam() << ".log";
         log_file = s.str();
@@ -19,7 +25,7 @@ public:
         s << "/tmp/" << GetParam() << ".conf";
         config_file = s.str();
 
-        config.AddInputSection(GetParam(), "--device--", "Option \"CorePointer\" \"on\"\n");
+        ConfigureInputDevice(param);
         config.WriteConfig(config_file);
         server.SetOption("-config", config_file);
     }
