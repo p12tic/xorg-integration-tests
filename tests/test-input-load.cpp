@@ -47,7 +47,7 @@ protected:
         server.SetOption("-config", config_file);
     }
 
-    void AddDriverSection(const char *param, const char *options = "") {
+    void AddInputSection(const char *param, const char *options = "") {
         std::ofstream conffile(config_file.c_str(), std::ios_base::app);
         conffile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
@@ -83,7 +83,7 @@ protected:
         log_file = s.str();
 
         WriteConfig(GetParam());
-        AddDriverSection(GetParam());
+        AddInputSection(GetParam());
         StartServer();
     }
 
