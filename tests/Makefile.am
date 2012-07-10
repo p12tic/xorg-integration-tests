@@ -1,4 +1,4 @@
-noinst_PROGRAMS = acecad test-input-load
+noinst_PROGRAMS = legacy-drivers test-input-load
 
 include $(top_srcdir)/Makefile-xorg-gtest.am
 noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
@@ -23,8 +23,8 @@ GTEST_LDADDS = \
 common_sources = input-driver-test.cpp input-driver-test.h \
 		 xorg-conf.cpp xorg-conf.h
 
-acecad_SOURCES = acecad.cpp $(common_sources)
-acecad_LDADD = $(GTEST_LDADDS)
+legacy_drivers_SOURCES = legacy-drivers.cpp $(common_sources)
+legacy_drivers_LDADD = $(GTEST_LDADDS)
 
 test_input_load_SOURCES = test-input-load.cpp $(common_sources)
 test_input_load_LDADD = $(GTEST_LDADDS)
