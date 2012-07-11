@@ -9,7 +9,6 @@ AM_CPPFLAGS = \
 	      $(XI_CFLAGS) \
 	      $(GTEST_CPPFLAGS) \
 	      $(XORG_GTEST_CPPFLAGS) \
-	      -DDEFAULT_XORG_SERVER=\"$(prefix)/bin/Xorg\" \
 	      -DTEST_ROOT_DIR=\"$(abs_top_srcdir)/tests/\"
 
 AM_CXXFLAGS = $(GTEST_CXXFLAGS) $(XORG_GTEST_CXXFLAGS)
