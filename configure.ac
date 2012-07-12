@@ -43,9 +43,7 @@ XORG_DEFAULT_OPTIONS
 XORG_ENABLE_INTEGRATION_TESTS(yes)
 
 PKG_CHECK_MODULES(XI, x11 xi)
-PKG_CHECK_MODULES(EVEMU, evemu, [have_evemu=yes],
-                  [PKG_CHECK_MODULES(EVEMU, utouch-evemu, [have_evemu=yes], [have_evemu=no])])
-AS_IF(test "x$have_evemu" != xyes, AC_MSG_ERROR([package 'evemu' not found]))
+PKG_CHECK_MODULES(EVEMU, [evemu >= 1.0.10])
 
 PKG_CHECK_MODULES(XORGGTEST, xorg-gtest)
 
