@@ -15,19 +15,17 @@ public:
         config.AddInputSection(driver, "--device--", "Option \"CorePointer\" \"on\"\n");
     }
 
-    virtual void SetUpConfigAndLog() {
-        std::string param = GetParam();
-
+    virtual void SetUpConfigAndLog(const std::string& prefix) {
         std::stringstream s;
-        s << "/tmp/Xorg-" << GetParam() << ".log";
+        s << "/tmp/Xorg-" << prefix << ".log";
         log_file = s.str();
         server.SetOption("-logfile",log_file);
 
         s.str(std::string());
-        s << "/tmp/" << GetParam() << ".conf";
+        s << "/tmp/" << prefix << ".conf";
         config_file = s.str();
 
-        ConfigureInputDevice(param);
+        ConfigureInputDevice(prefix);
         config.WriteConfig(config_file);
         server.SetOption("-config", config_file);
     }

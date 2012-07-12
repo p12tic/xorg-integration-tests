@@ -22,7 +22,7 @@ protected:
      * is started so for custom configurations, overwrite this method in a
      * subclass.
      */
-    virtual void SetUpConfigAndLog();
+    virtual void SetUpConfigAndLog(const std::string& prefix);
 
     virtual void StartServer();
     virtual void SetUp();
