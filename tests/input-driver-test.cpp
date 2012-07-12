@@ -36,6 +36,7 @@ void InputDriverTest::SetUpConfigAndLog(const std::string& prefix) {
     s << "/tmp/" << prefix << ".conf";
     config_file = s.str();
 
+    config.AddDefaultScreenWithDriver();
     config.AddInputSection(prefix);
     config.WriteConfig(config_file);
     server.SetOption("-config", config_file);

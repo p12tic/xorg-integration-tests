@@ -36,6 +36,10 @@ public:
                                  const std::string &options = "",
                                  bool reference_from_layout = true);
 
+    void AddDefaultScreenWithDriver(const std::string &driver = "dummy",
+                                    const std::string &identifier = "dummy",
+                                    const std::string &options = "");
+
     /**
      * @return the path of the config file.
      */
@@ -50,6 +54,7 @@ protected:
     std::string config_file;
     std::vector<std::string> sections;
     std::vector<std::string> input_devices;
+    std::string default_device;
 };
 
 #endif

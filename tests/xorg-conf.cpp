@@ -13,22 +13,6 @@ XOrgConfig::XOrgConfig(const std::string path) {
         "EndSection\n";
 
     sections.push_back(section.str());
-
-    section.str(std::string());
-    section << ""
-        "Section \"Screen\"\n"
-        "    Identifier \"Dummy screen\"\n"
-        "    Device \"Dummy video device\"\n"
-        "EndSection\n";
-    sections.push_back(section.str());
-
-    section.str(std::string());
-    section << ""
-        "Section \"Device\"\n"
-        "    Identifier \"Dummy video device\"\n"
-        "    Driver \"dummy\"\n"
-        "EndSection\n";
-    sections.push_back(section.str());
 }
 
 void XOrgConfig::WriteConfig(const std::string &param) {
@@ -41,16 +25,37 @@ void XOrgConfig::WriteConfig(const std::string &param) {
     conffile << ""
         "Section \"ServerLayout\"\n"
         "    Identifier \"Dummy layout\"\n"
-        "    Screen 0 \"Dummy screen\" 0 0\n"
         "    Option \"AutoAddDevices\" \"off\"\n";
+    if (!default_device.empty())
+        conffile << "    Screen 0 \"" << default_device << " screen\" 0 0\n";
     std::vector<std::string>::const_iterator it;
     for (it = input_devices.begin(); it != input_devices.end(); it++)
         conffile << "    InputDevice \"" << *it << "\"\n";
-
     conffile << "EndSection\n";
 
     for (it = sections.begin(); it != sections.end(); it++)
         conffile << "\n" << *it;
+}
+
+void XOrgConfig::AddDefaultScreenWithDriver(const std::string &driver,
+                                            const std::string &identifier,
+                                            const std::string &options) {
+    default_device = identifier;
+
+    std::stringstream section;
+    section << "Section \"Device\"\n"
+               "    Identifier \"" << identifier << "\"\n"
+               "    Driver \"" << driver << "\"\n"
+               << options <<
+               "EndSection\n";
+    sections.push_back(section.str());
+
+    section.str(std::string());
+    section << "Section \"Screen\"\n"
+               "    Identifier \"" << identifier << " screen\"\n"
+               "    Device \"" << identifier << "\"\n"
+               "EndSection\n";
+    sections.push_back(section.str());
 }
 
 void XOrgConfig::AddInputSection(const std::string &driver,

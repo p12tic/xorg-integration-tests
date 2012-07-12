@@ -25,6 +25,7 @@ public:
         s << "/tmp/" << prefix << ".conf";
         config_file = s.str();
 
+        config.AddDefaultScreenWithDriver();
         ConfigureInputDevice(prefix);
         config.WriteConfig(config_file);
         server.SetOption("-config", config_file);
@@ -84,6 +85,7 @@ TEST(AcecadInputDriver, WithOptionDevice)
     config.AddInputSection("acecad", "--device--",
                            "Option \"CorePointer\" \"on\"\n"
                            "Option \"Device\" \"/dev/input/event0\"\n");
+    config.AddDefaultScreenWithDriver();
     StartServer("acecad-type-stylus", server, config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
@@ -126,6 +128,7 @@ TEST(AiptekInputDriver, TypeStylus)
                            "Option \"CorePointer\" \"on\"\n"
                            "Option \"Device\" \"/dev/input/event0\"\n"
                            "Option \"Type\" \"stylus\"");
+    config.AddDefaultScreenWithDriver();
     StartServer("aiptek-type-stylus", server, config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
@@ -162,6 +165,7 @@ TEST(AiptekInputDriver, TypeCursor)
                            "Option \"CorePointer\" \"on\"\n"
                            "Option \"Device\" \"/dev/input/event0\"\n"
                            "Option \"Type\" \"cursor\"");
+    config.AddDefaultScreenWithDriver();
     StartServer("aiptek-type-cursor", server, config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
@@ -198,6 +202,7 @@ TEST(AiptekInputDriver, TypeEraser)
                            "Option \"CorePointer\" \"on\"\n"
                            "Option \"Device\" \"/dev/input/event0\"\n"
                            "Option \"Type\" \"eraser\"");
+    config.AddDefaultScreenWithDriver();
     StartServer("aiptek-type-eraser", server, config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
