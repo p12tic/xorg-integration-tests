@@ -31,9 +31,9 @@ public:
      * @param reference_from_layout True to reference the device from the
      * server layout (default)
      */
-    virtual void AddInputSection(std::string driver,
-                                 std::string identifier = "--device--",
-                                 std::string options = "",
+    virtual void AddInputSection(const std::string &driver,
+                                 const std::string &identifier = "--device--",
+                                 const std::string &options = "",
                                  bool reference_from_layout = true);
 
     /**

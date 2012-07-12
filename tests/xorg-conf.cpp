@@ -53,9 +53,9 @@ void XOrgConfig::WriteConfig(const std::string &param) {
         conffile << "\n" << *it;
 }
 
-void XOrgConfig::AddInputSection(std::string driver,
-                                      std::string identifier,
-                                      std::string options,
+void XOrgConfig::AddInputSection(const std::string &driver,
+                                 const std::string &identifier,
+                                 const std::string &options,
                                       bool reference_from_layout) {
     if (reference_from_layout)
         input_devices.push_back(identifier);
