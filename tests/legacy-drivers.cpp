@@ -11,7 +11,7 @@
 
 class LegacyInputDriverTest : public InputDriverTest {
 public:
-    virtual void ConfigureInputDevice(std::string &driver) {
+    virtual void ConfigureInputDevice(const std::string &driver) {
         config.AddInputSection(driver, "--device--", "Option \"CorePointer\" \"on\"\n");
     }
 
