@@ -147,6 +147,79 @@ TEST_P(EvdevDriverXKBTest, KeyboardLayout)
 
 INSTANTIATE_TEST_CASE_P(, EvdevDriverXKBTest, ::testing::Values("us", "de", "fr"));
 
+class EvdevDriverMouseTest : public InputDriverTest {
+public:
+    virtual void SetUp() {
+
+        dev = std::auto_ptr<xorg::testing::evemu::Device>(
+                new xorg::testing::evemu::Device(
+                    RECORDINGS_DIR "mice/PIXART USB OPTICAL MOUSE.desc"
+                    )
+                );
+        InputDriverTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog(const std::string &prefix) {
+        server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-mouse.log");
+        server.SetOption("-config", "/tmp/evdev-driver-mouse.conf");
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        config.WriteConfig("/tmp/evdev-driver-mouse.conf");
+    }
+
+protected:
+    std::auto_ptr<xorg::testing::evemu::Device> dev;
+};
+
+void scroll_wheel_event(::Display *display,
+                        xorg::testing::evemu::Device *dev,
+                        int value, int button) {
+
+    dev->PlayOne(EV_REL, REL_WHEEL, value, 1);
+
+    XSync(display, False);
+
+    ASSERT_NE(XPending(display), 0) << "No event pending" << std::endl;
+    XEvent btn;
+    int nevents = 0;
+    while(XPending(display)) {
+        XNextEvent(display, &btn);
+
+        ASSERT_EQ(btn.xbutton.type, ButtonPress);
+        ASSERT_EQ(btn.xbutton.button, button);
+
+        XNextEvent(display, &btn);
+        ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+        ASSERT_EQ(btn.xbutton.button, button);
+
+        nevents++;
+    }
+
+    ASSERT_EQ(nevents, abs(value));
+}
+
+
+TEST_F(EvdevDriverMouseTest, ScrollWheel)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    /* the server takes a while to start up bust the devices may not respond
+       to events yet. Add a noop call that just delays everything long
+       enough for this test to work */
+    XInternAtom(Display(), "foo", True);
+    XFlush(Display());
+
+    scroll_wheel_event(Display(), dev.get(), 1, 4);
+    scroll_wheel_event(Display(), dev.get(), 2, 4);
+    scroll_wheel_event(Display(), dev.get(), 3, 4);
+
+    scroll_wheel_event(Display(), dev.get(), -1, 5);
+    scroll_wheel_event(Display(), dev.get(), -2, 5);
+    scroll_wheel_event(Display(), dev.get(), -3, 5);
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
