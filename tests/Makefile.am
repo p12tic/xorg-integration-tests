@@ -1,4 +1,4 @@
-noinst_PROGRAMS = legacy-drivers test-input-load
+noinst_PROGRAMS = legacy-drivers test-input-load kbd-driver
 
 include $(top_srcdir)/Makefile-xorg-gtest.am
 noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
@@ -29,3 +29,6 @@ legacy_drivers_LDADD = $(GTEST_LDADDS)
 
 test_input_load_SOURCES = test-input-load.cpp $(common_sources)
 test_input_load_LDADD = $(GTEST_LDADDS)
+
+kbd_driver_SOURCES = kbd.cpp $(common_sources)
+kbd_driver_LDADD = $(GTEST_LDADDS)
