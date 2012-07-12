@@ -1,4 +1,4 @@
-noinst_PROGRAMS = legacy-drivers test-input-load kbd-driver
+noinst_PROGRAMS = legacy-drivers test-input-load kbd-driver evdev-driver
 
 include $(top_srcdir)/Makefile-xorg-gtest.am
 noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
@@ -32,3 +32,6 @@ test_input_load_LDADD = $(GTEST_LDADDS)
 
 kbd_driver_SOURCES = kbd.cpp $(common_sources)
 kbd_driver_LDADD = $(GTEST_LDADDS)
+
+evdev_driver_SOURCES = evdev.cpp $(common_sources)
+evdev_driver_LDADD = $(GTEST_LDADDS)
