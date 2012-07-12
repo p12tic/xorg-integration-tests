@@ -9,7 +9,8 @@ AM_CPPFLAGS = \
 	      $(XI_CFLAGS) \
 	      $(GTEST_CPPFLAGS) \
 	      $(XORG_GTEST_CPPFLAGS) \
-	      -DTEST_ROOT_DIR=\"$(abs_top_srcdir)/tests/\"
+	      -DTEST_ROOT_DIR=\"$(abs_top_srcdir)/tests/\" \
+	      -DRECORDINGS_DIR=\"$(abs_top_srcdir)/recordings/\"
 
 AM_CXXFLAGS = $(GTEST_CXXFLAGS) $(XORG_GTEST_CXXFLAGS)
 

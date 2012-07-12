@@ -52,5 +52,6 @@ PKG_CHECK_MODULES(XORGGTEST, xorg-gtest)
 CHECK_XORG_GTEST
 
 AC_CONFIG_FILES([Makefile
+                 recordings/Makefile
                  tests/Makefile])
 AC_OUTPUT

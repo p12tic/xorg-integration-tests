@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = tests
+SUBDIRS = tests recordings
 
 EXTRA_DIST = autogen.sh
