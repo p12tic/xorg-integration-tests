@@ -153,7 +153,7 @@ public:
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "mice/PIXART USB OPTICAL MOUSE.desc"
+                    RECORDINGS_DIR "mice/PIXART USB OPTICAL MOUSE-HWHEEL.desc"
                     )
                 );
         InputDriverTest::SetUp();
@@ -176,9 +176,9 @@ protected:
 
 void scroll_wheel_event(::Display *display,
                         xorg::testing::evemu::Device *dev,
-                        int value, int button) {
+                        int axis, int value, int button) {
 
-    dev->PlayOne(EV_REL, REL_WHEEL, value, 1);
+    dev->PlayOne(EV_REL, axis, value, 1);
 
     XSync(display, False);
 
@@ -211,13 +211,21 @@ TEST_F(EvdevDriverMouseTest, ScrollWheel)
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
 
-    scroll_wheel_event(Display(), dev.get(), 1, 4);
-    scroll_wheel_event(Display(), dev.get(), 2, 4);
-    scroll_wheel_event(Display(), dev.get(), 3, 4);
+    scroll_wheel_event(Display(), dev.get(), REL_WHEEL, 1, 4);
+    scroll_wheel_event(Display(), dev.get(), REL_WHEEL, 2, 4);
+    scroll_wheel_event(Display(), dev.get(), REL_WHEEL, 3, 4);
 
-    scroll_wheel_event(Display(), dev.get(), -1, 5);
-    scroll_wheel_event(Display(), dev.get(), -2, 5);
-    scroll_wheel_event(Display(), dev.get(), -3, 5);
+    scroll_wheel_event(Display(), dev.get(), REL_WHEEL, -1, 5);
+    scroll_wheel_event(Display(), dev.get(), REL_WHEEL, -2, 5);
+    scroll_wheel_event(Display(), dev.get(), REL_WHEEL, -3, 5);
+
+    scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, 1, 7);
+    scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, 2, 7);
+    scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, 3, 7);
+
+    scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, -1, 6);
+    scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, -2, 6);
+    scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, -3, 6);
 }
 
 int main(int argc, char **argv) {
