@@ -19,7 +19,7 @@ typedef Keys_Map::iterator keys_mapIter;
 typedef std::vector<Key_Pair> MultiMedia_Keys_Map;
 typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
 
-class EvdevDriverTest : public InputDriverTest {
+class EvdevDriverXKBTest : public InputDriverTest {
     virtual void SetUp() {
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
@@ -83,7 +83,7 @@ class EvdevDriverTest : public InputDriverTest {
 };
 
 
-TEST_P(EvdevDriverTest, DeviceExists)
+TEST_P(EvdevDriverXKBTest, DeviceExists)
 {
     std::string param;
     int ndevices;
@@ -123,7 +123,7 @@ void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_P
       XNextEvent(display, &press);
 }
 
-TEST_P(EvdevDriverTest, KeyboardLayout)
+TEST_P(EvdevDriverXKBTest, KeyboardLayout)
 {
     std::string layout = GetParam();
 
@@ -145,7 +145,7 @@ TEST_P(EvdevDriverTest, KeyboardLayout)
         play_key_pair (Display(), dev.get(), (*m_it));
 }
 
-INSTANTIATE_TEST_CASE_P(, EvdevDriverTest, ::testing::Values("us", "de", "fr"));
+INSTANTIATE_TEST_CASE_P(, EvdevDriverXKBTest, ::testing::Values("us", "de", "fr"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
