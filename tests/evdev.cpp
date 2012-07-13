@@ -263,6 +263,100 @@ TEST_F(EvdevDriverMouseTest, DevNode)
     XFree(data);
 }
 
+TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XFlush(Display());
+
+    Atom mb_prop = XInternAtom(Display(), "Evdev Middle Button Emulation", True);
+
+    ASSERT_NE(mb_prop, None);
+    int deviceid = -1;
+
+    XIDeviceInfo *info;
+    int ndevices;
+    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
+    while (ndevices--) {
+        if (strcmp(info[ndevices].name, "--device--") == 0)
+            deviceid = info[ndevices].deviceid;
+    }
+
+    XIFreeDeviceInfo(info);
+
+    ASSERT_NE(deviceid, -1) << "Failed to find device." << std::endl;
+
+    Atom type;
+    int format;
+    unsigned long nitems, bytes_after;
+    unsigned char *data;
+    XIGetProperty(Display(), deviceid, mb_prop, 0, 100, False,
+                  AnyPropertyType, &type, &format, &nitems, &bytes_after,
+                  &data);
+    ASSERT_EQ(type, XA_INTEGER);
+    ASSERT_EQ(format, 8);
+    ASSERT_EQ(nitems, 1);
+
+    /* enable mb emulation */
+    *data = 1;
+    XIChangeProperty(Display(), deviceid, mb_prop, type, format,
+                     PropModeReplace, data, 1);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
+    dev->PlayOne(EV_KEY, BTN_RIGHT, 1, 1);
+    dev->PlayOne(EV_KEY, BTN_RIGHT, 0, 1);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, 1);
+
+    XSync(Display(), False);
+
+    ASSERT_NE(XPending(Display()), 0) << "No event pending" << std::endl;
+    XEvent btn;
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 2);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 2);
+
+    ASSERT_EQ(XPending(Display()), 0) << "Events pending when there should be none" << std::endl;
+
+    /* disable mb emulation */
+    *data = 0;
+    XIChangeProperty(Display(), deviceid, mb_prop, type, format,
+                     PropModeReplace, data, 1);
+    XSync(Display(), False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
+    dev->PlayOne(EV_KEY, BTN_RIGHT, 1, 1);
+    dev->PlayOne(EV_KEY, BTN_RIGHT, 0, 1);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, 1);
+
+    XSync(Display(), False);
+
+    ASSERT_NE(XPending(Display()), 0) << "No event pending" << std::endl;
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 1);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 3);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 3);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 1);
+
+    ASSERT_EQ(XPending(Display()), 0) << "Events pending when there should be none" << std::endl;
+
+    XFree(data);
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
