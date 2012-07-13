@@ -4,6 +4,7 @@
 #include <linux/input.h>
 
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #define XK_LATIN1
 #include <X11/keysymdef.h>
 #include <X11/XF86keysym.h>
@@ -226,6 +227,40 @@ TEST_F(EvdevDriverMouseTest, ScrollWheel)
     scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, -1, 6);
     scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, -2, 6);
     scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, -3, 6);
+}
+
+TEST_F(EvdevDriverMouseTest, DevNode)
+{
+    Atom node_prop = XInternAtom(Display(), "Device Node", True);
+
+    ASSERT_NE(node_prop, None) << "This requires server 1.11";
+    int deviceid = -1;
+
+    XIDeviceInfo *info;
+    int ndevices;
+    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
+    while (ndevices--) {
+        if (strcmp(info[ndevices].name, "--device--") == 0)
+            deviceid = info[ndevices].deviceid;
+    }
+
+    XIFreeDeviceInfo(info);
+
+    ASSERT_NE(deviceid, -1) << "Failed to find device.";
+
+    Atom type;
+    int format;
+    unsigned long nitems, bytes_after;
+    char *data;
+    XIGetProperty(Display(), deviceid, node_prop, 0, 100, False,
+                  AnyPropertyType, &type, &format, &nitems, &bytes_after,
+                  (unsigned char**)&data);
+    ASSERT_EQ(type, XA_STRING);
+
+    std::string devnode(data);
+    ASSERT_EQ(devnode.compare(dev->GetDeviceNode()), 0);
+
+    XFree(data);
 }
 
 int main(int argc, char **argv) {
