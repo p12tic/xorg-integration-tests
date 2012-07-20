@@ -25,7 +25,7 @@ class EvdevDriverXKBTest : public InputDriverTest {
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "keyboards/AT Translated Set 2 Keyboard.desc"
+                    RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc"
                     )
                 );
 
@@ -154,7 +154,7 @@ public:
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "mice/PIXART USB OPTICAL MOUSE-HWHEEL.desc"
+                    RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
                     )
                 );
         InputDriverTest::SetUp();

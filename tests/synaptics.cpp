@@ -20,7 +20,7 @@ public:
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "touchpads/SynPS2 Synaptics TouchPad.desc"
+                    RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad.desc"
                     )
                 );
         InputDriverTest::SetUp();
@@ -106,8 +106,8 @@ TEST_F(SynapticsDriverTest, ScrollWheel)
        enough for this test to work */
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
-    check_buttons_event(Display(), dev.get(), "SynPS2 Synaptics TouchPad-two-finger-scroll-up.events", 4, 17);
-    check_buttons_event(Display(), dev.get(), "SynPS2 Synaptics TouchPad-two-finger-scroll-down.events", 5, 10);
+    check_buttons_event(Display(), dev.get(), "SynPS2-Synaptics-TouchPad-two-finger-scroll-up.events", 4, 17);
+    check_buttons_event(Display(), dev.get(), "SynPS2-Synaptics-TouchPad-two-finger-scroll-down.events", 5, 10);
 }
 
 TEST_F(SynapticsDriverTest, TapEvent)
@@ -118,7 +118,7 @@ TEST_F(SynapticsDriverTest, TapEvent)
        enough for this test to work */
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
-    check_buttons_event(Display(), dev.get(), "SynPS2 Synaptics TouchPad-tap.events", 1, 1);
+    check_buttons_event(Display(), dev.get(), "SynPS2-Synaptics-TouchPad-tap.events", 1, 1);
 }
 
 void check_drag_event(::Display *display,
@@ -164,7 +164,7 @@ TEST_F(SynapticsDriverTest, TapAndDragEvent)
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
     /* 1 press, 30 moves then 1 release is what we expect */
-    check_drag_event(Display(), dev.get(), "SynPS2 Synaptics TouchPad-tap-and-move.events", 1, 30, 1);
+    check_drag_event(Display(), dev.get(), "SynPS2-Synaptics-TouchPad-tap-and-move.events", 1, 30, 1);
 }
 
 int main(int argc, char **argv) {
