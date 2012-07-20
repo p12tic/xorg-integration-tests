@@ -28,7 +28,7 @@ public:
 
     virtual void SetUpConfigAndLog(const std::string &prefix) {
         server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-SynPS2.log");
-        server.SetOption("-config", "/tmp/evdev-synaptics-SynPS2.conf");
+        server.SetOption("-config", "/tmp/synaptics-SynPS2.conf");
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("synaptics", "--device--",
@@ -39,7 +39,7 @@ public:
                                "Option \"FastTaps\"            \"1\"\n"
                                "Option \"VertTwoFingerScroll\" \"1\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
-        config.WriteConfig("/tmp/evdev-synaptics-SynPS2.conf");
+        config.WriteConfig("/tmp/synaptics-SynPS2.conf");
     }
 
 protected:
