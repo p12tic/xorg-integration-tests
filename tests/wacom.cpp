@@ -21,6 +21,8 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
+#include <xorg/wacom-properties.h>
+
 /* Taken from gnome-settings-daemon */
 typedef enum {
 	WACOM_TYPE_INVALID =     0,
@@ -84,7 +86,7 @@ protected:
         s << "/tmp/Xorg-wacom.log";
         log_file = s.str();
 
-        WriteConfig();
+        WriteConfig();/* Taken from gnome-settings-daemon */
         StartServer();
     }
 
@@ -108,20 +110,43 @@ protected:
     std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
-bool check_for_tool (const char *tool_name, XDeviceInfo *list, int ndevices)
+XDeviceInfo* get_device_info_for_tool (const char *tool_name, XDeviceInfo *list, int ndevices)
 {
-    XDeviceInfo *info;
+    XDeviceInfo *info, *found;
     int loop;
-    bool found = false;
 
+    found = NULL;
     info = list;
+
     for (loop = 0; loop < ndevices; loop++, info++) {
         if (strcmp(info->name, tool_name) == 0) {
                 if (found)
-                    return false; // Duplicate
-                found = true;
+                    return (XDeviceInfo *) NULL; // Duplicate
+                found = info;
         }
     }
+
+    return found;
+}
+
+/* Return True if the given device has the property, or False otherwise */
+bool test_property(Display *dpy, XDevice* dev, const char *prop_name)
+{
+    int nprops_return;
+    Atom *properties;
+    Atom prop;
+    bool found = False;
+
+    prop = XInternAtom (dpy, prop_name, False);
+    properties = XListDeviceProperties(dpy, dev, &nprops_return);
+    while(nprops_return--) {
+	if (properties[nprops_return] == prop) {
+            found = True;
+            break;
+        }
+    }
+
+    XFree(properties);
     return found;
 }
 
@@ -132,53 +157,111 @@ TEST_P(WacomDriverTest, DeviceNames)
     ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
 
     int ndevices;
-
+    XDeviceInfo *info, *list, *found;
+    XDevice *device;
+    bool prop_found;
     Tablet tablet = GetParam();
-    XDeviceInfo *info, *list;
-    int loop;
-    bool found;
+
     list = XListInputDevices(Display(), &ndevices);
-    int i = 0;
     char tool_name[255];
         
     if (tablet.stylus) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
-        found = check_for_tool (tool_name, list, ndevices);
-        ASSERT_EQ(found, true) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        found = get_device_info_for_tool (tool_name, list, ndevices);
+        EXPECT_NE(found, (XDeviceInfo *) NULL) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        if (found) {
+            device = XOpenDevice(Display(), found->id);
+            EXPECT_NE(device, (XDevice *) NULL) << "Cannot open device for " << tool_name << std::endl;;
+
+            prop_found = test_property (Display(), device, WACOM_PROP_PRESSURECURVE);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
+
+            prop_found = test_property (Display(), device, WACOM_PROP_ROTATION);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_ROTATION << " not found on " << tool_name << std::endl;
+
+            prop_found = test_property (Display(), device, WACOM_PROP_TOOL_TYPE);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_TOOL_TYPE << " not found on " << tool_name << std::endl;
+
+            XCloseDevice (Display(), device);
+        }
     }
         
     if (tablet.eraser) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
-        found = check_for_tool (tool_name, list, ndevices);
-        ASSERT_EQ(found, true) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        found = get_device_info_for_tool (tool_name, list, ndevices);
+        EXPECT_NE(found, (XDeviceInfo *) NULL) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        if (found) {
+            device = XOpenDevice(Display(), found->id);
+            EXPECT_NE(device, (XDevice *) NULL) << "Cannot open device for " << tool_name << std::endl;;
+
+            prop_found = test_property (Display(), device, WACOM_PROP_PRESSURECURVE);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
+
+            prop_found = test_property (Display(), device, WACOM_PROP_ROTATION);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_ROTATION << " not found on " << tool_name << std::endl;
+
+            XCloseDevice (Display(), device);
+        }
     }
         
     if (tablet.cursor) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
-        found = check_for_tool (tool_name, list, ndevices);
-        ASSERT_EQ(found, true) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        found = get_device_info_for_tool (tool_name, list, ndevices);
+        EXPECT_NE(found, (XDeviceInfo *) NULL) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        if (found) {
+            device = XOpenDevice(Display(), found->id);
+            EXPECT_NE(device, (XDevice *) NULL) << "Cannot open device for " << tool_name << std::endl;;
+
+            prop_found = test_property (Display(), device,  WACOM_PROP_WHEELBUTTONS);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_WHEELBUTTONS << " not found on " << tool_name << std::endl;
+
+            XCloseDevice (Display(), device);
+        }
     }
         
     if (tablet.pad) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
-        found = check_for_tool (tool_name, list, ndevices);
-        ASSERT_EQ(found, true) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        found = get_device_info_for_tool (tool_name, list, ndevices);
+        EXPECT_NE(found, (XDeviceInfo *) NULL) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        if (found) {
+            device = XOpenDevice(Display(), found->id);
+            EXPECT_NE(device, (XDevice *) NULL) << "Cannot open device for " << tool_name << std::endl;;
+
+            prop_found = test_property (Display(), device,  WACOM_PROP_STRIPBUTTONS);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_STRIPBUTTONS << " not found on " << tool_name << std::endl;
+
+            XCloseDevice (Display(), device);
+        }
     }
         
     if (tablet.touch) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
-        found = check_for_tool (tool_name, list, ndevices);
-        ASSERT_EQ(found, true) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        found = get_device_info_for_tool (tool_name, list, ndevices);
+        EXPECT_NE(found, (XDeviceInfo *) NULL) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+        if (found) {
+            device = XOpenDevice(Display(), found->id);
+            EXPECT_NE(device, (XDevice *) NULL) << "Cannot open device for " << tool_name << std::endl;
+
+            prop_found = test_property (Display(), device,  WACOM_PROP_TOUCH);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_TOUCH << " not found on " << tool_name << std::endl;
+
+            prop_found = test_property (Display(), device,  WACOM_PROP_ENABLE_GESTURE);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_ENABLE_GESTURE << " not found on " << tool_name << std::endl;
+
+            prop_found = test_property (Display(), device,  WACOM_PROP_GESTURE_PARAMETERS);
+            EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_GESTURE_PARAMETERS << " not found on " << tool_name << std::endl;
+
+            XCloseDevice (Display(), device);
+        }
     }
 
     XFreeDeviceList (list);
 }
 
-WacomDeviceType
-get_device_type (Display *dpy, XDeviceInfo *dev)
+WacomDeviceType get_device_type (Display *dpy, XDeviceInfo *dev)
 {
     WacomDeviceType ret;
-    static Atom stylus, cursor, eraser, pad, touch;
+    Atom stylus, cursor, eraser, pad, touch;
     XDevice *device;
 
     ret = WACOM_TYPE_INVALID;
@@ -186,16 +269,11 @@ get_device_type (Display *dpy, XDeviceInfo *dev)
     if ((dev->use == IsXPointer) || (dev->use == IsXKeyboard))
         return ret;
 
-    if (!stylus)
-        stylus = XInternAtom (dpy, "STYLUS", False);
-    if (!eraser)
-        eraser = XInternAtom (dpy, "ERASER", False);
-    if (!cursor)
-        cursor = XInternAtom (dpy, "CURSOR", False);
-    if (!pad)
-        pad = XInternAtom (dpy, "PAD", False);
-    if (!touch)
-        touch = XInternAtom (dpy, "TOUCH", False);
+    stylus = XInternAtom (dpy, WACOM_PROP_XI_TYPE_STYLUS, False);
+    eraser = XInternAtom (dpy, WACOM_PROP_XI_TYPE_ERASER, False);
+    cursor = XInternAtom (dpy, WACOM_PROP_XI_TYPE_CURSOR, False);
+    pad    = XInternAtom (dpy, WACOM_PROP_XI_TYPE_PAD,    False);
+    touch  = XInternAtom (dpy, WACOM_PROP_XI_TYPE_TOUCH,  False);
 
     if (dev->type == stylus)
         ret = WACOM_TYPE_STYLUS;
@@ -207,8 +285,6 @@ get_device_type (Display *dpy, XDeviceInfo *dev)
         ret = WACOM_TYPE_PAD;
     else if (dev->type == touch)
         ret = WACOM_TYPE_TOUCH;
-    if (ret == WACOM_TYPE_INVALID)
-        return ret;
 
     return ret;
 }
@@ -229,7 +305,6 @@ bool check_for_type (WacomDeviceType type, Display *dpy, XDeviceInfo *list, int 
     return found;
 }
 
-
 TEST_P(WacomDriverTest, DeviceType)
 {
     int major = 2;
@@ -249,28 +324,61 @@ TEST_P(WacomDriverTest, DeviceType)
         found = check_for_type (WACOM_TYPE_STYLUS, Display(), list, ndevices);
         ASSERT_EQ(found, true) << "Stylus not found on " << tablet.name << std::endl;
     }
-        
+
     if (tablet.eraser) {
         found = check_for_type (WACOM_TYPE_ERASER, Display(), list, ndevices);
         ASSERT_EQ(found, true) << "Eraser not found on " << tablet.name << std::endl;
     }
-        
+
     if (tablet.cursor) {
         found = check_for_type (WACOM_TYPE_CURSOR, Display(), list, ndevices);
         ASSERT_EQ(found, true) << "Cursor not found on " << tablet.name << std::endl;
     }
-        
+
     if (tablet.pad) {
         found = check_for_type (WACOM_TYPE_PAD, Display(), list, ndevices);
         ASSERT_EQ(found, true) << "Pad not found on " << tablet.name << std::endl;
     }
-        
+
     if (tablet.touch) {
         found = check_for_type (WACOM_TYPE_TOUCH, Display(), list, ndevices);
         ASSERT_EQ(found, true) << "Touch not found on " << tablet.name << std::endl;
     }
 
     XFreeDeviceList (list);
+}
+
+bool set_rotate(Display *dpy, XDevice *dev, const char *rotate)
+{
+    int rotation = 0;
+    Atom prop, type;
+    int format;
+    unsigned char* data;
+    unsigned long nitems, bytes_after;
+
+    if (strcasecmp(rotate, "cw") == 0)
+        rotation = 1;
+    else if (strcasecmp(rotate, "ccw") == 0)
+        rotation = 2;
+    else if (strcasecmp(rotate, "half") == 0)
+        rotation = 3;
+
+    prop = XInternAtom(dpy, WACOM_PROP_ROTATION, True);
+    if (!prop)
+        return False;
+
+    XGetDeviceProperty(dpy, dev, prop, 0, 1000, False, AnyPropertyType,
+                       &type, &format, &nitems, &bytes_after, &data);
+
+    if (nitems == 0 || format != 8)
+        return False;
+
+    *data = rotation;
+    XChangeDeviceProperty(dpy, dev, prop, type, format,
+                          PropModeReplace, data, nitems);
+    XFlush(dpy);
+
+    return True;
 }
 
 INSTANTIATE_TEST_CASE_P(, WacomDriverTest,
