@@ -341,6 +341,146 @@ TEST_P(WacomDriverTest, DeviceType)
     XFreeDeviceList (list);
 }
 
+bool set_rotate(Display *dpy, int deviceid, const char *rotate)
+{
+    Status status;
+    int rotation = 0;
+    Atom prop, type;
+    int format;
+    unsigned char* data;
+    unsigned long nitems, bytes_after;
+
+    if (strcasecmp(rotate, "cw") == 0)
+        rotation = 1;
+    else if (strcasecmp(rotate, "ccw") == 0)
+        rotation = 2;
+    else if (strcasecmp(rotate, "half") == 0)
+        rotation = 3;
+
+    prop = XInternAtom(dpy, WACOM_PROP_ROTATION, True);
+    if (!prop)
+        return False;
+
+    status = XIGetProperty(dpy, deviceid, prop, 0, 1000, False,
+                           AnyPropertyType, &type, &format,
+                           &nitems, &bytes_after, &data);
+
+    if (status != Success || nitems == 0 || format != 8)
+        return False;
+
+    *data = rotation;
+    
+    XIChangeProperty(dpy, deviceid, prop, type, format,
+                          PropModeReplace, data, nitems);
+    XFlush(dpy);
+
+    return True;
+}
+
+int relative_motion (Display *display, xorg::testing::evemu::Device *dev, int axis, int value)
+{
+    Window w1, w2;
+    unsigned int mask;
+    int root_x1, root_y1, rel_x, rel_y;
+    int root_x2, root_y2;
+    XEvent ev;
+    
+    XSync(display, False);
+    XQueryPointer (display, DefaultRootWindow(display), &w1, &w2, &root_x1, &root_y2, &rel_x, &rel_y, &mask);
+
+    root_x2 = root_x1;
+    root_y2 = root_y1;
+    
+    dev->PlayOne(EV_REL, axis, value, 1);
+    XSync(display, False);
+
+    if (XPending(display) == 0)
+        return 0;
+    
+    while(XCheckMaskEvent (display, PointerMotionMask, &ev)) {
+        root_x2 = ev.xmotion.x_root;
+        root_y2 = ev.xmotion.y_root;
+    }
+    printf ("X axis: %d Y axis: %d\n", root_x2 - root_x1, root_y2 - root_y1);
+    if (axis == REL_X)
+        return (root_x2 - root_x1);
+
+    if (axis == REL_Y)
+        return (root_y2 - root_y1);
+
+    while(XPending(display))
+        XNextEvent(display, &ev);
+
+    return 0;
+}
+
+
+TEST_P(WacomDriverTest, Rotation)
+{
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
+
+    int ndevices;
+    XIDeviceInfo *info, *list, *found;
+    bool status;
+    Tablet tablet = GetParam();
+
+    /* Wait for devices to settle */
+    wait_devices (Display(), 5);
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), PointerMotionMask);
+    /* the server takes a while to start up bust the devices may not respond
+       to events yet. Add a noop call that just delays everything long
+       enough for this test to work */
+    XInternAtom(Display(), "foo", True);
+    XFlush(Display());
+    
+    list = XIQueryDevice(Display(), XIAllDevices, &ndevices);
+    char tool_name[255];
+    int delta;
+    
+    if (tablet.stylus) {
+        snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
+        found = get_device_info_for_tool (tool_name, list, ndevices);
+        ASSERT_NE(found, (XIDeviceInfo *) NULL) << "Tool \"" << tool_name << "\" not found or duplicate" << std::endl;
+
+        // Try wtith no rotation
+        status = set_rotate (Display(), found->deviceid, "none");
+        ASSERT_EQ(status, True) << "Failed to rotate " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_X, 10);
+        EXPECT_TRUE(delta > 0) << "Pointer rotation not applied in X " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_Y, 10);
+        EXPECT_TRUE(delta > 0) << "Pointer rotation not applied in Y " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_X, -10);
+        EXPECT_TRUE(delta < 0) << "Pointer rotation not applied in X " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_Y, -10);
+        EXPECT_TRUE(delta < 0) << "Pointer rotation not applied in Y " << tool_name << std::endl;
+
+        // Set opposite rotation
+        status = set_rotate (Display(), found->deviceid, "ccw");
+        ASSERT_EQ(status, True) << "Failed to rotate " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_X, 10);
+        EXPECT_TRUE(delta < 0) << "Pointer rotation not applied in X " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_Y, 10);
+        EXPECT_TRUE(delta < 0) << "Pointer rotation not applied in Y " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_X, -10);
+        EXPECT_TRUE(delta > 0) << "Pointer rotation not applied in X " << tool_name << std::endl;
+        
+        delta = relative_motion (Display(), dev.get(), REL_Y, -10);
+        EXPECT_TRUE(delta > 0) << "Pointer rotation not applied in Y " << tool_name << std::endl;
+    }
+
+    XIFreeDeviceInfo(list);
+}
+
 INSTANTIATE_TEST_CASE_P(, WacomDriverTest,
         ::testing::ValuesIn(tablets));
 
