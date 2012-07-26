@@ -13,6 +13,7 @@ XOrgConfig::XOrgConfig(const std::string path) {
         "EndSection\n";
 
     sections.push_back(section.str());
+    auto_add_devices = false;
 }
 
 void XOrgConfig::WriteConfig(const std::string &param) {
@@ -24,8 +25,9 @@ void XOrgConfig::WriteConfig(const std::string &param) {
 
     conffile << ""
         "Section \"ServerLayout\"\n"
-        "    Identifier \"Dummy layout\"\n"
-        "    Option \"AutoAddDevices\" \"off\"\n";
+        "    Identifier \"Dummy layout\"\n";
+    if (!auto_add_devices)
+        conffile << "    Option \"AutoAddDevices\" \"off\"\n";
     if (!default_device.empty())
         conffile << "    Screen 0 \"" << default_device << " screen\" 0 0\n";
     std::vector<std::string>::const_iterator it;
@@ -72,6 +74,10 @@ void XOrgConfig::AddInputSection(const std::string &driver,
                << options <<
                "EndSection\n";
     sections.push_back(section.str());
+}
+
+void XOrgConfig::SetAutoAddDevices(bool enabled) {
+    auto_add_devices = enabled;
 }
 
 const std::string& XOrgConfig::GetPath() {

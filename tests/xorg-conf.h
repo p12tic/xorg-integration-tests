@@ -41,6 +41,12 @@ public:
                                     const std::string &options = "");
 
     /**
+     * Enable or disable AutoAddDevices
+     * @param enabled True to enable AutoAddDevices, False to disable
+     */
+    void SetAutoAddDevices(bool enabled);
+
+    /**
      * @return the path of the config file.
      */
     const std::string& GetPath();
@@ -55,6 +61,7 @@ protected:
     std::vector<std::string> sections;
     std::vector<std::string> input_devices;
     std::string default_device;
+    bool auto_add_devices;
 };
 
 #endif
