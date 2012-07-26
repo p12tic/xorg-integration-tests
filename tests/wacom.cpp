@@ -22,6 +22,7 @@
 
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
+#include <X11/extensions/XI2.h> // For XI_TouchEnd
 
 #include <xorg/wacom-properties.h>
 #include <unistd.h>
