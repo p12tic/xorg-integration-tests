@@ -22,7 +22,6 @@
 
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
-#include <X11/extensions/XI2.h> // For XI_TouchEnd
 
 #include <xorg/wacom-properties.h>
 #include <unistd.h>
@@ -64,15 +63,16 @@ protected:
     }
 
     void SetUpXIEventMask () {
-        XIEventMask mask;
-        mask.deviceid = XIAllDevices;
-        mask.mask_len = XIMaskLen(XI_TouchEnd);
-        mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
-        XISetMask(mask.mask, XI_HierarchyChanged);
+        XIEventMask evmask;
+        unsigned char mask[2] = { 0, 0 };
 
-        XSync(Display(), False);
-        EXPECT_EQ(Success, XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1));
-        free(mask.mask);
+        XISetMask(mask, XI_HierarchyChanged);
+
+        evmask.deviceid = XIAllDevices;
+        evmask.mask_len = sizeof(mask);
+        evmask.mask = mask;
+
+        EXPECT_EQ(Success, XISelectEvents(Display(), DefaultRootWindow(Display()), &evmask, 1));
         XSync(Display(), False);
     }
 
