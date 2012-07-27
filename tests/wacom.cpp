@@ -88,31 +88,31 @@ protected:
         // FIXME: I don't think WaitForDevice() does take the timeout param into account
         if (tablet.stylus) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 1000))
+            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
                 << "Tool " << tool_name << " not found" << std::endl;
         }
 
         if (tablet.eraser) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 1000))
+            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
                 << "Tool " << tool_name << " not found" << std::endl;
         }
 
         if (tablet.cursor) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 1000))
+            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
                 << "Tool " << tool_name << " not found" << std::endl;
         }
 
         if (tablet.touch) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 1000))
+            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
                 << "Tool " << tool_name << " not found" << std::endl;
         }
 
         if (tablet.pad) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 1000))
+            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
                 << "Tool " << tool_name << " not found" << std::endl;
         }
     }
@@ -204,6 +204,8 @@ bool test_property(Display *dpy, int deviceid, const char *prop_name)
     return False;
 }
 
+// To disable
+// TEST_P(WacomDriverTest, DISABLED_DeviceNames)
 TEST_P(WacomDriverTest, DeviceNames)
 {
     Tablet tablet = GetParam();
@@ -224,6 +226,7 @@ TEST_P(WacomDriverTest, DeviceNames)
     if (tablet.stylus) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
         deviceinfo = get_device_info_for_tool (tool_name, list, ndevices);
+        ASSERT_NE (deviceinfo, (XIDeviceInfo *) NULL) << "Tool not found " << tool_name <<std::endl;
 
         prop_found = test_property (Display(), deviceinfo->deviceid, WACOM_PROP_PRESSURECURVE);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
@@ -238,6 +241,7 @@ TEST_P(WacomDriverTest, DeviceNames)
     if (tablet.eraser) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
         deviceinfo = get_device_info_for_tool (tool_name, list, ndevices);
+        ASSERT_NE (deviceinfo, (XIDeviceInfo *) NULL) << "Tool not found " << tool_name <<std::endl;
 
         prop_found = test_property (Display(), deviceinfo->deviceid, WACOM_PROP_PRESSURECURVE);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
@@ -249,6 +253,7 @@ TEST_P(WacomDriverTest, DeviceNames)
     if (tablet.cursor) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
         deviceinfo = get_device_info_for_tool (tool_name, list, ndevices);
+        ASSERT_NE (deviceinfo, (XIDeviceInfo *) NULL) << "Tool not found " << tool_name <<std::endl;
 
         prop_found = test_property (Display(), deviceinfo->deviceid,  WACOM_PROP_WHEELBUTTONS);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_WHEELBUTTONS << " not found on " << tool_name << std::endl;
@@ -257,6 +262,7 @@ TEST_P(WacomDriverTest, DeviceNames)
     if (tablet.pad) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
         deviceinfo = get_device_info_for_tool (tool_name, list, ndevices);
+        ASSERT_NE (deviceinfo, (XIDeviceInfo *) NULL) << "Tool not found " << tool_name <<std::endl;
 
         prop_found = test_property (Display(), deviceinfo->deviceid,  WACOM_PROP_STRIPBUTTONS);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_STRIPBUTTONS << " not found on " << tool_name << std::endl;
@@ -265,6 +271,7 @@ TEST_P(WacomDriverTest, DeviceNames)
     if (tablet.touch) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
         deviceinfo = get_device_info_for_tool (tool_name, list, ndevices);
+        ASSERT_NE (deviceinfo, (XIDeviceInfo *) NULL) << "Tool not found " << tool_name <<std::endl;
 
         prop_found = test_property (Display(), deviceinfo->deviceid,  WACOM_PROP_TOUCH);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_TOUCH << " not found on " << tool_name << std::endl;
@@ -295,6 +302,8 @@ void check_for_type (Display *dpy, XIDeviceInfo *list, int ndevices, const char 
     ASSERT_TRUE(found) << type << " not found" << std::endl;
 }
 
+// To disable
+// TEST_P(WacomDriverTest, DISABLED_DeviceType)
 TEST_P(WacomDriverTest, DeviceType)
 {
     Tablet tablet = GetParam();
@@ -363,25 +372,28 @@ bool set_rotate(Display *dpy, int deviceid, const char *rotate)
     return True;
 }
 
-int stylus_move_right (Display *display, xorg::testing::evemu::Device *dev)
+int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 {
     int root_x1, root_y1, root_x2, root_y2;
     int loop, step;
     XEvent ev;
     
-    XSync(display, False);
-    while(XPending(display))
-        XNextEvent(display, &ev);
+    XSync(dpy, False);
+    while(XPending(dpy))
+        XNextEvent(dpy, &ev);
 
     // Move to device coord (1000,1000)
     dev->PlayOne(EV_ABS, ABS_X, 1000, True);
     dev->PlayOne(EV_ABS, ABS_Y, 1000, True);
     dev->PlayOne(EV_ABS, ABS_DISTANCE, 0, True);
     dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, True);
-    XSync(display, False);
+
+    XSync (dpy, False);
+    EXPECT_NE(XPending(dpy), 0) << "No event received??" << std::endl;
 
     // Capture motion events and save screen coordinates
-    while(XCheckMaskEvent (display, PointerMotionMask, &ev)) {
+    XSync (dpy, False);
+    while(XCheckMaskEvent (dpy, PointerMotionMask, &ev)) {
         root_x1 = ev.xmotion.x_root;
         root_y1 = ev.xmotion.y_root;
     }
@@ -396,21 +408,27 @@ int stylus_move_right (Display *display, xorg::testing::evemu::Device *dev)
     }
     dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 0, True);
 
-    XSync(display, False);
-    EXPECT_NE(XPending(display), 0);
+    XSync (dpy, False);
+    EXPECT_NE(XPending(dpy), 0) << "Still no event received??" << std::endl;
 
-    while(XCheckMaskEvent (display, PointerMotionMask|PointerMotionHintMask, &ev)) {
+    XSync (dpy, False);
+    while(XCheckMaskEvent (dpy, PointerMotionMask|PointerMotionHintMask, &ev)) {
         root_x2 = ev.xmotion.x_root;
         root_y2 = ev.xmotion.y_root;
     }
-    printf ("X axis: %d Y axis: %d\n", root_x2 - root_x1, root_y2 - root_y1);
 
-    while(XPending(display))
-        XNextEvent(display, &ev);
+    XSync (dpy, False);
+    while(XPending(dpy))
+        XNextEvent(dpy, &ev);
 
     return (root_x2 - root_x1);
 }
 
+// FIXME
+// This test would fail in some random case, as it the X events were
+// not generated...
+// To disable
+// TEST_P(WacomDriverTest, DISABLED_Rotation)
 TEST_P(WacomDriverTest, Rotation)
 {
     Tablet tablet = GetParam();
@@ -425,9 +443,9 @@ TEST_P(WacomDriverTest, Rotation)
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | 
                                                           ButtonReleaseMask | 
                                                           PointerMotionMask | 
-                                                          PointerMotionHintMask |
                                                           ButtonMotionMask);
-    /* the server takes a while to start up bust the devices may not respond
+
+    /* the server takes a while to start up but the devices may not respond
        to events yet. Add a noop call that just delays everything long
        enough for this test to work */
     XInternAtom(Display(), "foo", True);
@@ -436,19 +454,28 @@ TEST_P(WacomDriverTest, Rotation)
     int ndevices;
     list = XIQueryDevice(Display(), XIAllDevices, &ndevices);
     char tool_name[255];
-    int delta;
+    int displace;
     
     if (tablet.stylus) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
         deviceinfo = get_device_info_for_tool (tool_name, list, ndevices);
+        ASSERT_NE (deviceinfo, (XIDeviceInfo *) NULL) << "Tool not found " << tool_name <<std::endl;
 
         // Try with no rotation
         status = set_rotate (Display(), deviceinfo->deviceid, "none");
-        EXPECT_TRUE(stylus_move_right (Display(), dev.get()) > 0) << "Failed to rotate " << tool_name << std::endl;
+        EXPECT_TRUE(status) << "Failed to rotate " << tool_name << std::endl;
+
+        displace = stylus_move_right (Display(), dev.get());
+        ASSERT_NE (displace, 0) << "Did not get any event from " << tool_name << std::endl;
+        EXPECT_TRUE(displace > 0) << "Pointer moved to the wrong direction with rotate none for " << tool_name << std::endl;
 
         // Set opposite rotation
-        status = set_rotate (Display(), deviceinfo->deviceid, "ccw");
-        EXPECT_TRUE(stylus_move_right (Display(), dev.get()) < 0) << "Failed to rotate " << tool_name << std::endl;
+        status = set_rotate (Display(), deviceinfo->deviceid, "half");
+        EXPECT_TRUE(status) << "Failed to rotate " << tool_name << std::endl;
+
+        displace = stylus_move_right (Display(), dev.get());
+        ASSERT_NE (displace, 0) << "Did not get any event from " << tool_name << std::endl;
+        EXPECT_TRUE(displace < 0) << "Pointer moved to the wrong direction with rotate half for " << tool_name << std::endl;
     }
 
     XIFreeDeviceInfo(list);
