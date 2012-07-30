@@ -47,7 +47,7 @@ PKG_CHECK_MODULES(EVEMU, [evemu >= 1.0.10])
 
 PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.4.0])
 
-CHECK_XORG_GTEST
+CHECK_XORG_GTEST([], AC_MSG_ERROR([xorg-gtest or its dependencies not found.  Did you specify --with-gtest-source-path?]))
 
 AC_CONFIG_FILES([Makefile
                  recordings/Makefile
