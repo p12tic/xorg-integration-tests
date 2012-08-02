@@ -1,0 +1,58 @@
+This is a test suite for X.Org tests.
+
+== Building the code ==
+Required libraries:
+ googletest: http://code.google.com/p/googletest/
+ xorg-gtest: http://cgit.freedesktop.org/xorg/test/xorg-gtest/
+
+Both of these are source libraries, but they need to be built and installed
+for this repository to build.
+
+=== Building googletest ===
+  ./configure --prefix=$HOME/testing
+  make && make install
+
+=== Building xorg-gtest ===
+  ./autogen.sh
+  ./configure --with-gtest-source-path="/path/to/googletest" --prefix=$HOME/testing
+  make && make install
+
+Notes:
+* The gtest source path must be an absolute path.
+* The repository must be installed for the pkg-config file to provide the
+   right CFLAGS and include paths.
+
+=== Building this repository ===
+  export ACLOCAL="aclocal -I $HOME/testing/aclocal"
+  export PKG_CONFIG_PATH="$HOME/testing/lib/pkgconfig"
+  ./autogen.sh --with-gtest-source-path="/path/to/googletest" --prefix=$HOME/testing
+  make
+
+Notes:
+* The gtest source path must be an absolute path.
+* This repo does not need to be installed.
+
+== Running the tests ==
+Tests can be run by "make check", or one-by-one. 
+
+Most tests start up some X server, so it is advisable to shut down any X
+server on the test box. Some tests only start Xdummy, but do add
+virtual input devices that may mess with the current session. Again, it is
+advisable to shut down any X server on the test box.
+
+For controlling test output (e.g. xml reporting), refer to
+http://code.google.com/p/googletest/wiki/AdvancedGuide#Controlling_Test_Output
+
+== Debugging test failures  ==
+To run a subset of tests within a test case, filter on the test name. For
+example,
+
+        ./test-input-load --gtest_filter=InputDriverTest.DriverDevice/7
+
+only runs the 7th test in the InputDriverTest/DriverDevice test case. Refer
+to the googletest wiki for more information.
+http://code.google.com/p/googletest/wiki/AdvancedGuide#Running_a_Subset_of_the_Tests
+
+xorg-gtest supports the environment variable XORG_GTEST_XSERVER_SIGSTOP. If
+set, the test will SIGSTOP itself once a server has been started. This,
+allows to investigate logs or attach gdb to the server process.
