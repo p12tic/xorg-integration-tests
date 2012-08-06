@@ -47,8 +47,13 @@ TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
      * loads - probably a bug but that's current behaviour on RHEL 6.3 */
     if (param.compare("acecad") == 0)
         expected_devices = 4;
-    else
+    else {
         expected_devices = 6;
+	/* xserver git 1357cd7251 , no <default pointer> */
+	if (server.GetVersion().compare("1.11.0") > 0)
+		expected_devices--;
+    }
+
 
     ASSERT_EQ(ndevices, expected_devices);
 
@@ -101,7 +106,13 @@ TEST(AcecadInputDriver, WithOptionDevice)
     KillServer(server, config);
 
     /* VCP, VCK, xtest, mouse, keyboard, acecad */
-    ASSERT_EQ(ndevices, 7);
+    int expected_devices = 7;
+
+    /* xserver git 1357cd7251 , no <default pointer> */
+    if (server.GetVersion().compare("1.11.0") > 0)
+	    expected_devices--;
+
+    ASSERT_EQ(ndevices, expected_devices);
     bool found = false;
     while(ndevices--) {
         if (strcmp(info[ndevices].name, "--device--") == 0) {
@@ -144,7 +155,13 @@ TEST(AiptekInputDriver, TypeStylus)
     KillServer(server, config);
 
     /* VCP, VCK, xtest, mouse, keyboard, aiptek */
-    ASSERT_EQ(ndevices, 7);
+    int expected_devices = 7;
+
+    /* xserver git 1357cd7251, no <default pointer> */
+    if (server.GetVersion().compare("1.11.0") > 0)
+	    expected_devices--;
+
+    ASSERT_EQ(ndevices, expected_devices);
     bool found = false;
     while(ndevices--) {
         if (strcmp(info[ndevices].name, "--device--") == 0) {
@@ -181,7 +198,12 @@ TEST(AiptekInputDriver, TypeCursor)
     KillServer(server, config);
 
     /* VCP, VCK, xtest, mouse, keyboard, aiptek */
-    ASSERT_EQ(ndevices, 7);
+    int expected_devices = 7;
+
+    /* xserver git 1357cd7251, no <default pointer> */
+    if (server.GetVersion().compare("1.11.0") > 0)
+	    expected_devices--;
+
     bool found = false;
     while(ndevices--) {
         if (strcmp(info[ndevices].name, "--device--") == 0) {
@@ -217,7 +239,12 @@ TEST(AiptekInputDriver, TypeEraser)
     KillServer(server, config);
 
     /* VCP, VCK, xtest, mouse, keyboard, aiptek */
-    ASSERT_EQ(ndevices, 7);
+    int expected_devices = 7;
+
+    /* xserver git 1357cd7251, no <default pointer> */
+    if (server.GetVersion().compare("1.11.0") > 0)
+	    expected_devices--;
+
     bool found = false;
     while(ndevices--) {
         if (strcmp(info[ndevices].name, "--device--") == 0) {
