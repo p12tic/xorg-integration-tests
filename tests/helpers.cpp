@@ -17,7 +17,7 @@ void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfi
 }
 
 void KillServer(::xorg::testing::XServer &server, XOrgConfig &config) {
-    if (!server.Terminate())
-        server.Kill();
+    if (!server.Terminate(3000))
+        server.Kill(3000);
     unlink(config.GetPath().c_str());
 }

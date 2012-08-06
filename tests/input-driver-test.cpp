@@ -55,8 +55,8 @@ void InputDriverTest::SetUp() {
 
 void InputDriverTest::TearDown() {
     if (server.Pid() != -1)
-        if (!server.Terminate())
-            server.Kill();
+        if (!server.Terminate(3000))
+            server.Kill(3000);
 
     if (!failed) {
         if (config_file.size())
