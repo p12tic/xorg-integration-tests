@@ -32,14 +32,38 @@ public:
     }
 };
 
-TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
+static int find_device(Display *dpy, const char* device_name)
 {
-    std::string param;
     int ndevices;
     XIDeviceInfo *info;
 
+    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
+
+    int found = 0;
+    while(ndevices--) {
+        if (strcmp(info[ndevices].name, device_name) == 0)
+            found++;
+    }
+
+    XIFreeDeviceInfo(info);
+
+    return found;
+}
+
+static int count_devices(Display *dpy) {
+    int ndevices;
+    XIDeviceInfo *info;
+
+    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
+    XIFreeDeviceInfo(info);
+    return ndevices;
+}
+
+TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
+{
+    std::string param;
+
     param = GetParam();
-    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
 
     int expected_devices;
 
@@ -54,22 +78,11 @@ TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
 		expected_devices--;
     }
 
-
-    ASSERT_EQ(ndevices, expected_devices);
-
-    bool found = false;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0) {
-            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
-            found = true;
-        }
-    }
+    ASSERT_EQ(count_devices(Display()), expected_devices);
 
     /* No joke, they all fail. some fail for missing Device option, others
      * for not finding the device, etc. */
-    ASSERT_EQ(found, false);
-
-    XIFreeDeviceInfo(info);
+    ASSERT_EQ(find_device(Display(), "--device--"), 0);
 }
 
 INSTANTIATE_TEST_CASE_P(, LegacyInputDriverTest,
@@ -103,8 +116,6 @@ TEST(AcecadInputDriver, WithOptionDevice)
 
     info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
 
-    KillServer(server, config);
-
     /* VCP, VCK, xtest, mouse, keyboard, acecad */
     int expected_devices = 7;
 
@@ -112,16 +123,11 @@ TEST(AcecadInputDriver, WithOptionDevice)
     if (server.GetVersion().compare("1.11.0") > 0)
 	    expected_devices--;
 
-    ASSERT_EQ(ndevices, expected_devices);
-    bool found = false;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0) {
-            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
-            found = true;
-        }
-    }
-    ASSERT_EQ(found, true);
-    XIFreeDeviceInfo(info);
+    ASSERT_EQ(count_devices(dpy), expected_devices);
+    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+
+    KillServer(server, config);
+
 }
 
 /***********************************************************************
@@ -147,13 +153,6 @@ TEST(AiptekInputDriver, TypeStylus)
     int minor = 0;
     ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
 
-    int ndevices;
-    XIDeviceInfo *info;
-
-    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
-
-    KillServer(server, config);
-
     /* VCP, VCK, xtest, mouse, keyboard, aiptek */
     int expected_devices = 7;
 
@@ -161,16 +160,10 @@ TEST(AiptekInputDriver, TypeStylus)
     if (server.GetVersion().compare("1.11.0") > 0)
 	    expected_devices--;
 
-    ASSERT_EQ(ndevices, expected_devices);
-    bool found = false;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0) {
-            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
-            found = true;
-        }
-    }
-    ASSERT_EQ(found, true);
-    XIFreeDeviceInfo(info);
+    ASSERT_EQ(count_devices(dpy), expected_devices);
+    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+
+    KillServer(server, config);
 }
 
 TEST(AiptekInputDriver, TypeCursor)
@@ -190,13 +183,6 @@ TEST(AiptekInputDriver, TypeCursor)
     int minor = 0;
     ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
 
-    int ndevices;
-    XIDeviceInfo *info;
-
-    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
-
-    KillServer(server, config);
-
     /* VCP, VCK, xtest, mouse, keyboard, aiptek */
     int expected_devices = 7;
 
@@ -204,15 +190,10 @@ TEST(AiptekInputDriver, TypeCursor)
     if (server.GetVersion().compare("1.11.0") > 0)
 	    expected_devices--;
 
-    bool found = false;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0) {
-            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
-            found = true;
-        }
-    }
-    ASSERT_EQ(found, true);
-    XIFreeDeviceInfo(info);
+    ASSERT_EQ(count_devices(dpy), expected_devices);
+    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+
+    KillServer(server, config);
 }
 
 TEST(AiptekInputDriver, TypeEraser)
@@ -232,12 +213,6 @@ TEST(AiptekInputDriver, TypeEraser)
     int minor = 0;
     ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
 
-    int ndevices;
-    XIDeviceInfo *info;
-
-    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
-    KillServer(server, config);
-
     /* VCP, VCK, xtest, mouse, keyboard, aiptek */
     int expected_devices = 7;
 
@@ -245,15 +220,10 @@ TEST(AiptekInputDriver, TypeEraser)
     if (server.GetVersion().compare("1.11.0") > 0)
 	    expected_devices--;
 
-    bool found = false;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0) {
-            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
-            found = true;
-        }
-    }
-    ASSERT_EQ(found, true);
-    XIFreeDeviceInfo(info);
+    ASSERT_EQ(count_devices(dpy), expected_devices);
+    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+
+    KillServer(server, config);
 }
 
 int main(int argc, char **argv) {
