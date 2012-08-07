@@ -9,29 +9,6 @@
 #include "input-driver-test.h"
 #include "helpers.h"
 
-class LegacyInputDriverTest : public InputDriverTest {
-public:
-    virtual void ConfigureInputDevice(const std::string &driver) {
-        config.AddInputSection(driver, "--device--", "Option \"CorePointer\" \"on\"\n");
-    }
-
-    virtual void SetUpConfigAndLog(const std::string& param) {
-        std::stringstream s;
-        s << "/tmp/Xorg-" << param << ".log";
-        server.SetOption("-logfile",s.str());
-
-        s.str(std::string());
-        s << "/tmp/" << param << ".conf";
-        config.SetPath(s.str());
-
-        config.AddDefaultScreenWithDriver();
-        ConfigureInputDevice(param);
-        config.WriteConfig(config.GetPath());
-        server.SetOption("-config", config.GetPath());
-    }
-};
-
-
 static int count_devices(Display *dpy) {
     int ndevices;
     XIDeviceInfo *info;
@@ -41,7 +18,7 @@ static int count_devices(Display *dpy) {
     return ndevices;
 }
 
-TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
+TEST_P(SimpleInputDriverTest, LegacyDriver)
 {
     std::string param;
 
@@ -67,7 +44,7 @@ TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 0);
 }
 
-INSTANTIATE_TEST_CASE_P(, LegacyInputDriverTest,
+INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
         ::testing::Values("acecad", "aiptek", "elographics",
                           "fpit", "hyperpen",  "mutouch",
                           "penmount"));

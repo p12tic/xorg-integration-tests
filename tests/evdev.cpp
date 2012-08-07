@@ -21,7 +21,8 @@ typedef Keys_Map::iterator keys_mapIter;
 typedef std::vector<Key_Pair> MultiMedia_Keys_Map;
 typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
 
-class EvdevDriverXKBTest : public InputDriverTest {
+class EvdevDriverXKBTest : public InputDriverTest,
+                           public ::testing::WithParamInterface<std::string> {
     virtual void SetUp() {
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(

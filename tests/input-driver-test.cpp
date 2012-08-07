@@ -49,9 +49,12 @@ void InputDriverTest::SetUpEventListener() {
 }
 
 void InputDriverTest::SetUp() {
-    SetUpEventListener();
-    SetUpConfigAndLog(GetParam());
+    SetUp("");
+}
 
+void InputDriverTest::SetUp(const std::string &param) {
+    SetUpEventListener();
+    SetUpConfigAndLog(param);
     StartServer();
 }
 

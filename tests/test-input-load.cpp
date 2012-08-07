@@ -4,7 +4,7 @@
 
 #include "input-driver-test.h"
 
-TEST_P(InputDriverTest, DriverDevice)
+TEST_P(SimpleInputDriverTest, DriverDevice)
 {
     std::ifstream in_file(server.GetLogFilePath().c_str());
     std::string line;
@@ -24,7 +24,7 @@ TEST_P(InputDriverTest, DriverDevice)
     }
 }
 
-INSTANTIATE_TEST_CASE_P(, InputDriverTest,
+INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
         ::testing::Values("acecad", "aiptek", "elographics",
                           "fpit", "hyperpen",  "mutouch",
                           "penmount", "wacom", "synaptics",
