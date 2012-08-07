@@ -85,7 +85,6 @@ protected:
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
             new xorg::testing::evemu::Device( RECORDINGS_DIR "tablets/" + std::string (tablet.descfile)));
-        // FIXME: I don't think WaitForDevice() does take the timeout param into account
         if (tablet.stylus) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
             ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
