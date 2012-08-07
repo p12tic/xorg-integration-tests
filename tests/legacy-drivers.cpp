@@ -32,23 +32,6 @@ public:
     }
 };
 
-static int find_device(Display *dpy, const char* device_name)
-{
-    int ndevices;
-    XIDeviceInfo *info;
-
-    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
-
-    int found = 0;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, device_name) == 0)
-            found++;
-    }
-
-    XIFreeDeviceInfo(info);
-
-    return found;
-}
 
 static int count_devices(Display *dpy) {
     int ndevices;
@@ -82,7 +65,7 @@ TEST_P(LegacyInputDriverTest, SimpleDeviceSection)
 
     /* No joke, they all fail. some fail for missing Device option, others
      * for not finding the device, etc. */
-    ASSERT_EQ(find_device(Display(), "--device--"), 0);
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 0);
 }
 
 INSTANTIATE_TEST_CASE_P(, LegacyInputDriverTest,
@@ -124,7 +107,7 @@ TEST(AcecadInputDriver, WithOptionDevice)
 	    expected_devices--;
 
     ASSERT_EQ(count_devices(dpy), expected_devices);
-    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     KillServer(server, config);
 
@@ -161,7 +144,7 @@ TEST(AiptekInputDriver, TypeStylus)
 	    expected_devices--;
 
     ASSERT_EQ(count_devices(dpy), expected_devices);
-    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     KillServer(server, config);
 }
@@ -191,7 +174,7 @@ TEST(AiptekInputDriver, TypeCursor)
 	    expected_devices--;
 
     ASSERT_EQ(count_devices(dpy), expected_devices);
-    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     KillServer(server, config);
 }
@@ -221,7 +204,7 @@ TEST(AiptekInputDriver, TypeEraser)
 	    expected_devices--;
 
     ASSERT_EQ(count_devices(dpy), expected_devices);
-    ASSERT_EQ(find_device(dpy, "--device--"), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     KillServer(server, config);
 }

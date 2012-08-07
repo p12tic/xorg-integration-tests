@@ -14,5 +14,11 @@ void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfi
  */
 void KillServer(::xorg::testing::XServer &server, XOrgConfig &config);
 
+/**
+ * Find the device in the input device list and return the number of
+ * instances found.
+ */
+int FindInputDeviceByName(Display *dpy, const std::string& device_name);
+
 #endif
 

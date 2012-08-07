@@ -13,6 +13,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
+#include "helpers.h"
 
 typedef std::pair <int, KeySym> Key_Pair;
 typedef std::multimap<std::string, Key_Pair> Keys_Map;

@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <X11/extensions/XInput2.h>
+
 void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfig &config) {
     std::stringstream conf;
     conf << "/tmp/" << prefix << ".conf";
@@ -19,4 +21,22 @@ void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfi
 void KillServer(::xorg::testing::XServer &server, XOrgConfig &config) {
     if (!server.Terminate(3000))
         server.Kill(3000);
+}
+
+int FindInputDeviceByName(Display *dpy, const std::string &device_name)
+{
+    int ndevices;
+    XIDeviceInfo *info;
+
+    info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
+
+    int found = 0;
+    while(ndevices--) {
+        if (strcmp(info[ndevices].name, device_name.c_str()) == 0)
+            found++;
+    }
+
+    XIFreeDeviceInfo(info);
+
+    return found;
 }
