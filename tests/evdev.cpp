@@ -331,46 +331,89 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
     XFree(data);
 }
 
-TEST(EvdevDriverButtonMappingTest, ButtonMapping)
-{
-    XOrgConfig config;
-    xorg::testing::XServer server;
+void button_event(::Display *display,
+                  xorg::testing::evemu::Device *dev,
+                  int button, int logical) {
 
-    std::auto_ptr<xorg::testing::evemu::Device> dev = std::auto_ptr<xorg::testing::evemu::Device>(
-            new xorg::testing::evemu::Device(
-                RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
-                )
-            );
+    dev->PlayOne(EV_KEY, button, 1, true);
+    dev->PlayOne(EV_KEY, button, 0, true);
 
-    config.AddInputSection("evdev", "--device",
-                           "Option \"ButtonMapping\" \"3 2 1\"\n"
-                           "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
-    config.AddDefaultScreenWithDriver();
-    StartServer("evdev-buttonmapping", server, config);
+    XSync(display, False);
 
-    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    ASSERT_NE(XPending(display), 0) << "No event pending" << std::endl;
 
-    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
-    XFlush(dpy);
-
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, 1);
-
-    XSync(dpy, False);
-
-    ASSERT_NE(XPending(dpy), 0) << "No event pending" << std::endl;
     XEvent btn;
+    XNextEvent(display, &btn);
 
-    XNextEvent(dpy, &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 3);
+    ASSERT_EQ(btn.xbutton.button, logical);
 
-    XNextEvent(dpy, &btn);
+    XNextEvent(display, &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonRelease);
-    ASSERT_EQ(btn.xbutton.button, 3);
+    ASSERT_EQ(btn.xbutton.button, logical);
 
-    ASSERT_EQ(XPending(dpy), 0) << "Events pending when there should be none" << std::endl;
+    ASSERT_EQ(XPending(display), 0) << "Events pending when there should be none" << std::endl;
 }
+
+
+typedef struct {
+    int map[8];
+    int nmap;
+} Mapping;
+
+void PrintTo(const Mapping &m, ::std::ostream *os) {
+    for (int i = 0; i < m.nmap; i++)
+        *os << m.map[i] << " ";
+}
+
+class EvdevDriverButtonMappingTest : public EvdevDriverMouseTest,
+                                     public ::testing::WithParamInterface<Mapping> {
+public:
+    virtual void SetUpConfigAndLog(const std::string &param) {
+
+        const Mapping mapping = GetParam();
+        std::stringstream ss;
+        for (int i = 0; i < mapping.nmap; i++) {
+            ss << mapping.map[i];
+            if (i < mapping.nmap - 1)
+                ss << " ";
+        }
+
+        server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-buttonmapping.log");
+        server.SetOption("-config", "/tmp/evdev-driver-buttonmapping.conf");
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\""
+                               "Option \"ButtonMapping\" \"" + ss.str() + "\"");
+        config.WriteConfig("/tmp/evdev-driver-buttonmapping.conf");
+    }
+};
+
+TEST_P(EvdevDriverButtonMappingTest, ButtonMapping)
+{
+    Mapping mapping = GetParam();
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XFlush(Display());
+
+    XSync(Display(), True);
+
+    button_event(Display(), dev.get(), BTN_LEFT, mapping.map[0]);
+    button_event(Display(), dev.get(), BTN_MIDDLE, mapping.map[1]);
+    button_event(Display(), dev.get(), BTN_RIGHT, mapping.map[2]);
+}
+
+Mapping mappings[] = {
+    { {1, 2, 3}, 3 },
+    { {3, 1, 1}, 3 },
+    { {1, 3, 1}, 3 },
+    { {3, 1, 2}, 3 },
+};
+
+INSTANTIATE_TEST_CASE_P(, EvdevDriverButtonMappingTest,
+                        ::testing::ValuesIn(mappings));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
