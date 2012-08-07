@@ -17,8 +17,12 @@ void KillServer(::xorg::testing::XServer &server, XOrgConfig &config);
 /**
  * Find the device in the input device list and return the number of
  * instances found.
+ *
+ * @param [out] deviceid If not NULL, deviceid is set to the id of the
+ *                       device. If multiple devices with the same name
+ *                       exist, the behaviour is undefined.
  */
-int FindInputDeviceByName(Display *dpy, const std::string& device_name);
+int FindInputDeviceByName(Display *dpy, const std::string& device_name, int *deviceid = NULL);
 
 #endif
 

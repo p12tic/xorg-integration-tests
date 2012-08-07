@@ -23,7 +23,7 @@ void KillServer(::xorg::testing::XServer &server, XOrgConfig &config) {
         server.Kill(3000);
 }
 
-int FindInputDeviceByName(Display *dpy, const std::string &device_name)
+int FindInputDeviceByName(Display *dpy, const std::string &device_name, int *deviceid)
 {
     int ndevices;
     XIDeviceInfo *info;
@@ -32,8 +32,11 @@ int FindInputDeviceByName(Display *dpy, const std::string &device_name)
 
     int found = 0;
     while(ndevices--) {
-        if (strcmp(info[ndevices].name, device_name.c_str()) == 0)
+        if (strcmp(info[ndevices].name, device_name.c_str()) == 0) {
+            if (deviceid)
+                *deviceid = info[ndevices].deviceid;
             found++;
+        }
     }
 
     XIFreeDeviceInfo(info);

@@ -90,22 +90,7 @@ class EvdevDriverXKBTest : public InputDriverTest {
 
 TEST_P(EvdevDriverXKBTest, DeviceExists)
 {
-    std::string param;
-    int ndevices;
-    XIDeviceInfo *info;
-
-    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
-    bool found = false;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0) {
-            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
-            found = true;
-        }
-    }
-
-    ASSERT_EQ(found, true);
-
-    XIFreeDeviceInfo(info);
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
 }
 
 void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_Pair pair)
@@ -241,19 +226,9 @@ TEST_F(EvdevDriverMouseTest, DevNode)
     Atom node_prop = XInternAtom(Display(), "Device Node", True);
 
     ASSERT_NE(node_prop, None) << "This requires server 1.11";
+
     int deviceid = -1;
-
-    XIDeviceInfo *info;
-    int ndevices;
-    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
-    while (ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0)
-            deviceid = info[ndevices].deviceid;
-    }
-
-    XIFreeDeviceInfo(info);
-
-    ASSERT_NE(deviceid, -1) << "Failed to find device.";
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
 
     Atom type;
     int format;
@@ -278,19 +253,9 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
     Atom mb_prop = XInternAtom(Display(), "Evdev Middle Button Emulation", True);
 
     ASSERT_NE(mb_prop, None);
+
     int deviceid = -1;
-
-    XIDeviceInfo *info;
-    int ndevices;
-    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
-    while (ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0)
-            deviceid = info[ndevices].deviceid;
-    }
-
-    XIFreeDeviceInfo(info);
-
-    ASSERT_NE(deviceid, -1) << "Failed to find device." << std::endl;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
 
     Atom type;
     int format;
