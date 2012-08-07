@@ -331,6 +331,47 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
     XFree(data);
 }
 
+TEST(EvdevDriverButtonMappingTest, ButtonMapping)
+{
+    XOrgConfig config;
+    xorg::testing::XServer server;
+
+    std::auto_ptr<xorg::testing::evemu::Device> dev = std::auto_ptr<xorg::testing::evemu::Device>(
+            new xorg::testing::evemu::Device(
+                RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
+                )
+            );
+
+    config.AddInputSection("evdev", "--device",
+                           "Option \"ButtonMapping\" \"3 2 1\"\n"
+                           "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+    config.AddDefaultScreenWithDriver();
+    StartServer("evdev-buttonmapping", server, config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
+    XFlush(dpy);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, 1);
+
+    XSync(dpy, False);
+
+    ASSERT_NE(XPending(dpy), 0) << "No event pending" << std::endl;
+    XEvent btn;
+
+    XNextEvent(dpy, &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 3);
+
+    XNextEvent(dpy, &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 3);
+
+    ASSERT_EQ(XPending(dpy), 0) << "Events pending when there should be none" << std::endl;
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
