@@ -300,6 +300,7 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
     *data = 1;
     XIChangeProperty(Display(), deviceid, mb_prop, type, format,
                      PropModeReplace, data, 1);
+    XSync(Display(), False);
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
     dev->PlayOne(EV_KEY, BTN_RIGHT, 1, 1);
