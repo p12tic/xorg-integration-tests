@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <map>
+#include <fstream>
 #include <xorg/gtest/xorg-gtest.h>
 #include <linux/input.h>
 
@@ -414,6 +415,46 @@ Mapping mappings[] = {
 
 INSTANTIATE_TEST_CASE_P(, EvdevDriverButtonMappingTest,
                         ::testing::ValuesIn(mappings));
+
+class EvdevDriverInvalidButtonMappingTest : public EvdevDriverMouseTest,
+                                            public ::testing::WithParamInterface<std::string> {
+public:
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        std::string log_file = "/tmp/Xorg-evdev-driver-buttonmapping-invalid.log";
+        server.SetOption("-logfile", log_file);
+        server.SetOption("-config", "/tmp/evdev-driver-buttonmapping-invalid.conf");
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\""
+                               "Option \"ButtonMapping\" \"" + GetParam() + "\"");
+        config.WriteConfig("/tmp/evdev-driver-buttonmapping-invalid.conf");
+    }
+};
+
+TEST_P(EvdevDriverInvalidButtonMappingTest, InvalidButtonMapping)
+{
+    std::ifstream in_file(server.GetLogFilePath().c_str());
+    std::string line;
+    std::string error_msg("Invalid button mapping.");
+
+    // grep for error message in the log file...
+    if(in_file.is_open())
+    {
+        while (getline (in_file, line))
+        {
+            size_t found = line.find(error_msg);
+            if (found != std::string::npos)
+                return;
+        }
+    }
+    FAIL() << "Invalid button mapping message not found in log";
+}
+
+INSTANTIATE_TEST_CASE_P(, EvdevDriverInvalidButtonMappingTest,
+                        ::testing::Values(" ", "a", "64", "1 2 ", "-1",
+                                          "1 a", "1 55", "1 -2"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
