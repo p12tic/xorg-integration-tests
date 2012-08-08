@@ -13,6 +13,10 @@ typedef struct
     const char *touch;
 } Tablet;
 
+void PrintTo(const Tablet& t, ::std::ostream *os) {
+    *os << "Tablet tested: " << t.test_id << " " << t.name;
+}
+
 Tablet tablets[] = {
     { "00", "Wacom-PTK-540WL.desc",              "PTK-540WL",                    "stylus", "eraser", "cursor", "pad",    "touch"  },
     { "01", "Wacom-Bamboo-16FG-4x5-Finger.desc", "Wacom Bamboo 16FG 4x5 Finger", NULL,     NULL,     NULL,     NULL,     "touch"  },
