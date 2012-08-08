@@ -9,13 +9,9 @@
  *
  */
 class InputDriverTest : public xorg::testing::Test,
-                        public ::testing::EmptyTestEventListener,
+                        private ::testing::EmptyTestEventListener,
                         public ::testing::WithParamInterface<std::string> {
 protected:
-    /**
-     * Sets ::failed to true if this test failed.
-     */
-    virtual void OnTestPartResult(const ::testing::TestPartResult &test_part_result);
 
     /**
      * Set up the config and log file. Called from SetUp, before the server
@@ -23,6 +19,12 @@ protected:
      * subclass.
      */
     virtual void SetUpConfigAndLog(const std::string& prefix);
+
+    /**
+     * Set up an event listener that listens for test results. If any result
+     * fails, ::failed is set to true.
+     */
+    void SetUpEventListener();
 
     virtual void StartServer();
     virtual void SetUp();
@@ -35,6 +37,12 @@ protected:
     bool failed;
 
     XOrgConfig config;
+
+private:
+    /**
+     * Sets ::failed to true if this test failed.
+     */
+    void OnTestPartResult(const ::testing::TestPartResult &test_part_result);
 };
 
 #endif

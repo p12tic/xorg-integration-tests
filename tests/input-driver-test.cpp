@@ -42,12 +42,15 @@ void InputDriverTest::SetUpConfigAndLog(const std::string& prefix) {
     server.SetOption("-config", config_file);
 }
 
-void InputDriverTest::SetUp() {
+void InputDriverTest::SetUpEventListener() {
     failed = false;
 
     testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
     listeners.Append(this);
+}
 
+void InputDriverTest::SetUp() {
+    SetUpEventListener();
     SetUpConfigAndLog(GetParam());
 
     StartServer();
