@@ -74,6 +74,9 @@ class EvdevDriverXKBTest : public InputDriverTest {
                                "Option \"XkbModel\"   \"dellusbmm\"\n"
                                "Option \"XkbLayout\"  \""+ prefix + "\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default mouse device to avoid server adding our device again */
+        config.AddInputSection("mouse", "mouse-device",
+                               "Option \"CorePointer\" \"on\"\n");
         config.WriteConfig("/tmp/evdev-driver-xkb.conf");
     }
 
@@ -168,6 +171,9 @@ public:
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "keyboard-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig("/tmp/evdev-driver-mouse.conf");
     }
 
