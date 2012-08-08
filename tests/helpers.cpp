@@ -18,11 +18,6 @@ void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfi
     server.WaitForConnections();
 }
 
-void KillServer(::xorg::testing::XServer &server, XOrgConfig &config) {
-    if (!server.Terminate(3000))
-        server.Kill(3000);
-}
-
 int FindInputDeviceByName(Display *dpy, const std::string &device_name, int *deviceid)
 {
     int ndevices;

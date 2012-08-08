@@ -109,8 +109,7 @@ TEST(AcecadInputDriver, WithOptionDevice)
     ASSERT_EQ(count_devices(dpy), expected_devices);
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
-    KillServer(server, config);
-
+    config.RemoveConfig();
 }
 
 /***********************************************************************
@@ -146,7 +145,7 @@ TEST(AiptekInputDriver, TypeStylus)
     ASSERT_EQ(count_devices(dpy), expected_devices);
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
-    KillServer(server, config);
+    config.RemoveConfig();
 }
 
 TEST(AiptekInputDriver, TypeCursor)
@@ -176,7 +175,7 @@ TEST(AiptekInputDriver, TypeCursor)
     ASSERT_EQ(count_devices(dpy), expected_devices);
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
-    KillServer(server, config);
+    config.RemoveConfig();
 }
 
 TEST(AiptekInputDriver, TypeEraser)
@@ -206,7 +205,7 @@ TEST(AiptekInputDriver, TypeEraser)
     ASSERT_EQ(count_devices(dpy), expected_devices);
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
-    KillServer(server, config);
+    config.RemoveConfig();
 }
 
 int main(int argc, char **argv) {
