@@ -1,3 +1,6 @@
+#ifndef __WACOM_DEVS_H__
+#define __WACOM_DEVS_H__
+
 typedef struct
 {
     const char *test_id;
@@ -27,3 +30,4 @@ Tablet tablets[] = {
     { "13", "Wacom-ISDv4-E6-Pen.desc",           "Wacom ISDv4 E6 Pen",           "stylus", "eraser", NULL,     NULL,     NULL     }
 };
 
+#endif
