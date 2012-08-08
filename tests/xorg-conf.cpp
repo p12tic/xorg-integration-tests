@@ -1,5 +1,6 @@
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 
 #include "xorg-conf.h"
 
@@ -37,6 +38,10 @@ void XOrgConfig::WriteConfig(const std::string &param) {
 
     for (it = sections.begin(); it != sections.end(); it++)
         conffile << "\n" << *it;
+}
+
+void XOrgConfig::RemoveConfig() {
+    unlink(GetPath().c_str());
 }
 
 void XOrgConfig::AddDefaultScreenWithDriver(const std::string &driver,

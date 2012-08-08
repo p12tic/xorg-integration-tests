@@ -59,8 +59,7 @@ void InputDriverTest::TearDown() {
             server.Kill(3000);
 
     if (!failed) {
-        if (config_file.size())
-            unlink(config_file.c_str());
+        config.RemoveConfig();
 
         if (log_file.size())
             unlink(log_file.c_str());

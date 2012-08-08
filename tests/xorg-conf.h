@@ -23,6 +23,14 @@ public:
     virtual void WriteConfig(const std::string &path = "");
 
     /**
+     * Remove the config previously written (if any).
+     *
+     * This must be called explicitly so that the config stays around on
+     * failure.
+     */
+    virtual void RemoveConfig();
+
+    /**
      * Add a Section InputDevice to the config file.
      *
      * @param identifier Device identifier, or "--device--" if left out
