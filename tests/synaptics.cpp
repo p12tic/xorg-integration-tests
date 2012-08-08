@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <map>
+#include <utility>
 #include <xorg/gtest/xorg-gtest.h>
 #include <linux/input.h>
 
@@ -166,6 +167,51 @@ TEST_F(SynapticsDriverTest, TapAndDragEvent)
     /* 1 press, 30 moves then 1 release is what we expect */
     check_drag_event(Display(), dev.get(), "SynPS2-Synaptics-TouchPad-tap-and-move.events", 1, 30, 1);
 }
+
+/* Bug 53037 - Device coordinate scaling breaks XWarpPointer requests
+
+   If a device with a device coordinate range is the lastSlave, a
+   WarpPointer request on some coordinates may end up on different pixels
+   than requested. The server scales from screen to device coordinates, then
+   back to screen - a rounding error may then change to the wrong pixel.
+
+   https://bugs.freedesktop.org/show_bug.cgi?id=53037
+ */
+class SynapticsWarpTest : public SynapticsDriverTest,
+                          public ::testing::WithParamInterface<std::pair<int, int> >{
+};
+
+TEST_P(SynapticsWarpTest, WarpScaling)
+{
+    SCOPED_TRACE("https://bugs.freedesktop.org/show_bug.cgi?id=53037");
+
+    /* Play one event so this device is lastSlave */
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-move.events");
+
+    int x = GetParam().first,
+        y = GetParam().second;
+
+    XWarpPointer(Display(), 0, DefaultRootWindow(Display()), 0, 0, 0, 0, x, y);
+
+    Window root, child;
+    int rx, ry, wx, wy;
+    unsigned int mask;
+
+    XQueryPointer(Display(), DefaultRootWindow(Display()), &root, &child,
+                  &rx, &ry, &wx, &wy, &mask);
+    ASSERT_EQ(root, DefaultRootWindow(Display()));
+    /* Warping to negative should clip to 0 */
+    ASSERT_EQ(rx, std::max(x, 0));
+    ASSERT_EQ(ry, std::max(y, 0));
+}
+
+INSTANTIATE_TEST_CASE_P(, SynapticsWarpTest,
+                        ::testing::Values(std::make_pair(0, 0),
+                                          std::make_pair(1, 1),
+                                          std::make_pair(2, 2),
+                                          std::make_pair(200, 200),
+                                          std::make_pair(-1, -1)
+                            ));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
