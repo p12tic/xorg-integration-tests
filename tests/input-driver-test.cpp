@@ -60,9 +60,7 @@ void InputDriverTest::TearDown() {
 
     if (!failed) {
         config.RemoveConfig();
-
-        if (log_file.size())
-            unlink(log_file.c_str());
+        server.RemoveLogFile();
     }
 
     testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
