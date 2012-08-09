@@ -29,8 +29,7 @@ void InputDriverTest::StartServer() {
 void InputDriverTest::SetUpConfigAndLog(const std::string& param) {
     std::stringstream s;
     s << "/tmp/Xorg-" << param << ".log";
-    log_file = s.str();
-    server.SetOption("-logfile",log_file);
+    server.SetOption("-logfile", s.str());
 
     s.str(std::string());
     s << "/tmp/" << param << ".conf";

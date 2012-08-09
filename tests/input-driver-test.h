@@ -36,7 +36,6 @@ protected:
     virtual bool Failed();
 
     int xi2_opcode;
-    std::string log_file;
     xorg::testing::XServer server;
 
     XOrgConfig config;

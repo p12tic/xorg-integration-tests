@@ -6,7 +6,7 @@
 
 TEST_P(InputDriverTest, DriverDevice)
 {
-    std::ifstream in_file(log_file.c_str());
+    std::ifstream in_file(server.GetLogFilePath().c_str());
     std::string line;
     std::string error_msg("Failed to load module");
     std::string param(GetParam());
