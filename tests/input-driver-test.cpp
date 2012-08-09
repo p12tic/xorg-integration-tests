@@ -34,12 +34,12 @@ void InputDriverTest::SetUpConfigAndLog(const std::string& param) {
 
     s.str(std::string());
     s << "/tmp/" << param << ".conf";
-    config_file = s.str();
+    config.SetPath(s.str());
 
     config.AddDefaultScreenWithDriver();
     config.AddInputSection(param);
-    config.WriteConfig(config_file);
-    server.SetOption("-config", config_file);
+    config.WriteConfig();
+    server.SetOption("-config", config.GetPath());
 }
 
 void InputDriverTest::SetUpEventListener() {

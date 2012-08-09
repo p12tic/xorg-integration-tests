@@ -23,12 +23,12 @@ public:
 
         s.str(std::string());
         s << "/tmp/" << param << ".conf";
-        config_file = s.str();
+        config.SetPath(s.str());
 
         config.AddDefaultScreenWithDriver();
         ConfigureInputDevice(param);
-        config.WriteConfig(config_file);
-        server.SetOption("-config", config_file);
+        config.WriteConfig(config.GetPath());
+        server.SetOption("-config", config.GetPath());
     }
 };
 
