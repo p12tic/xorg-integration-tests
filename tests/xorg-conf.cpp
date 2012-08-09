@@ -18,8 +18,10 @@ XOrgConfig::XOrgConfig(const std::string& path) {
 }
 
 void XOrgConfig::WriteConfig(const std::string &param) {
-    if (!param.empty())
+    if (!param.empty()) {
         config_file = param;
+        SetPath(param);
+    }
 
     std::ofstream conffile(config_file.c_str());
     conffile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
