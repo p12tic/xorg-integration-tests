@@ -4,6 +4,20 @@
 #include <string>
 #include <vector>
 
+/**
+ * xorg.conf writer class. This class abstracts the more common options to
+ * write a xorg.conf.
+ *
+ * @code
+ * XOrgConfig config;
+ * config.AddDefaultScreenWithDriver();
+ * config.AddInputSection("evdev");
+ * config.WriteConfig("/tmp/my.conf");
+ * ....
+ * config.RemoveConfig();
+ *
+ * @endcode
+ */
 class XOrgConfig {
 public:
     /**
