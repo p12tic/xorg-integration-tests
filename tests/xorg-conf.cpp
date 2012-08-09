@@ -3,7 +3,7 @@
 
 #include "xorg-conf.h"
 
-XOrgConfig::XOrgConfig(const std::string path) {
+XOrgConfig::XOrgConfig(const std::string& path) {
     config_file = path;
 
     std::stringstream section;
