@@ -22,7 +22,7 @@ protected:
 
     /**
      * Set up an event listener that listens for test results. If any result
-     * fails, ::failed is set to true.
+     * fails, Failed() will return true.
      */
     void SetUpEventListener();
 
@@ -30,17 +30,24 @@ protected:
     virtual void SetUp();
     virtual void TearDown();
 
+    /**
+     * @return false if all tests succeeded, true if one failed
+     */
+    virtual bool Failed();
+
     int xi2_opcode;
     std::string config_file;
     std::string log_file;
     xorg::testing::XServer server;
-    bool failed;
 
     XOrgConfig config;
 
 private:
+    bool failed;
+
     /**
-     * Sets ::failed to true if this test failed.
+     * Callback for test results. If any test fails, ::Failed() will return
+     * false.
      */
     void OnTestPartResult(const ::testing::TestPartResult &test_part_result);
 };

@@ -61,7 +61,7 @@ void InputDriverTest::TearDown() {
         if (!server.Terminate(3000))
             server.Kill(3000);
 
-    if (!failed) {
+    if (!Failed()) {
         config.RemoveConfig();
         server.RemoveLogFile();
     }
@@ -72,4 +72,8 @@ void InputDriverTest::TearDown() {
 
 void InputDriverTest::OnTestPartResult(const ::testing::TestPartResult &test_part_result) {
     failed = test_part_result.failed();
+}
+
+bool InputDriverTest::Failed() {
+    return failed;
 }
