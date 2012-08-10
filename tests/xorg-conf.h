@@ -22,7 +22,7 @@ class XOrgConfig {
 public:
     /**
      * Create a new configuration file. This doesn't write to a file until
-     * ::WriteConfig is called.
+     * WriteConfig() is called.
      *
      * @param path The future default path to write to, or a default path if
      * none is given
@@ -31,6 +31,7 @@ public:
 
     /**
      * Write the current config to the path given.
+     *
      * @param path The target path to write to, or the stored path in the
      * object
      */
@@ -74,7 +75,7 @@ public:
     const std::string& GetPath();
 
     /**
-     * @param the new path of the config file.
+     * @param path The new path of the config file.
      */
     void SetPath(const std::string &path);
 
