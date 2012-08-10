@@ -36,7 +36,7 @@ void InputDriverTest::SetUpConfigAndLog(const std::string& param) {
     config.SetPath(s.str());
 
     config.AddDefaultScreenWithDriver();
-    config.AddInputSection(param);
+    config.AddInputSection(param, "--device--", "Option \"CorePointer\" \"on\"\n");
     config.WriteConfig();
     server.SetOption("-config", config.GetPath());
 }
