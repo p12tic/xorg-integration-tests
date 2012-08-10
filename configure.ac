@@ -41,6 +41,7 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.17)
 XORG_DEFAULT_OPTIONS
 XORG_ENABLE_INTEGRATION_TESTS(yes)
+XORG_WITH_DOXYGEN
 
 PKG_CHECK_MODULES(XI, x11 xi)
 PKG_CHECK_MODULES(EVEMU, [evemu >= 1.0.10])
@@ -50,6 +51,8 @@ PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.4.0])
 CHECK_XORG_GTEST([], AC_MSG_ERROR([xorg-gtest or its dependencies not found.  Did you specify --with-gtest-source-path?]))
 
 AC_CONFIG_FILES([Makefile
+                 doc/Doxyfile
+                 doc/Makefile
                  recordings/Makefile
                  tests/Makefile])
 AC_OUTPUT
