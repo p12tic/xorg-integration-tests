@@ -55,7 +55,7 @@ void XOrgConfig::AddDefaultScreenWithDriver(const std::string &driver,
     section << "Section \"Device\"\n"
                "    Identifier \"" << identifier << "\"\n"
                "    Driver \"" << driver << "\"\n"
-               << options <<
+               << options << "\n" <<
                "EndSection\n";
     sections.push_back(section.str());
 
@@ -78,7 +78,7 @@ void XOrgConfig::AddInputSection(const std::string &driver,
     section << "Section \"InputDevice\"\n"
                "    Identifier \"" << identifier << "\"\n"
                "    Driver \"" << driver << "\"\n"
-               << options <<
+               << options << "\n" <<
                "EndSection\n";
     sections.push_back(section.str());
 }
