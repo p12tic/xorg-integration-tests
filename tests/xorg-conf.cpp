@@ -70,7 +70,7 @@ void XOrgConfig::AddDefaultScreenWithDriver(const std::string &driver,
 void XOrgConfig::AddInputSection(const std::string &driver,
                                  const std::string &identifier,
                                  const std::string &options,
-                                      bool reference_from_layout) {
+                                 bool reference_from_layout) {
     if (reference_from_layout)
         input_devices.push_back(identifier);
 
