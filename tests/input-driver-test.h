@@ -18,7 +18,7 @@ protected:
      * is started so for custom configurations, overwrite this method in a
      * subclass.
      */
-    virtual void SetUpConfigAndLog(const std::string& prefix);
+    virtual void SetUpConfigAndLog(const std::string& param);
 
     /**
      * Set up an event listener that listens for test results. If any result

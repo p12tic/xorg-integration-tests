@@ -26,7 +26,7 @@ public:
         InputDriverTest::SetUp();
     }
 
-    virtual void SetUpConfigAndLog(const std::string &prefix) {
+    virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-SynPS2.log");
         server.SetOption("-config", "/tmp/synaptics-SynPS2.conf");
 

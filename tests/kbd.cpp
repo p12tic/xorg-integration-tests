@@ -62,7 +62,7 @@ class KeyboardDriverTest : public InputDriverTest {
         InputDriverTest::SetUp();
     }
 
-    virtual void SetUpConfigAndLog(const std::string &prefix) {
+    virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-kbd-driver.log");
         server.SetOption("-config", "/tmp/kbd-driver.conf");
 
@@ -72,7 +72,7 @@ class KeyboardDriverTest : public InputDriverTest {
                                "Option \"CoreKeyboard\" \"on\"\n"
                                "Option \"XkbRules\"   \"xorg\"\n"
                                "Option \"XkbModel\"   \"dellusbmm\"\n"
-                               "Option \"XkbLayout\"  \""+ prefix + "\"\n");
+                               "Option \"XkbLayout\"  \""+ param + "\"\n");
         config.WriteConfig("/tmp/kbd-driver.conf");
     }
 

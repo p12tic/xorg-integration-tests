@@ -26,18 +26,18 @@ void InputDriverTest::StartServer() {
     ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
 }
 
-void InputDriverTest::SetUpConfigAndLog(const std::string& prefix) {
+void InputDriverTest::SetUpConfigAndLog(const std::string& param) {
     std::stringstream s;
-    s << "/tmp/Xorg-" << prefix << ".log";
+    s << "/tmp/Xorg-" << param << ".log";
     log_file = s.str();
     server.SetOption("-logfile",log_file);
 
     s.str(std::string());
-    s << "/tmp/" << prefix << ".conf";
+    s << "/tmp/" << param << ".conf";
     config_file = s.str();
 
     config.AddDefaultScreenWithDriver();
-    config.AddInputSection(prefix);
+    config.AddInputSection(param);
     config.WriteConfig(config_file);
     server.SetOption("-config", config_file);
 }

@@ -64,7 +64,7 @@ class EvdevDriverXKBTest : public InputDriverTest {
         InputDriverTest::SetUp();
     }
 
-    virtual void SetUpConfigAndLog(const std::string &prefix) {
+    virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-xkb.log");
         server.SetOption("-config", "/tmp/evdev-driver-xkb.conf");
 
@@ -73,7 +73,7 @@ class EvdevDriverXKBTest : public InputDriverTest {
                                "Option \"CoreKeyboard\" \"on\"\n"
                                "Option \"XkbRules\"   \"xorg\"\n"
                                "Option \"XkbModel\"   \"dellusbmm\"\n"
-                               "Option \"XkbLayout\"  \""+ prefix + "\"\n"
+                               "Option \"XkbLayout\"  \""+ param + "\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default mouse device to avoid server adding our device again */
         config.AddInputSection("mouse", "mouse-device",
@@ -149,7 +149,7 @@ public:
         InputDriverTest::SetUp();
     }
 
-    virtual void SetUpConfigAndLog(const std::string &prefix) {
+    virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-mouse.log");
         server.SetOption("-config", "/tmp/evdev-driver-mouse.conf");
 
