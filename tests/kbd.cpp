@@ -73,7 +73,7 @@ class KeyboardDriverTest : public InputDriverTest,
                                "Option \"CoreKeyboard\" \"on\"\n"
                                "Option \"XkbRules\"   \"xorg\"\n"
                                "Option \"XkbModel\"   \"dellusbmm\"\n"
-                               "Option \"XkbLayout\"  \""+ param + "\"\n");
+                               "Option \"XkbLayout\"  \""+ GetParam() + "\"\n");
         config.WriteConfig("/tmp/kbd-driver.conf");
     }
 

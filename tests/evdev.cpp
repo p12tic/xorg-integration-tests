@@ -75,7 +75,7 @@ class EvdevDriverXKBTest : public InputDriverTest,
                                "Option \"CoreKeyboard\" \"on\"\n"
                                "Option \"XkbRules\"   \"xorg\"\n"
                                "Option \"XkbModel\"   \"dellusbmm\"\n"
-                               "Option \"XkbLayout\"  \""+ param + "\"\n"
+                               "Option \"XkbLayout\"  \""+ GetParam() + "\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default mouse device to avoid server adding our device again */
         config.AddInputSection("mouse", "mouse-device",
