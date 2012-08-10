@@ -356,6 +356,7 @@ void button_event(::Display *display,
     ASSERT_EQ(XPending(display), 0) << "Events pending when there should be none" << std::endl;
 }
 
+#ifndef DOXYGEN_IGNORE_THIS
 
 typedef struct {
     int map[8];
@@ -366,6 +367,8 @@ void PrintTo(const Mapping &m, ::std::ostream *os) {
     for (int i = 0; i < m.nmap; i++)
         *os << m.map[i] << " ";
 }
+
+#endif /* DOXYGEN_IGNORE_THIS */
 
 class EvdevDriverButtonMappingTest : public EvdevDriverMouseTest,
                                      public ::testing::WithParamInterface<Mapping> {

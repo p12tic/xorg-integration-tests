@@ -1,6 +1,8 @@
 #ifndef __WACOM_DEVS_H__
 #define __WACOM_DEVS_H__
 
+#ifndef DOXYGEN_IGNORE_THIS
+
 typedef struct
 {
     const char *test_id;
@@ -33,5 +35,7 @@ Tablet tablets[] = {
     { "12", "Wacom-ISDv4-E6-Finger.desc",        "Wacom ISDv4 E6 Finger",        NULL,     NULL,     NULL,     NULL,     "touch"  },
     { "13", "Wacom-ISDv4-E6-Pen.desc",           "Wacom ISDv4 E6 Pen",           "stylus", "eraser", NULL,     NULL,     NULL     }
 };
+
+#endif /* DOXYGEN_IGNORE_THIS */
 
 #endif
