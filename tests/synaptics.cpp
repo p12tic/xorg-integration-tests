@@ -14,6 +14,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
+#include "helpers.h"
 
 class SynapticsDriverTest : public InputDriverTest {
 public:
@@ -212,6 +213,63 @@ INSTANTIATE_TEST_CASE_P(, SynapticsWarpTest,
                                           std::make_pair(200, 200),
                                           std::make_pair(-1, -1)
                             ));
+
+class SynapticsDriverClickpadTest : public InputDriverTest {
+public:
+    virtual void SetUp() {
+        dev = std::auto_ptr<xorg::testing::evemu::Device>(
+                new xorg::testing::evemu::Device(
+                    RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.desc"
+                    )
+                );
+        InputDriverTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad.log");
+        server.SetOption("-config", "/tmp/synaptics-clickpad.conf");
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("synaptics", "--device--",
+                               "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
+        config.WriteConfig("/tmp/synaptics-clickpad.conf");
+    }
+
+protected:
+    std::auto_ptr<xorg::testing::evemu::Device> dev;
+};
+
+TEST_F(SynapticsDriverClickpadTest, Clickpad)
+{
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    Atom clickpad_prop = XInternAtom(Display(), "Synaptics ClickPad", True);
+    ASSERT_NE(clickpad_prop, None);
+
+    Status status;
+    Atom type;
+    int format;
+    unsigned long nitems, bytes_after;
+    unsigned char *data;
+
+    status = XIGetProperty(Display(), deviceid, clickpad_prop, 0, 1, False,
+                           XIAnyPropertyType, &type, &format, &nitems,
+                           &bytes_after, &data);
+
+    ASSERT_EQ(status, Success);
+    ASSERT_EQ(format, 8);
+    ASSERT_EQ(nitems, 1);
+    ASSERT_EQ(bytes_after, 0);
+    ASSERT_EQ(data[0], 1);
+    free(data);
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
