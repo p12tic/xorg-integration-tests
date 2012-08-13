@@ -298,6 +298,84 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
 }
 
+TEST(SynapticsClickPad, HotPlugSoftButtons)
+{
+    std::auto_ptr<xorg::testing::evemu::Device> dev;
+
+    dev = std::auto_ptr<xorg::testing::evemu::Device>(
+            new xorg::testing::evemu::Device(
+                    RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.desc"
+                )
+            );
+
+    XOrgConfig config;
+    xorg::testing::XServer server;
+
+    config.SetAutoAddDevices(true);
+    config.AddDefaultScreenWithDriver();
+    StartServer("synaptics-clickpad-softbuttons", server, config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
+
+    int deviceid;
+    int ndevices = FindInputDeviceByName(dpy, "SynPS/2 Synaptics TouchPad", &deviceid);
+    ASSERT_GT(ndevices, 0);
+    EXPECT_EQ(ndevices, 1) << "More than one touchpad found, cannot "
+                              "guarantee right behaviour.";
+
+    Atom clickpad_prop = XInternAtom(dpy, "Synaptics ClickPad", True);
+    ASSERT_NE(clickpad_prop, None);
+
+    Status status;
+    Atom type;
+    int format;
+    unsigned long nitems, bytes_after;
+    unsigned char *data;
+
+    status = XIGetProperty(dpy, deviceid, clickpad_prop, 0, 1, False,
+                           XIAnyPropertyType, &type, &format, &nitems,
+                           &bytes_after, &data);
+
+    ASSERT_EQ(status, Success);
+    ASSERT_EQ(format, 8);
+    ASSERT_EQ(nitems, 1);
+    ASSERT_EQ(bytes_after, 0);
+    ASSERT_EQ(data[0], 1);
+    free(data);
+
+    /* This option is assigned by the xorg.conf.d, it won't activate for
+       xorg.conf devices. */
+    Atom softbutton_props = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
+    ASSERT_NE(softbutton_props, None);
+
+    status = XIGetProperty(dpy, deviceid, softbutton_props, 0, 8, False,
+                           XIAnyPropertyType, &type, &format, &nitems,
+                           &bytes_after, &data);
+
+    ASSERT_EQ(status, Success);
+    ASSERT_EQ(format, 32);
+    ASSERT_EQ(nitems, 8);
+    ASSERT_EQ(bytes_after, 0);
+
+    int32_t *buttons = reinterpret_cast<int32_t*>(data);
+    ASSERT_EQ(buttons[0], 3472);
+    ASSERT_EQ(buttons[1], 0);
+    ASSERT_EQ(buttons[2], 3900);
+    ASSERT_EQ(buttons[3], 0);
+    ASSERT_EQ(buttons[4], 0);
+    ASSERT_EQ(buttons[5], 0);
+    ASSERT_EQ(buttons[6], 0);
+    ASSERT_EQ(buttons[7], 0);
+
+    free(data);
+
+    config.RemoveConfig();
+    server.RemoveLogFile();
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
