@@ -241,7 +241,7 @@ protected:
     std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
-TEST_F(SynapticsDriverClickpadTest, Clickpad)
+TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 {
     int major = 2;
     int minor = 0;
@@ -269,6 +269,33 @@ TEST_F(SynapticsDriverClickpadTest, Clickpad)
     ASSERT_EQ(bytes_after, 0);
     ASSERT_EQ(data[0], 1);
     free(data);
+
+    /* This option is assigned by the xorg.conf.d, it won't activate for
+       xorg.conf devices. */
+    Atom softbutton_props = XInternAtom(Display(), "Synaptics Soft Button Areas", True);
+    ASSERT_NE(softbutton_props, None);
+
+    status = XIGetProperty(Display(), deviceid, softbutton_props, 0, 8, False,
+                           XIAnyPropertyType, &type, &format, &nitems,
+                           &bytes_after, &data);
+
+    ASSERT_EQ(status, Success);
+    ASSERT_EQ(format, 32);
+    ASSERT_EQ(nitems, 8);
+    ASSERT_EQ(bytes_after, 0);
+
+    int32_t *buttons = reinterpret_cast<int32_t*>(data);
+    ASSERT_EQ(buttons[0], 0);
+    ASSERT_EQ(buttons[1], 0);
+    ASSERT_EQ(buttons[2], 0);
+    ASSERT_EQ(buttons[3], 0);
+    ASSERT_EQ(buttons[4], 0);
+    ASSERT_EQ(buttons[5], 0);
+    ASSERT_EQ(buttons[6], 0);
+    ASSERT_EQ(buttons[7], 0);
+
+    free(data);
+
 }
 
 int main(int argc, char **argv) {
