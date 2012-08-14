@@ -252,10 +252,7 @@ TEST_P(WacomDriverTest, DeviceType)
     int minor = 0;
     ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
 
-    XIDeviceInfo *info, *list;
-    int loop;
-    bool found;
-
+    XIDeviceInfo *list;
     int ndevices;
     list = XIQueryDevice(Display(), XIAllDevices, &ndevices);
 
@@ -376,7 +373,6 @@ TEST_P(WacomDriverTest, Rotation)
     int minor = 0;
     ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
 
-    XIDeviceInfo *info, *list, *deviceinfo;
     bool status;
 
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask |
