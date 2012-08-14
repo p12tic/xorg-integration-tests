@@ -152,12 +152,12 @@ void check_drag_event(::Display *display,
         nevents++;
     ASSERT_EQ(expect_npress, nevents);
     ASSERT_EQ(ev.xbutton.button, 1);
-    
+
     nevents = 0;
     while (XCheckMaskEvent (display, PointerMotionMask, &ev))
         nevents++;
     ASSERT_EQ(expect_nmotion, nevents);
-    
+
     nevents = 0;
     while (XCheckMaskEvent (display, ButtonReleaseMask, &ev))
         nevents++;
