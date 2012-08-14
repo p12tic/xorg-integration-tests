@@ -16,10 +16,16 @@
 #include "input-driver-test.h"
 #include "helpers.h"
 
+/**
+ * Synaptics driver test for touchpad devices. This class uses a traditional
+ * touchpad device.
+ */
 class SynapticsDriverTest : public InputDriverTest {
 public:
+    /**
+     * Initializes a standard touchpad device.
+     */
     virtual void SetUp() {
-
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad.desc"
@@ -28,6 +34,11 @@ public:
         InputDriverTest::SetUp();
     }
 
+    /**
+     * Sets up an xorg.conf for a single synaptics CorePointer device based on
+     * the evemu device. Options enabled: tapping (1 finger), two-finger
+     * vertical scroll.
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-SynPS2.log");
         server.SetOption("-config", "/tmp/synaptics-SynPS2.conf");
@@ -169,14 +180,18 @@ TEST_F(SynapticsDriverTest, TapAndDragEvent)
     check_drag_event(Display(), dev.get(), "SynPS2-Synaptics-TouchPad-tap-and-move.events", 1, 30, 1);
 }
 
-/* Bug 53037 - Device coordinate scaling breaks XWarpPointer requests
-
-   If a device with a device coordinate range is the lastSlave, a
-   WarpPointer request on some coordinates may end up on different pixels
-   than requested. The server scales from screen to device coordinates, then
-   back to screen - a rounding error may then change to the wrong pixel.
-
-   https://bugs.freedesktop.org/show_bug.cgi?id=53037
+/**
+ * Synaptics driver test for Bug 53037 - Device coordinate scaling breaks
+ * XWarpPointer requests
+ *
+ * If a device with a device coordinate range is the lastSlave, a
+ * WarpPointer request on some coordinates may end up on different pixels
+ * than requested. The server scales from screen to device coordinates, then
+ * back to screen - a rounding error may then change to the wrong pixel.
+ *
+ * https://bugs.freedesktop.org/show_bug.cgi?id=53037
+ *
+ * Takes a pair of integers, not used by the class itself.
  */
 class SynapticsWarpTest : public SynapticsDriverTest,
                           public ::testing::WithParamInterface<std::pair<int, int> >{
@@ -214,8 +229,14 @@ INSTANTIATE_TEST_CASE_P(, SynapticsWarpTest,
                                           std::make_pair(-1, -1)
                             ));
 
+/**
+ * Synaptics driver test for clickpad devices.
+ */
 class SynapticsDriverClickpadTest : public InputDriverTest {
 public:
+    /**
+     * Initializes a clickpad, as the one found on the Lenovo x220t.
+     */
     virtual void SetUp() {
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
@@ -225,6 +246,9 @@ public:
         InputDriverTest::SetUp();
     }
 
+    /**
+     * Set up a single clickpad CorePointer device.
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad.log");
         server.SetOption("-config", "/tmp/synaptics-clickpad.conf");
@@ -298,8 +322,16 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
 }
 
+/**
+ * Synaptics driver test for clickpad devices with the SoftButtonArea option
+ * set.
+ */
 class SynapticsDriverClickpadSoftButtonsTest : public SynapticsDriverClickpadTest {
 public:
+    /**
+     * Sets up a single CorePointer synaptics clickpad device with the
+     * SoftButtonArea option set to 50% left/right, 82% from the top.
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad-softbuttons.log");
         server.SetOption("-config", "/tmp/synaptics-clickpad-softbuttons.conf");

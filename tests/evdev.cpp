@@ -22,8 +22,15 @@ typedef Keys_Map::iterator keys_mapIter;
 typedef std::vector<Key_Pair> MultiMedia_Keys_Map;
 typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
 
+/**
+ * Evdev driver test for keyboard devices. Takes a string as parameter,
+ * which is later used for the XkbLayout option.
+ */
 class EvdevDriverXKBTest : public InputDriverTest,
                            public ::testing::WithParamInterface<std::string> {
+    /**
+     * Initializes a standard keyboard device.
+     */
     virtual void SetUp() {
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
@@ -66,6 +73,10 @@ class EvdevDriverXKBTest : public InputDriverTest,
         InputDriverTest::SetUp();
     }
 
+    /**
+     * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
+     * the evemu device. The input from GetParam() is used as XkbLayout.
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-xkb.log");
         server.SetOption("-config", "/tmp/evdev-driver-xkb.conf");
@@ -84,8 +95,19 @@ class EvdevDriverXKBTest : public InputDriverTest,
     }
 
     protected:
+    /**
+     * The evemu device to generate events.
+     */
     std::auto_ptr<xorg::testing::evemu::Device> dev;
+
+    /**
+     * List of evdev keysyms to X11 keysyms for each layout.
+     */
     Keys_Map Keys;
+
+    /**
+     * List of evdev keysyms to X11 keysyms for multimedia keys
+     */
     MultiMedia_Keys_Map Multimedia_Keys;
 };
 
@@ -139,10 +161,15 @@ TEST_P(EvdevDriverXKBTest, KeyboardLayout)
 
 INSTANTIATE_TEST_CASE_P(, EvdevDriverXKBTest, ::testing::Values("us", "de", "fr"));
 
+/**
+ * Evdev driver test for mouse devices.
+ */
 class EvdevDriverMouseTest : public InputDriverTest {
 public:
+    /**
+     * Initializes a standard mouse device with two wheels.
+     */
     virtual void SetUp() {
-
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
@@ -151,6 +178,10 @@ public:
         InputDriverTest::SetUp();
     }
 
+    /**
+     * Sets up an xorg.conf for a single evdev CorePointer device based on
+     * the evemu device.
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-mouse.log");
         server.SetOption("-config", "/tmp/evdev-driver-mouse.conf");
@@ -166,6 +197,9 @@ public:
     }
 
 protected:
+    /**
+     * The evemu device to generate events.
+     */
     std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
@@ -370,9 +404,17 @@ void PrintTo(const Mapping &m, ::std::ostream *os) {
 
 #endif /* DOXYGEN_IGNORE_THIS */
 
+/**
+ * Button mapping test for the evdev driver. Takes a struct Mapping as input
+ * parameter:
+ */
 class EvdevDriverButtonMappingTest : public EvdevDriverMouseTest,
                                      public ::testing::WithParamInterface<Mapping> {
 public:
+    /**
+     * Set up a config for a single evdev CorePointer device with
+     * Option "ButtonMapping" based on the Mapping provided by GetParam()
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
 
         const Mapping mapping = GetParam();
@@ -419,9 +461,17 @@ Mapping mappings[] = {
 INSTANTIATE_TEST_CASE_P(, EvdevDriverButtonMappingTest,
                         ::testing::ValuesIn(mappings));
 
+/**
+ * Button mapping test for invalid button mappings the evdev driver. Takes a
+ * string as input parameter.
+ */
 class EvdevDriverInvalidButtonMappingTest : public EvdevDriverMouseTest,
                                             public ::testing::WithParamInterface<std::string> {
 public:
+    /**
+     * Set up a config for a single evdev CorePointer device with
+     * Option "ButtonMapping" based on the string provided by GetParam()
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
         std::string log_file = "/tmp/Xorg-evdev-driver-buttonmapping-invalid.log";
         server.SetOption("-logfile", log_file);

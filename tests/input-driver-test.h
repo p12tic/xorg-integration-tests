@@ -35,9 +35,33 @@ protected:
      */
     void SetUpEventListener();
 
+    /**
+     * Starts the server and waits for connections. Once completed,
+     * xorg::testing::Test::Display() will be set to the server's display
+     * and that display will have registered for XI2.0.
+     */
     virtual void StartServer();
+
+    /**
+     * Default googletest entry point for setup-work during test fixtures.
+     * This implementation simply calls SetUp() with an empty string.
+     */
     virtual void SetUp();
+
+    /**
+     * Sets up an event listener to watch for test failures and calls
+     * SetUpConfigAndLog() for initalisation of the server config. Finally,
+     * starts the server.
+     *
+     * Most test fixtures will not need any extra other than initializing a
+     * device and then calling SetUp().
+     */
     virtual void SetUp(const std::string &param);
+
+    /**
+     * Default googletest entry point for clean-up work after test
+     * fixtures were run.
+     */
     virtual void TearDown();
 
     /**
@@ -45,9 +69,22 @@ protected:
      */
     virtual bool Failed();
 
+    /**
+     * Opcode for XI2 events
+     */
     int xi2_opcode;
+
+    /**
+     * The X server instance. This server is started with StartServer() but
+     * may be started by child classes directly.
+     */
     xorg::testing::XServer server;
 
+    /**
+     * The server configuration. SetUpConfigAndLog() by default works on
+     * this configuration and the server started by StartServer() will then
+     * use this configuration.
+     */
     XOrgConfig config;
 
 private:
@@ -69,6 +106,9 @@ private:
 class SimpleInputDriverTest : public InputDriverTest,
                               public ::testing::WithParamInterface<std::string> {
 public:
+    /**
+     * Calls InputDriverTest::SetUp() with a parameter value of GetParam().
+     */
     virtual void SetUp() {
         InputDriverTest::SetUp(GetParam());
     }

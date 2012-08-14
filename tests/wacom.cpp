@@ -28,9 +28,16 @@
 
 #include "helpers.h"
 
+/**
+ * Wacom driver test class. This class takes a struct Tablet that defines
+ * which device should be initialised.
+ */
 class WacomDriverTest : public xorg::testing::Test,
                         public ::testing::WithParamInterface<Tablet> {
 protected:
+    /**
+     * Write a configuration file with a default dummy video driver section.
+     */
     void WriteConfig() {
         std::stringstream s;
         Tablet tablet = GetParam();
@@ -64,6 +71,9 @@ protected:
         server.SetOption("-config", config_file);
     }
 
+    /**
+     * Register for XI2 Hierarchy events on the root window
+     */
     void SetUpXIEventMask () {
         XIEventMask evmask;
         unsigned char mask[2] = { 0, 0 };
@@ -78,6 +88,9 @@ protected:
         XSync(Display(), False);
     }
 
+    /**
+     * Create an evemu device based on GetParam()'s tablet.
+     */
     void CreateDevice ()
     {
         Tablet tablet = GetParam();
@@ -118,6 +131,9 @@ protected:
         }
     }
 
+    /**
+     * Start the X server for the tablet provided by GetParam.
+     */
     void StartServer() {
         Tablet tablet = GetParam();
 
@@ -160,6 +176,9 @@ protected:
     std::string log_file;
     xorg::testing::XServer server;
 
+    /**
+     * The evemu device to generate events.
+     */
     std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 

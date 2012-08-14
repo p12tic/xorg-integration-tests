@@ -19,8 +19,15 @@ typedef Keys_Map::iterator keys_mapIter;
 typedef std::vector<Key_Pair> MultiMedia_Keys_Map;
 typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
 
+/**
+ * Keyboard driver test. This class takes a string as parameter that is used
+ * for the XkbLayout option.
+ */
 class KeyboardDriverTest : public InputDriverTest,
                            public ::testing::WithParamInterface<std::string> {
+    /**
+     * Initializes a standard keyboard device.
+     */
     virtual void SetUp() {
 
         dev = std::auto_ptr<xorg::testing::evemu::Device>(
@@ -63,6 +70,10 @@ class KeyboardDriverTest : public InputDriverTest,
         InputDriverTest::SetUp();
     }
 
+    /**
+     * Sets up an xorg.conf for a single kbd CoreKeyboard device.
+     * The input from GetParam() is used as XkbLayout.
+     */
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-kbd-driver.log");
         server.SetOption("-config", "/tmp/kbd-driver.conf");
@@ -78,8 +89,19 @@ class KeyboardDriverTest : public InputDriverTest,
     }
 
     protected:
+    /**
+     * The evemu device to generate events.
+     */
     std::auto_ptr<xorg::testing::evemu::Device> dev;
+
+    /**
+     * List of evdev keysyms to X11 keysyms for each layout.
+     */
     Keys_Map Keys;
+
+    /**
+     * List of evdev keysyms to X11 keysyms for multimedia keys
+     */
     MultiMedia_Keys_Map Multimedia_Keys;
 };
 
