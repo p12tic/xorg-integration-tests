@@ -298,6 +298,64 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
 }
 
+class SynapticsDriverClickpadSoftButtonsTest : public SynapticsDriverClickpadTest {
+public:
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad-softbuttons.log");
+        server.SetOption("-config", "/tmp/synaptics-clickpad-softbuttons.conf");
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("synaptics", "--device--",
+                               "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"SoftButtonAreas\"     \"50% 0 82% 0 0 0 0 0\"\n"
+                               "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
+        config.WriteConfig("/tmp/synaptics-clickpad-softbuttons.conf");
+    }
+};
+
+TEST_F(SynapticsDriverClickpadSoftButtonsTest, LeftClick)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.left-phys-click.events");
+
+    XEvent btn;
+    ASSERT_NE(XPending(Display()), 0) << "No event pending" << std::endl;
+    XNextEvent(Display(), &btn);
+
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 1);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 1);
+
+    XSync(Display(), True);
+}
+
+TEST_F(SynapticsDriverClickpadSoftButtonsTest, RightClick)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.right-phys-click.events");
+
+    XEvent btn;
+    ASSERT_NE(XPending(Display()), 0) << "No event pending" << std::endl;
+    XNextEvent(Display(), &btn);
+
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 3);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 3);
+
+    XSync(Display(), True);
+}
+
 TEST(SynapticsClickPad, HotPlugSoftButtons)
 {
     std::auto_ptr<xorg::testing::evemu::Device> dev;
