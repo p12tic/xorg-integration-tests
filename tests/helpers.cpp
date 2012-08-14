@@ -34,6 +34,11 @@ int FindInputDeviceByName(Display *dpy, const std::string &device_name, int *dev
         }
     }
 
+    if (found > 1) {
+        SCOPED_TRACE("More than one device named '" + device_name +
+                     "' found.\nThis may cause some tests to fail.\n");
+    }
+
     XIFreeDeviceInfo(info);
 
     return found;
