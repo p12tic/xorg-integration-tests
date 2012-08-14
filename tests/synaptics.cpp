@@ -256,6 +256,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("synaptics", "--device--",
                                "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"TapButton1\"          \"1\"\n"
                                "Option \"GrabEventDevice\"     \"0\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
         config.WriteConfig("/tmp/synaptics-clickpad.conf");
@@ -320,6 +321,29 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
     free(data);
 
+}
+
+TEST_F(SynapticsDriverClickpadTest, Tap)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.tap.events");
+
+    XSync(Display(), False);
+
+    XEvent btn;
+    ASSERT_NE(XPending(Display()), 0) << "No event pending" << std::endl;
+    XNextEvent(Display(), &btn);
+
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 1U);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 1U);
+
+    XSync(Display(), True);
 }
 
 /**
