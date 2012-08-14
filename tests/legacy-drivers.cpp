@@ -74,6 +74,7 @@ TEST(AcecadInputDriver, WithOptionDevice)
     XIDeviceInfo *info;
 
     info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
+    XIFreeDeviceInfo(info);
 
     /* VCP, VCK, xtest, mouse, keyboard, acecad */
     int expected_devices = 7;
