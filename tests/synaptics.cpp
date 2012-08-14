@@ -86,7 +86,7 @@ TEST_F(SynapticsDriverTest, DevicePresent)
 void check_buttons_event(::Display *display,
                         xorg::testing::evemu::Device *dev,
                         const std::string& events_path,
-                        int button,
+                        unsigned int button,
                         int expect_nevents) {
 
     dev->Play(RECORDINGS_DIR "touchpads/" + events_path);
@@ -151,7 +151,7 @@ void check_drag_event(::Display *display,
     while (XCheckMaskEvent (display, ButtonPressMask, &ev))
         nevents++;
     ASSERT_EQ(expect_npress, nevents);
-    ASSERT_EQ(ev.xbutton.button, 1);
+    ASSERT_EQ(ev.xbutton.button, 1U);
 
     nevents = 0;
     while (XCheckMaskEvent (display, PointerMotionMask, &ev))
@@ -162,7 +162,7 @@ void check_drag_event(::Display *display,
     while (XCheckMaskEvent (display, ButtonReleaseMask, &ev))
         nevents++;
     ASSERT_EQ(expect_nrelease, nevents);
-    ASSERT_EQ(ev.xbutton.button, 1);
+    ASSERT_EQ(ev.xbutton.button, 1U);
 
     while(XPending(display))
         XNextEvent(display, &ev);
@@ -275,7 +275,7 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
 
     Atom clickpad_prop = XInternAtom(Display(), "Synaptics ClickPad", True);
-    ASSERT_NE(clickpad_prop, None);
+    ASSERT_NE(clickpad_prop, (Atom)None);
 
     Status status;
     Atom type;
@@ -289,15 +289,15 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
     ASSERT_EQ(status, Success);
     ASSERT_EQ(format, 8);
-    ASSERT_EQ(nitems, 1);
-    ASSERT_EQ(bytes_after, 0);
-    ASSERT_EQ(data[0], 1);
+    ASSERT_EQ(nitems, 1U);
+    ASSERT_EQ(bytes_after, 0U);
+    ASSERT_EQ(data[0], 1U);
     free(data);
 
     /* This option is assigned by the xorg.conf.d, it won't activate for
        xorg.conf devices. */
     Atom softbutton_props = XInternAtom(Display(), "Synaptics Soft Button Areas", True);
-    ASSERT_NE(softbutton_props, None);
+    ASSERT_NE(softbutton_props, (Atom)None);
 
     status = XIGetProperty(Display(), deviceid, softbutton_props, 0, 8, False,
                            XIAnyPropertyType, &type, &format, &nitems,
@@ -305,8 +305,8 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
     ASSERT_EQ(status, Success);
     ASSERT_EQ(format, 32);
-    ASSERT_EQ(nitems, 8);
-    ASSERT_EQ(bytes_after, 0);
+    ASSERT_EQ(nitems, 8U);
+    ASSERT_EQ(bytes_after, 0U);
 
     int32_t *buttons = reinterpret_cast<int32_t*>(data);
     ASSERT_EQ(buttons[0], 0);
@@ -358,11 +358,11 @@ TEST_F(SynapticsDriverClickpadSoftButtonsTest, LeftClick)
     XNextEvent(Display(), &btn);
 
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 1);
+    ASSERT_EQ(btn.xbutton.button, 1U);
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonRelease);
-    ASSERT_EQ(btn.xbutton.button, 1);
+    ASSERT_EQ(btn.xbutton.button, 1U);
 
     XSync(Display(), True);
 }
@@ -379,11 +379,11 @@ TEST_F(SynapticsDriverClickpadSoftButtonsTest, RightClick)
     XNextEvent(Display(), &btn);
 
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 3);
+    ASSERT_EQ(btn.xbutton.button, 3U);
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonRelease);
-    ASSERT_EQ(btn.xbutton.button, 3);
+    ASSERT_EQ(btn.xbutton.button, 3U);
 
     XSync(Display(), True);
 }
@@ -417,7 +417,7 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
                               "guarantee right behaviour.";
 
     Atom clickpad_prop = XInternAtom(dpy, "Synaptics ClickPad", True);
-    ASSERT_NE(clickpad_prop, None);
+    ASSERT_NE(clickpad_prop, (Atom)None);
 
     Status status;
     Atom type;
@@ -431,15 +431,15 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
 
     ASSERT_EQ(status, Success);
     ASSERT_EQ(format, 8);
-    ASSERT_EQ(nitems, 1);
-    ASSERT_EQ(bytes_after, 0);
-    ASSERT_EQ(data[0], 1);
+    ASSERT_EQ(nitems, 1U);
+    ASSERT_EQ(bytes_after, 0U);
+    ASSERT_EQ(data[0], 1U);
     free(data);
 
     /* This option is assigned by the xorg.conf.d, it won't activate for
        xorg.conf devices. */
     Atom softbutton_props = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
-    ASSERT_NE(softbutton_props, None);
+    ASSERT_NE(softbutton_props, (Atom)None);
 
     status = XIGetProperty(dpy, deviceid, softbutton_props, 0, 8, False,
                            XIAnyPropertyType, &type, &format, &nitems,
@@ -447,8 +447,8 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
 
     ASSERT_EQ(status, Success);
     ASSERT_EQ(format, 32);
-    ASSERT_EQ(nitems, 8);
-    ASSERT_EQ(bytes_after, 0);
+    ASSERT_EQ(nitems, 8U);
+    ASSERT_EQ(bytes_after, 0U);
 
     int32_t *buttons = reinterpret_cast<int32_t*>(data);
     ASSERT_EQ(buttons[0], 3472);
