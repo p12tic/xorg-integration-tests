@@ -158,8 +158,6 @@ bool test_property(Display *dpy, int deviceid, const char *prop_name)
     return False;
 }
 
-// To disable
-// TEST_P(WacomDriverTest, DISABLED_DeviceNames)
 TEST_P(WacomDriverTest, DeviceNames)
 {
     Tablet tablet = GetParam();
@@ -247,8 +245,6 @@ void check_for_type (Display *dpy, XIDeviceInfo *list, int ndevices, const char 
     ASSERT_TRUE(found) << type << " not found" << std::endl;
 }
 
-// To disable
-// TEST_P(WacomDriverTest, DISABLED_DeviceType)
 TEST_P(WacomDriverTest, DeviceType)
 {
     Tablet tablet = GetParam();
@@ -372,8 +368,6 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 // FIXME
 // This test would fail in some random case, as it the X events were
 // not generated...
-// To disable
-// TEST_P(WacomDriverTest, DISABLED_Rotation)
 TEST_P(WacomDriverTest, Rotation)
 {
     Tablet tablet = GetParam();
