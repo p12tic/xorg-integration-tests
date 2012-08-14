@@ -34,7 +34,7 @@ protected:
     void WriteConfig() {
         std::stringstream s;
         Tablet tablet = GetParam();
-        
+
         s << "/tmp/wacom-test-" << std::string(tablet.test_id) << ".conf";
         config_file = s.str();
 
@@ -151,7 +151,7 @@ protected:
         // Keep logs and config for investigation
         // if (config_file.size())
         //     unlink(config_file.c_str());
-        // 
+        //
         // if (log_file.size())
         //    unlink(log_file.c_str());
     }
@@ -179,10 +179,10 @@ bool test_property(Display *dpy, int deviceid, const char *prop_name)
                            &nitems, &bytes_after, &data);
     if (data != NULL)
         XFree (data);
-    
+
     if (status == Success)
         return True;
-        
+
     return False;
 }
 
@@ -199,10 +199,10 @@ TEST_P(WacomDriverTest, DeviceNames)
     bool prop_found;
 
     /* Wait for devices to settle */
-    
+
     int deviceid;
     char tool_name[255];
-        
+
     if (tablet.stylus) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
@@ -216,7 +216,7 @@ TEST_P(WacomDriverTest, DeviceNames)
         prop_found = test_property (Display(), deviceid, WACOM_PROP_TOOL_TYPE);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_TOOL_TYPE << " not found on " << tool_name << std::endl;
     }
-        
+
     if (tablet.eraser) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
@@ -227,7 +227,7 @@ TEST_P(WacomDriverTest, DeviceNames)
         prop_found = test_property (Display(), deviceid, WACOM_PROP_ROTATION);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_ROTATION << " not found on " << tool_name << std::endl;
     }
-        
+
     if (tablet.cursor) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
@@ -235,7 +235,7 @@ TEST_P(WacomDriverTest, DeviceNames)
         prop_found = test_property (Display(), deviceid,  WACOM_PROP_WHEELBUTTONS);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_WHEELBUTTONS << " not found on " << tool_name << std::endl;
     }
-        
+
     if (tablet.pad) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
@@ -243,7 +243,7 @@ TEST_P(WacomDriverTest, DeviceNames)
         prop_found = test_property (Display(), deviceid,  WACOM_PROP_STRIPBUTTONS);
         EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_STRIPBUTTONS << " not found on " << tool_name << std::endl;
     }
-        
+
     if (tablet.touch) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
@@ -289,8 +289,8 @@ TEST_P(WacomDriverTest, DeviceType)
     bool found;
 
     int ndevices;
-    list = XIQueryDevice(Display(), XIAllDevices, &ndevices); 
-        
+    list = XIQueryDevice(Display(), XIAllDevices, &ndevices);
+
     if (tablet.stylus)
         check_for_type (Display(), list, ndevices, WACOM_PROP_XI_TYPE_STYLUS);
 
@@ -337,7 +337,7 @@ bool set_rotate(Display *dpy, int deviceid, const char *rotate)
         return False;
 
     *data = rotation;
-    
+
     XIChangeProperty(dpy, deviceid, prop, type, format,
                           PropModeReplace, data, nitems);
     XFlush(dpy);
@@ -350,7 +350,7 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
     int root_x1, root_y1, root_x2, root_y2;
     int loop, step;
     XEvent ev;
-    
+
     XSync(dpy, False);
     while(XPending(dpy))
         XNextEvent(dpy, &ev);
@@ -373,7 +373,7 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 
     root_x2 = root_x1;
     root_y2 = root_y1;
-    
+
     step = 10;
     for (loop = 1000; loop < 3000; loop += step) {
         dev->PlayOne(EV_ABS, ABS_X, loop, True);
@@ -413,9 +413,9 @@ TEST_P(WacomDriverTest, Rotation)
     XIDeviceInfo *info, *list, *deviceinfo;
     bool status;
 
-    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | 
-                                                          ButtonReleaseMask | 
-                                                          PointerMotionMask | 
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask |
+                                                          ButtonReleaseMask |
+                                                          PointerMotionMask |
                                                           ButtonMotionMask);
 
     /* the server takes a while to start up but the devices may not respond
