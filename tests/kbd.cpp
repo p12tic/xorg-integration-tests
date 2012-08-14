@@ -138,7 +138,7 @@ void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_P
     XNextEvent(display, &press);
 
     KeySym sym = XKeycodeToKeysym(display, press.xkey.keycode, 0);
-    ASSERT_NE(NoSymbol, sym) << "No keysym for keycode " << press.xkey.keycode << std::endl;
+    ASSERT_NE((KeySym)NoSymbol, sym) << "No keysym for keycode " << press.xkey.keycode << std::endl;
     ASSERT_EQ(pair.second, sym) << "Keysym not matching for keycode " << press.xkey.keycode << std::endl;
 
     XSync(display, False);
