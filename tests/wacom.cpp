@@ -91,9 +91,8 @@ protected:
     /**
      * Create an evemu device based on GetParam()'s tablet.
      */
-    void CreateDevice ()
+    void CreateDevice (const Tablet& tablet)
     {
-        Tablet tablet = GetParam();
         char tool_name[255];
 
         SetUpXIEventMask ();
@@ -144,7 +143,7 @@ protected:
 
         ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
 
-        CreateDevice();
+        CreateDevice(tablet);
     }
 
     virtual void SetUp()
