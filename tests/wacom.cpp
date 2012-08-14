@@ -26,49 +26,30 @@
 #include <xorg/wacom-properties.h>
 #include <unistd.h>
 
+#include "input-driver-test.h"
 #include "helpers.h"
 
 /**
  * Wacom driver test class. This class takes a struct Tablet that defines
  * which device should be initialised.
  */
-class WacomDriverTest : public xorg::testing::Test,
+class WacomDriverTest : public InputDriverTest,
                         public ::testing::WithParamInterface<Tablet> {
 protected:
+
     /**
-     * Write a configuration file with a default dummy video driver section.
+     * Write a configuration file for a hotplug-enabled server using the
+     * dummy video driver.
      */
-    void WriteConfig() {
-        std::stringstream s;
+    virtual void SetUpConfigAndLog(const std::string &param) {
         Tablet tablet = GetParam();
 
-        s << "/tmp/wacom-test-" << std::string(tablet.test_id) << ".conf";
-        config_file = s.str();
+        server.SetOption("-logfile", "/tmp/Xorg-wacom-" + std::string(tablet.test_id) + ".log");
+        server.SetOption("-config", "/tmp/wacom-test-" + std::string(tablet.test_id) + ".conf");
 
-        std::ofstream conffile(config_file.c_str());
-        conffile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-
-        conffile << ""
-"            Section \"ServerFlags\""
-"                Option \"Log\" \"flush\""
-"            EndSection"
-""
-"            Section \"ServerLayout\""
-"                Identifier \"Dummy layout\""
-"                Screen 0 \"Dummy screen\" 0 0"
-"                Option \"AutoAddDevices\" \"on\""
-"            EndSection"
-""
-"            Section \"Screen\""
-"                Identifier \"Dummy screen\""
-"                Device \"Dummy video device\""
-"            EndSection"
-""
-"            Section \"Device\""
-"                Identifier \"Dummy video device\""
-"                Driver \"dummy\""
-"            EndSection";
-        server.SetOption("-config", config_file);
+        config.AddDefaultScreenWithDriver();
+        config.SetAutoAddDevices(true);
+        config.WriteConfig(server.GetConfigPath());
     }
 
     /**
@@ -91,89 +72,62 @@ protected:
     /**
      * Create an evemu device based on GetParam()'s tablet.
      */
-    void CreateDevice (const Tablet& tablet)
+    void VerifyDevice (const Tablet& tablet)
     {
         char tool_name[255];
 
-        SetUpXIEventMask ();
-
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-            new xorg::testing::evemu::Device( RECORDINGS_DIR "tablets/" + std::string (tablet.descfile)));
         if (tablet.stylus) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
-                << "Tool '" << tool_name << "' not found" << std::endl;
+            if (!FindInputDeviceByName(Display(), tool_name)) {
+                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                    << "Tool '" << tool_name << "' not found" << std::endl;
+            }
         }
 
         if (tablet.eraser) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
-                << "Tool '" << tool_name << "' not found" << std::endl;
+            if (!FindInputDeviceByName(Display(), tool_name)) {
+                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                    << "Tool '" << tool_name << "' not found" << std::endl;
+            }
         }
 
         if (tablet.cursor) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
-                << "Tool '" << tool_name << "' not found" << std::endl;
+            if (!FindInputDeviceByName(Display(), tool_name)) {
+                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                    << "Tool '" << tool_name << "' not found" << std::endl;
+            }
         }
 
         if (tablet.touch) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
-                << "Tool '" << tool_name << "' not found" << std::endl;
+            if (!FindInputDeviceByName(Display(), tool_name)) {
+                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                    << "Tool '" << tool_name << "' not found" << std::endl;
+            }
         }
 
         if (tablet.pad) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
-            ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
-                << "Tool '" << tool_name << "' not found" << std::endl;
+            if (!FindInputDeviceByName(Display(), tool_name)) {
+                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                    << "Tool '" << tool_name << "' not found" << std::endl;
+            }
         }
-    }
-
-    /**
-     * Start the X server for the tablet provided by GetParam.
-     */
-    void StartServer() {
-        Tablet tablet = GetParam();
-
-        server.SetOption("-logfile",log_file);
-        server.Start();
-        server.WaitForConnections();
-        xorg::testing::Test::SetDisplayString(server.GetDisplayString());
-
-        ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
-
-        CreateDevice(tablet);
     }
 
     virtual void SetUp()
     {
         Tablet tablet = GetParam();
+        dev = std::auto_ptr<xorg::testing::evemu::Device>(
+            new xorg::testing::evemu::Device( RECORDINGS_DIR "tablets/" + std::string (tablet.descfile)));
 
-        std::stringstream s;
-        s << "/tmp/Xorg-wacom-test-" << std::string(tablet.test_id) << ".log";
-        log_file = s.str();
+        InputDriverTest::SetUp();
 
-        WriteConfig();/* Taken from gnome-settings-daemon */
-        StartServer();
+        SetUpXIEventMask ();
+        VerifyDevice(tablet);
     }
-
-    virtual void TearDown()
-    {
-        if (server.Pid() != -1)
-            if (!server.Terminate())
-                server.Kill();
-        // Keep logs and config for investigation
-        // if (config_file.size())
-        //     unlink(config_file.c_str());
-        //
-        // if (log_file.size())
-        //    unlink(log_file.c_str());
-    }
-
-    std::string config_file;
-    std::string log_file;
-    xorg::testing::XServer server;
 
     /**
      * The evemu device to generate events.
