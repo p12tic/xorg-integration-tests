@@ -129,7 +129,7 @@ void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_P
     XNextEvent(display, &press);
 
     KeySym sym = XKeycodeToKeysym(display, press.xkey.keycode, 0);
-    ASSERT_NE(NoSymbol, sym) << "No keysym for keycode " << press.xkey.keycode << std::endl;
+    ASSERT_NE((KeySym)NoSymbol, sym) << "No keysym for keycode " << press.xkey.keycode << std::endl;
     ASSERT_EQ(pair.second, sym) << "Keysym not matching for keycode " << press.xkey.keycode << std::endl;
 
     XSync(display, False);
@@ -205,7 +205,7 @@ protected:
 
 void scroll_wheel_event(::Display *display,
                         xorg::testing::evemu::Device *dev,
-                        int axis, int value, int button) {
+                        int axis, int value, unsigned int button) {
 
     dev->PlayOne(EV_REL, axis, value, 1);
 
@@ -261,7 +261,7 @@ TEST_F(EvdevDriverMouseTest, DevNode)
 {
     Atom node_prop = XInternAtom(Display(), "Device Node", True);
 
-    ASSERT_NE(node_prop, None) << "This requires server 1.11";
+    ASSERT_NE(node_prop, (Atom)None) << "This requires server 1.11";
 
     int deviceid = -1;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
@@ -288,7 +288,7 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
 
     Atom mb_prop = XInternAtom(Display(), "Evdev Middle Button Emulation", True);
 
-    ASSERT_NE(mb_prop, None);
+    ASSERT_NE(mb_prop, (Atom)None);
 
     int deviceid = -1;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
@@ -302,7 +302,7 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
                   &data);
     ASSERT_EQ(type, XA_INTEGER);
     ASSERT_EQ(format, 8);
-    ASSERT_EQ(nitems, 1);
+    ASSERT_EQ(nitems, 1U);
 
     /* enable mb emulation */
     *data = 1;
@@ -322,11 +322,11 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 2);
+    ASSERT_EQ(btn.xbutton.button, 2U);
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonRelease);
-    ASSERT_EQ(btn.xbutton.button, 2);
+    ASSERT_EQ(btn.xbutton.button, 2U);
 
     ASSERT_EQ(XPending(Display()), 0) << "Events pending when there should be none" << std::endl;
 
@@ -347,19 +347,19 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 1);
+    ASSERT_EQ(btn.xbutton.button, 1U);
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 3);
+    ASSERT_EQ(btn.xbutton.button, 3U);
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonRelease);
-    ASSERT_EQ(btn.xbutton.button, 3);
+    ASSERT_EQ(btn.xbutton.button, 3U);
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonRelease);
-    ASSERT_EQ(btn.xbutton.button, 1);
+    ASSERT_EQ(btn.xbutton.button, 1U);
 
     ASSERT_EQ(XPending(Display()), 0) << "Events pending when there should be none" << std::endl;
 
@@ -368,7 +368,7 @@ TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
 
 void button_event(::Display *display,
                   xorg::testing::evemu::Device *dev,
-                  int button, int logical) {
+                  int button, unsigned int logical) {
 
     dev->PlayOne(EV_KEY, button, 1, true);
     dev->PlayOne(EV_KEY, button, 0, true);
