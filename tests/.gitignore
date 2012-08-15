@@ -1,1 +1,7 @@
-acecad
+legacy-drivers
+test-input-load
+kbd-driver
+mouse-driver
+evdev-driver
+synaptics-driver
+wacom-driver
