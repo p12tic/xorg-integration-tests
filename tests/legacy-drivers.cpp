@@ -207,6 +207,50 @@ TEST(AiptekInputDriver, TypeEraser)
     server.RemoveLogFile();
 }
 
+/***********************************************************************
+ *                                                                     *
+ *                            ELOGRAPHICS                              *
+ *                                                                     *
+ ***********************************************************************/
+TEST(ElographicsDriver, Load)
+{
+    XOrgConfig config;
+    xorg::testing::XServer server;
+
+    config.AddInputSection("elographics", "--device--",
+                           "Option \"CorePointer\" \"on\"\n"
+                           "Option \"Device\" \"/dev/input/event0\"\n");
+    config.AddDefaultScreenWithDriver();
+    StartServer("elographics", server, config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
+
+    /* VCP, VCK, xtest, mouse, keyboard, aiptek */
+    int expected_devices = 7;
+
+    /* xserver git 1357cd7251, no <default pointer> */
+    if (server.GetVersion().compare("1.11.0") > 0)
+	    expected_devices--;
+
+    ASSERT_EQ(count_devices(dpy), expected_devices);
+    if (FindInputDeviceByName(dpy, "--device--") != 1) {
+        SCOPED_TRACE("\n"
+                     "	Elographics device '--device--' not found.\n"
+                     "	Maybe this is elographics < 1.4.\n"
+                     "	Checking for TOUCHSCREEN instead, see git commit\n"
+                     "	xf86-input-elographics-1.3.0-1-g55f337f");
+        ASSERT_EQ(FindInputDeviceByName(dpy, "TOUCHSCREEN"), 1);
+    } else
+        ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+
+    config.RemoveConfig();
+    server.Terminate(3000);
+    server.RemoveLogFile();
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
