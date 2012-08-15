@@ -29,7 +29,7 @@ INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
                           "fpit", "hyperpen",  "mutouch",
                           "penmount", "wacom", "synaptics",
                           "keyboard", "mouse", "vmmouse",
-                          "evdev"));
+                          "evdev", "void"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

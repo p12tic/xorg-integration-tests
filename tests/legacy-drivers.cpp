@@ -49,6 +49,25 @@ INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
                           "fpit", "hyperpen",  "mutouch",
                           "penmount"));
 
+/**
+ * Void input driver test class
+ */
+class VoidInputDriverTest : public InputDriverTest {
+public:
+    /**
+     * Initialize an xorg.conf with a single CorePointer void device.
+     */
+    virtual void SetUp() {
+        InputDriverTest::SetUp("void");
+    }
+};
+
+TEST_F(VoidInputDriverTest, VoidDriver)
+{
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
+}
+
+
 /***********************************************************************
  *                                                                     *
  *                               ACECAD                                *
