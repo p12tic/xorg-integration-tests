@@ -101,6 +101,59 @@ TEST_F(MouseDriverTest, ScrollWheel)
     /* Vertical scrolling only, it appears we can't send HScroll events */
 }
 
+TEST_F(MouseDriverTest, Move)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), PointerMotionMask);
+    XFlush(Display());
+    XSync(Display(), False);
+
+    dev->PlayOne(EV_REL, ABS_X, -1, 1);
+
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
+
+    int x, y;
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    x = ev.xmotion.x_root;
+    y = ev.xmotion.y_root;
+
+    /* left */
+    dev->PlayOne(EV_REL, ABS_X, -1, 1);
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
+
+    XNextEvent(Display(), &ev);
+    ASSERT_LT(ev.xmotion.x_root, x);
+    ASSERT_EQ(ev.xmotion.y_root, y);
+    x = ev.xmotion.x_root;
+
+    /* right */
+    dev->PlayOne(EV_REL, ABS_X, 1, 1);
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
+
+    XNextEvent(Display(), &ev);
+    ASSERT_GT(ev.xmotion.x_root, x);
+    ASSERT_EQ(ev.xmotion.y_root, y);
+    x = ev.xmotion.x_root;
+
+    /* up */
+    dev->PlayOne(EV_REL, ABS_Y, -1, 1);
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
+
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xmotion.x_root, x);
+    ASSERT_LT(ev.xmotion.y_root, y);
+    y = ev.xmotion.y_root;
+
+    /* down */
+    dev->PlayOne(EV_REL, ABS_Y, 1, 1);
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
+
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xmotion.x_root, x);
+    ASSERT_GT(ev.xmotion.y_root, y);
+    y = ev.xmotion.y_root;
+}
+
 TEST_F(MouseDriverTest, DevNode)
 {
     Atom node_prop = XInternAtom(Display(), "Device Node", True);
