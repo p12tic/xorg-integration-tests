@@ -250,15 +250,26 @@ TEST(ElographicsDriver, Load)
 	    expected_devices--;
 
     ASSERT_EQ(count_devices(dpy), expected_devices);
-    if (FindInputDeviceByName(dpy, "--device--") != 1) {
+
+    int deviceid;
+    if (FindInputDeviceByName(dpy, "--device--", &deviceid) != 1) {
         SCOPED_TRACE("\n"
                      "	Elographics device '--device--' not found.\n"
                      "	Maybe this is elographics < 1.4.\n"
                      "	Checking for TOUCHSCREEN instead, see git commit\n"
                      "	xf86-input-elographics-1.3.0-1-g55f337f");
-        ASSERT_EQ(FindInputDeviceByName(dpy, "TOUCHSCREEN"), 1);
+        ASSERT_EQ(FindInputDeviceByName(dpy, "TOUCHSCREEN", &deviceid), 1);
     } else
-        ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+        ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    int ndevices;
+    XIDeviceInfo *info = XIQueryDevice(dpy, deviceid, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+
+    ASSERT_EQ(info->use, XISlavePointer) << "https://bugs.freedesktop.org/show_bug.cgi?id=40870";
+    ASSERT_EQ(info->attachment, 2); /* VCP */
+
+    XIFreeDeviceInfo(info);
 
     config.RemoveConfig();
     server.Terminate(3000);
