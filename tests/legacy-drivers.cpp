@@ -2,6 +2,15 @@
 #include <fstream>
 #include <xorg/gtest/xorg-gtest.h>
 
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
@@ -250,6 +259,146 @@ TEST(ElographicsDriver, Load)
         ASSERT_EQ(FindInputDeviceByName(dpy, "TOUCHSCREEN"), 1);
     } else
         ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+
+    config.RemoveConfig();
+    server.Terminate(3000);
+    server.RemoveLogFile();
+}
+
+/* Create a named pipe that pumps out elographics 10-byte packets */
+struct elo_packet {
+    unsigned char header;               /* always 'U' */
+    unsigned char expected;             /* always 'T' (touch packet) in this program */
+    unsigned char has_pressure;         /* 0x80 if pressure is present, 0 otherwise */
+    unsigned char x_lo;
+    unsigned char x_hi;
+    unsigned char y_lo;
+    unsigned char y_hi;
+    unsigned char pressure_hi;
+    unsigned char pressure_lo;
+    unsigned char checksum;             /* 0x88 + bytes[1..8] */
+};
+
+static void elo_init_packet(struct elo_packet *packet, short x, short y, short pressure)
+{
+    int i;
+
+    packet->header = 'U';
+    packet->expected = 'T';
+    packet->has_pressure = 0x80;
+    packet->x_lo = x & 0xFF;
+    packet->x_hi = (x & 0xFF00) >> 8;
+    packet->y_lo = y & 0xFF;
+    packet->y_hi = (y & 0xFF00) >> 8;
+    packet->pressure_lo = pressure & 0xFF;
+    packet->pressure_hi = (pressure & 0xFF00) >> 8;
+
+    packet->checksum = 0xaa;
+
+    for (i = 0; i < 9; i++)
+        packet->checksum += *(((unsigned char*)packet) + i);
+}
+
+static void elo_sighandler(int sig)
+{
+    unlink("/tmp/elographics.pipe");
+    exit(0);
+}
+
+static void elo_sighandler_pipe(int sig)
+{
+}
+
+int elo_simulate(void)
+{
+    int i;
+    int rc, fd;
+    struct elo_packet packet;
+    const char *path = "/tmp/elographics.pipe";
+
+    rc = mkfifo(path, 0x755);
+    if (rc == -1) {
+        perror("Failed to create pipe:");
+        return 1;
+    }
+
+    signal(SIGINT, elo_sighandler);
+    signal(SIGTERM, elo_sighandler);
+    signal(SIGPIPE, elo_sighandler_pipe);
+
+    fd = open(path, O_WRONLY);
+    if (fd == -1) {
+        perror("Failed to open pipe:");
+        rc = 1;
+        goto out;
+    }
+
+    for (i = 0; i < 30; i++) {
+        elo_init_packet(&packet, 100 * i, 10, 10);
+        rc = write(fd, &packet, sizeof(packet));
+        if (rc == -1 && errno == SIGPIPE)
+            i--;
+        usleep(500000);
+    }
+
+out:
+    unlink(path);
+
+    return rc;
+}
+
+TEST(ElographicsDriver, Move)
+{
+    XOrgConfig config;
+    xorg::testing::XServer server;
+
+    config.AddInputSection("elographics", "--device--",
+                           "Option \"CorePointer\" \"on\"\n"
+                           "Option \"DebugLevel\" \"10\"\n"
+                           "Option \"Model\" \"Sunit dSeries\"" /* does not send packets to device*/
+                           "Option \"Device\" \"/tmp/elographics.pipe\"\n");
+    config.AddDefaultScreenWithDriver();
+
+    /* fork here */
+    pid_t pid = fork();
+    if (pid == 0) { /* child */
+#ifdef __linux
+        prctl(PR_SET_PDEATHSIG, SIGTERM);
+#endif
+        elo_simulate();
+        return;
+    }
+
+    /* parent */
+    StartServer("elographics", server, config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
+    XSync(dpy, False);
+
+    if (FindInputDeviceByName(dpy, "--device--") != 1) {
+        SCOPED_TRACE("\n"
+                     "	Elographics device '--device--' not found.\n"
+                     "	Maybe this is elographics < 1.4.\n"
+                     "	Checking for TOUCHSCREEN instead, see git commit\n"
+                     "	xf86-input-elographics-1.3.0-1-g55f337f");
+        ASSERT_EQ(FindInputDeviceByName(dpy, "TOUCHSCREEN"), 1);
+    } else
+        ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(dpy, MotionNotify, -1, -1, 1000), true);
+
+    XEvent first, second;
+    XNextEvent(dpy, &first);
+
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(dpy, MotionNotify, -1, -1, 1000), true);
+    XNextEvent(dpy, &second);
+
+    ASSERT_LT(first.xmotion.x_root, second.xmotion.x_root);
 
     config.RemoveConfig();
     server.Terminate(3000);
