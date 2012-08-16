@@ -505,6 +505,60 @@ TEST_P(EvdevDriverInvalidButtonMappingTest, InvalidButtonMapping)
     FAIL() << "Invalid button mapping message not found in log";
 }
 
+
+/**
+ * Test for the server honouring Option Floating "on".
+ */
+class EvdevDriverFloatingSlaveTest : public EvdevDriverMouseTest {
+public:
+    /**
+     * Set up a config for a single evdev Floating device.
+     */
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        std::string log_file = "/tmp/Xorg-evdev-driver-floating.log";
+        server.SetOption("-logfile", log_file);
+        server.SetOption("-config", "/tmp/evdev-driver-floating.conf");
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"Floating\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        config.WriteConfig("/tmp/evdev-driver-floating.conf");
+    }
+};
+
+TEST_F(EvdevDriverFloatingSlaveTest, FloatingDevice)
+{
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    int ndevices;
+    XIDeviceInfo *info = XIQueryDevice(Display(), deviceid, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+
+    ASSERT_EQ(info->use, XIFloatingSlave);
+
+    XIFreeDeviceInfo(info);
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        dev->PlayOne(EV_REL, ABS_X, 10, 1);
+        dev->PlayOne(EV_REL, ABS_X, 4, 1);
+
+        XSync(Display(), False);
+        ASSERT_FALSE(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000));
+
+        ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+
+        ASSERT_TRUE(WIFEXITED(status));
+        ASSERT_EQ(WEXITSTATUS(status), 0);
+    }
+}
+
+
 INSTANTIATE_TEST_CASE_P(, EvdevDriverInvalidButtonMappingTest,
                         ::testing::Values(" ", "a", "64", "1 2 ", "-1",
                                           "1 a", "1 55", "1 -2"));
