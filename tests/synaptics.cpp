@@ -267,6 +267,22 @@ protected:
     std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
+static void
+set_clickpad_property(Display *dpy, const char* name)
+{
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, name, &deviceid), 1);
+
+    Atom clickpad_prop = XInternAtom(dpy, "Synaptics ClickPad", True);
+    ASSERT_NE(clickpad_prop, (Atom)None);
+
+    unsigned char data = 1;
+
+    XIChangeProperty(dpy, deviceid, clickpad_prop, XA_INTEGER, 8,
+                     PropModeReplace, &data, 1);
+    XSync(dpy, False);
+}
+
 TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 {
 #ifndef INPUT_PROP_BUTTONPAD
@@ -330,6 +346,7 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
 TEST_F(SynapticsDriverClickpadTest, Tap)
 {
+    set_clickpad_property(Display(), "--device--");
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
 
@@ -353,6 +370,7 @@ TEST_F(SynapticsDriverClickpadTest, Tap)
 
 TEST_F(SynapticsDriverClickpadTest, VertScrollDown)
 {
+    set_clickpad_property(Display(), "--device--");
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
 
@@ -376,6 +394,7 @@ TEST_F(SynapticsDriverClickpadTest, VertScrollDown)
 
 TEST_F(SynapticsDriverClickpadTest, VertScrollUp)
 {
+    set_clickpad_property(Display(), "--device--");
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
 
@@ -414,6 +433,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("synaptics", "--device--",
                                "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"ClickPad\"            \"on\"\n"
                                "Option \"GrabEventDevice\"     \"0\"\n"
                                "Option \"SoftButtonAreas\"     \"50% 0 82% 0 0 0 0 0\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
