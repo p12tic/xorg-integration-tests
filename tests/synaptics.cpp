@@ -269,6 +269,10 @@ protected:
 
 TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 {
+#ifndef INPUT_PROP_BUTTONPAD
+    SCOPED_TRACE("<linux/input.h>'s INPUT_PROP_BUTTONPAD is missing.\n"
+                 "Clickpad detection will not work on this kernel");
+#endif
     int major = 2;
     int minor = 0;
     ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
@@ -461,6 +465,10 @@ TEST_F(SynapticsDriverClickpadSoftButtonsTest, RightClick)
 
 TEST(SynapticsClickPad, HotPlugSoftButtons)
 {
+#ifndef INPUT_PROP_BUTTONPAD
+    SCOPED_TRACE("<linux/input.h>'s INPUT_PROP_BUTTONPAD is missing.\n"
+                 "Clickpad detection will not work on this kernel");
+#endif
     std::auto_ptr<xorg::testing::evemu::Device> dev;
 
     dev = std::auto_ptr<xorg::testing::evemu::Device>(
