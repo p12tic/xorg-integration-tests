@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #ifndef _INPUT_DRIVER_TEST_H_
 #define _INPUT_DRIVER_TEST_H_
 

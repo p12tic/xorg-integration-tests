@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #ifndef _HELPERS_H_
 #define _HELPERS_H_
 

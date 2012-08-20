@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <stdexcept>
 #include <fstream>
 #include <xorg/gtest/xorg-gtest.h>

@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #ifndef __WACOM_DEVS_H__
 #define __WACOM_DEVS_H__
 

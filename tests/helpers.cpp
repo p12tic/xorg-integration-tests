@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include "helpers.h"
 
 #include <X11/extensions/XInput2.h>

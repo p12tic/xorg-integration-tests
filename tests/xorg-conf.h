@@ -1,3 +1,6 @@
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
 #ifndef _XORGCONFIG_H_
 #define _XORGCONFIG_H_
 
