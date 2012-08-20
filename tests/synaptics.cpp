@@ -309,7 +309,7 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
     unsigned char *data;
 
     status = XIGetProperty(Display(), deviceid, clickpad_prop, 0, 1, False,
-                           XIAnyPropertyType, &type, &format, &nitems,
+                           AnyPropertyType, &type, &format, &nitems,
                            &bytes_after, &data);
 
     ASSERT_EQ(status, Success);
@@ -325,7 +325,7 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
     ASSERT_NE(softbutton_props, (Atom)None);
 
     status = XIGetProperty(Display(), deviceid, softbutton_props, 0, 8, False,
-                           XIAnyPropertyType, &type, &format, &nitems,
+                           AnyPropertyType, &type, &format, &nitems,
                            &bytes_after, &data);
 
     ASSERT_EQ(status, Success);
@@ -528,7 +528,7 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     unsigned char *data;
 
     status = XIGetProperty(dpy, deviceid, clickpad_prop, 0, 1, False,
-                           XIAnyPropertyType, &type, &format, &nitems,
+                           AnyPropertyType, &type, &format, &nitems,
                            &bytes_after, &data);
 
     ASSERT_EQ(status, Success);
@@ -544,7 +544,7 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     ASSERT_NE(softbutton_props, (Atom)None);
 
     status = XIGetProperty(dpy, deviceid, softbutton_props, 0, 8, False,
-                           XIAnyPropertyType, &type, &format, &nitems,
+                           AnyPropertyType, &type, &format, &nitems,
                            &bytes_after, &data);
 
     ASSERT_EQ(status, Success);
