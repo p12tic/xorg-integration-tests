@@ -39,9 +39,17 @@ protected:
     void SetUpEventListener();
 
     /**
+     * Register for the given XI2 extension. Default is 2.0, will ASSERT if
+     * the server does not support XI2.
+     *
+     * @return the minor version number returned by the server.
+     */
+    virtual int RegisterXI2(int major = 2, int minor = 0);
+
+    /**
      * Starts the server and waits for connections. Once completed,
      * xorg::testing::Test::Display() will be set to the server's display
-     * and that display will have registered for XI2.0.
+     * and that display will have registered for XI2.
      */
     virtual void StartServer();
 

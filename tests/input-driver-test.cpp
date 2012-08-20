@@ -10,6 +10,25 @@
 
 #include "input-driver-test.h"
 
+int InputDriverTest::RegisterXI2(int major, int minor)
+{
+    int event_start;
+    int error_start;
+
+    if (!XQueryExtension(Display(), "XInputExtension", &xi2_opcode,
+                         &event_start, &error_start))
+        ADD_FAILURE() << "XQueryExtension returned FALSE";
+
+    int major_return = major;
+    int minor_return = minor;
+    if (XIQueryVersion(Display(), &major_return, &minor_return) != Success)
+        ADD_FAILURE() << "XIQueryVersion failed";
+    if (major_return != major)
+       ADD_FAILURE() << "XIQueryVersion returned invalid major";
+
+    return minor_return;
+}
+
 void InputDriverTest::StartServer() {
     server.Start();
     server.WaitForConnections();
@@ -17,16 +36,7 @@ void InputDriverTest::StartServer() {
 
     ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
 
-    int event_start;
-    int error_start;
-
-    ASSERT_TRUE(XQueryExtension(Display(), "XInputExtension", &xi2_opcode,
-                &event_start, &error_start));
-
-    int major = 2;
-    int minor = 0;
-
-    ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
+    RegisterXI2();
 }
 
 void InputDriverTest::SetUpConfigAndLog(const std::string& param) {
