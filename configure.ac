@@ -50,6 +50,26 @@ PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.4.0])
 
 CHECK_XORG_GTEST([], AC_MSG_ERROR([xorg-gtest or its dependencies not found.  Did you specify --with-gtest-source-path?]))
 
+# Check for RHEL and define as appropriate
+if test -f /etc/redhat-release; then
+    [rhel_version=`grep -o "[5-7].[0-9]\+" /etc/redhat-release`]
+    case "$rhel_version" in
+        5.*)
+        AC_DEFINE(HAVE_RHEL5, [1], [Building on RHEL5])
+        ;;
+        6.*)
+        AC_DEFINE(HAVE_RHEL6, [1], [Building on RHEL6])
+        ;;
+        7.*)
+        AC_DEFINE(HAVE_RHEL7, [1], [Building on RHEL7])
+        ;;
+        **)
+        ;;
+    esac
+    AC_DEFINE_UNQUOTED(RHEL_VERSION, [$rhel_version], "RHEL version")
+fi
+AM_CONDITIONAL(HAVE_RHEL, [test "x$rhel_version" != "x"])
+
 AC_CONFIG_FILES([Makefile
                  doc/Doxyfile
                  doc/Makefile
