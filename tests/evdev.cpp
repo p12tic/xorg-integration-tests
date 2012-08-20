@@ -199,12 +199,67 @@ public:
         config.WriteConfig("/tmp/evdev-driver-mouse.conf");
     }
 
+    virtual int RegisterXI2(int major, int minor)
+    {
+        return InputDriverTest::RegisterXI2(2, 1);
+    }
+
 protected:
     /**
      * The evemu device to generate events.
      */
     std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
+
+TEST_F(EvdevDriverMouseTest, SmoothScrollingAvailable)
+{
+    ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
+
+    int ndevices;
+    XIDeviceInfo *info = XIQueryDevice(Display(), deviceid, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+
+    int nvaluators = 0;
+    bool hscroll_class_found = false;
+    bool vscroll_class_found = false;
+    for (int i = 0; i < info->num_classes; i++) {
+        XIAnyClassInfo *any = info->classes[i];
+        if (any->type == XIScrollClass) {
+            XIScrollClassInfo *scroll = reinterpret_cast<XIScrollClassInfo*>(any);
+            switch(scroll->scroll_type) {
+                case XIScrollTypeVertical:
+                    vscroll_class_found = true;
+                    ASSERT_EQ(scroll->increment, -1);
+                    ASSERT_EQ(scroll->flags & XIScrollFlagPreferred, XIScrollFlagPreferred);
+                    break;
+                case XIScrollTypeHorizontal:
+                    hscroll_class_found = true;
+                    ASSERT_EQ(scroll->increment, 1);
+                    break;
+                default:
+                    FAIL() << "Invalid scroll class: " << scroll->type;
+            }
+        } else if (any->type == XIValuatorClass) {
+            nvaluators++;
+        }
+    }
+
+#ifndef HAVE_RHEL6
+    ASSERT_EQ(nvaluators, 4);
+    ASSERT_TRUE(hscroll_class_found);
+    ASSERT_TRUE(vscroll_class_found);
+#else
+    /* RHEL6 disables smooth scrolling */
+    ASSERT_EQ(nvaluators, 2);
+    ASSERT_FALSE(hscroll_class_found);
+    ASSERT_FALSE(vscroll_class_found);
+#endif
+
+    XIFreeDeviceInfo(info);
+}
 
 void scroll_wheel_event(::Display *display,
                         xorg::testing::evemu::Device *dev,
