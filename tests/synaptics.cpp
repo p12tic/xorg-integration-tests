@@ -64,10 +64,6 @@ protected:
 
 TEST_F(SynapticsDriverTest, DevicePresent)
 {
-    int major = 2;
-    int minor = 0;
-    ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
-
     int ndevices;
     XIDeviceInfo *info;
 
