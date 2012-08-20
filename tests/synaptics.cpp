@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <map>
 #include <utility>
+#include <sstream>
 #include <xorg/gtest/xorg-gtest.h>
 #include <linux/input.h>
 
@@ -131,6 +132,104 @@ TEST_F(SynapticsDriverTest, SmoothScrollingAvailable)
 
     XIFreeDeviceInfo(info);
 }
+
+#ifndef HAVE_RHEL6
+/**
+ * Synaptics driver test for smooth scrolling increments.
+ */
+class SynapticsDriverSmoothScrollTest : public SynapticsDriverTest,
+                                        public ::testing::WithParamInterface<std::pair<int, int> > {
+    /**
+     * Sets up an xorg.conf for a single synaptics CorePointer device based on
+     * the evemu device. Options enabled: tapping (1 finger), two-finger
+     * vertical scroll.
+     */
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-smooth-scrolling.log");
+        server.SetOption("-config", "/tmp/synaptics-smooth-scrolling.conf");
+
+        std::pair<int, int> params = GetParam();
+
+        std::string vdelta = static_cast<std::stringstream*>( &(std::stringstream() << params.first) )->str();
+        std::string hdelta = static_cast<std::stringstream*>( &(std::stringstream() << params.second) )->str();
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("synaptics", "--device--",
+                               "Option \"Protocol\"            \"event\"\n"
+                               "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"TapButton1\"          \"1\"\n"
+                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"FastTaps\"            \"1\"\n"
+                               "Option \"VertTwoFingerScroll\" \"1\"\n"
+                               "Option \"HorizTwoFingerScroll\" \"1\"\n"
+                               "Option \"VertScrollDelta\" \"" + vdelta + "\"\n"
+                               "Option \"HorizScrollDelta\" \"" + hdelta + "\"\n"
+                               "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
+        config.WriteConfig("/tmp/synaptics-smooth-scrolling.conf");
+    }
+
+};
+
+TEST_P(SynapticsDriverSmoothScrollTest, ScrollDelta)
+{
+    ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
+
+    int ndevices;
+    XIDeviceInfo *info = XIQueryDevice(Display(), deviceid, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+
+    std::pair<int, int> deltas = GetParam();
+
+    bool hscroll_class_found = false;
+    bool vscroll_class_found = false;
+    for (int i = 0; i < info->num_classes; i++) {
+        XIAnyClassInfo *any = info->classes[i];
+        if (any->type == XIScrollClass) {
+            XIScrollClassInfo *scroll = reinterpret_cast<XIScrollClassInfo*>(any);
+            switch(scroll->scroll_type) {
+                case XIScrollTypeVertical:
+                    vscroll_class_found = true;
+                    ASSERT_EQ(scroll->increment, deltas.first); /* default driver increment */
+                    break;
+                case XIScrollTypeHorizontal:
+                    hscroll_class_found = true;
+                    ASSERT_EQ(scroll->increment, deltas.second); /* default driver increment */
+                    break;
+                default:
+                    FAIL() << "Invalid scroll class: " << scroll->type;
+            }
+        }
+    }
+
+    /* The server doesn't allow a 0 increment on scroll axes, so the device
+       comes up with no scroll axes.  */
+    if (deltas.second == 0)
+        ASSERT_FALSE(hscroll_class_found);
+    else
+        ASSERT_TRUE(hscroll_class_found);
+
+    if (deltas.first == 0)
+        ASSERT_FALSE(vscroll_class_found);
+    else
+        ASSERT_TRUE(vscroll_class_found);
+
+    XIFreeDeviceInfo(info);
+}
+
+INSTANTIATE_TEST_CASE_P(, SynapticsDriverSmoothScrollTest,
+                        ::testing::Values(std::make_pair(0, 0),
+                                          std::make_pair(1, 1),
+                                          std::make_pair(100, 100),
+                                          std::make_pair(-1, -1),
+                                          std::make_pair(-100, 1),
+                                          std::make_pair(1, 100)
+                            ));
+
+#endif
+
 
 void check_buttons_event(::Display *display,
                         xorg::testing::evemu::Device *dev,
