@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "input-driver-test.h"
+#include "device-interface.h"
 #include "helpers.h"
 
 /**
@@ -37,6 +38,7 @@
  * which device should be initialised.
  */
 class WacomDriverTest : public InputDriverTest,
+                        public DeviceInterface,
                         public ::testing::WithParamInterface<Tablet> {
 protected:
 
@@ -123,19 +125,13 @@ protected:
     virtual void SetUp()
     {
         Tablet tablet = GetParam();
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-            new xorg::testing::evemu::Device( RECORDINGS_DIR "tablets/" + std::string (tablet.descfile)));
+        SetDevice("tablets/" + std::string (tablet.descfile));
 
         InputDriverTest::SetUp();
 
         SetUpXIEventMask ();
         VerifyDevice(tablet);
     }
-
-    /**
-     * The evemu device to generate events.
-     */
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
 /* Return True if the given device has the property, or False otherwise */
