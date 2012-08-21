@@ -17,22 +17,20 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
+#include "device-interface.h"
 #include "helpers.h"
 
 /**
  * Mouse driver test.
  */
-class MouseDriverTest : public InputDriverTest {
+class MouseDriverTest : public InputDriverTest,
+                        public DeviceInterface {
 public:
     /**
      * Initializes a standard mouse device with two wheels.
      */
     virtual void SetUp() {
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
-                    )
-                );
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
         InputDriverTest::SetUp();
     }
 
@@ -51,12 +49,6 @@ public:
                                "Option \"CorePointer\" \"on\"\n");
         config.WriteConfig("/tmp/mouse-driver.conf");
     }
-
-protected:
-    /**
-     * The evemu device to generate events.
-     */
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
 void scroll_wheel_event(::Display *display,
