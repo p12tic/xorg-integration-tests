@@ -1,4 +1,11 @@
-noinst_PROGRAMS = legacy-drivers test-input-load kbd-driver mouse-driver evdev-driver synaptics-driver wacom-driver
+noinst_PROGRAMS = legacy-drivers \
+                  test-input-load \
+                  kbd-driver \
+                  mouse-driver \
+                  evdev-driver \
+                  synaptics-driver \
+                  wacom-driver \
+                  grab
 
 include $(top_srcdir)/Makefile-xorg-gtest.am
 noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
@@ -45,3 +52,6 @@ synaptics_driver_LDADD = $(GTEST_LDADDS)
 
 wacom_driver_SOURCES = wacom.cpp $(common_sources)
 wacom_driver_LDADD = $(GTEST_LDADDS)
+
+grab_SOURCES = grab.cpp $(common_sources)
+grab_LDADD = $(GTEST_LDADDS)
