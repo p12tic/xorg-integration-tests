@@ -17,6 +17,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
+#include "device-interface.h"
 #include "helpers.h"
 
 typedef std::pair <int, KeySym> Key_Pair;
@@ -30,17 +31,13 @@ typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
  * which is later used for the XkbLayout option.
  */
 class EvdevDriverXKBTest : public InputDriverTest,
+                           public DeviceInterface,
                            public ::testing::WithParamInterface<std::string> {
     /**
      * Initializes a standard keyboard device.
      */
     virtual void SetUp() {
-
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc"
-                    )
-                );
+        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
 
         // Define a map of pair to hold each key/keysym per layout
         // US, QWERTY => qwerty
@@ -98,11 +95,6 @@ class EvdevDriverXKBTest : public InputDriverTest,
     }
 
     protected:
-    /**
-     * The evemu device to generate events.
-     */
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
-
     /**
      * List of evdev keysyms to X11 keysyms for each layout.
      */
@@ -167,17 +159,14 @@ INSTANTIATE_TEST_CASE_P(, EvdevDriverXKBTest, ::testing::Values("us", "de", "fr"
 /**
  * Evdev driver test for mouse devices.
  */
-class EvdevDriverMouseTest : public InputDriverTest {
+class EvdevDriverMouseTest : public InputDriverTest,
+                             public DeviceInterface {
 public:
     /**
      * Initializes a standard mouse device with two wheels.
      */
     virtual void SetUp() {
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
-                    )
-                );
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
         InputDriverTest::SetUp();
     }
 
@@ -203,12 +192,6 @@ public:
     {
         return InputDriverTest::RegisterXI2(2, 1);
     }
-
-protected:
-    /**
-     * The evemu device to generate events.
-     */
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
 TEST_F(EvdevDriverMouseTest, SmoothScrollingAvailable)
