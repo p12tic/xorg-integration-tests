@@ -244,6 +244,66 @@ TEST_F(EvdevDriverMouseTest, SmoothScrollingAvailable)
     XIFreeDeviceInfo(info);
 }
 
+TEST_F(EvdevDriverMouseTest, SmoothScrolling)
+{
+    ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_Motion);
+    mask.mask = new unsigned char[mask.mask_len];
+    XISetMask(mask.mask, XI_Motion);
+    XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_ButtonRelease);
+    XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1);
+    XSync(Display(), False);
+
+    delete mask.mask;
+
+    dev->PlayOne(EV_REL, REL_WHEEL, -1, true);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_Motion,
+                                                           1000));
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xany.type, GenericEvent);
+    ASSERT_EQ(ev.xcookie.evtype, XI_Motion);
+    XGetEventData(Display(), &ev.xcookie);
+    XIDeviceEvent *e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+    ASSERT_GE(e->valuators.mask_len, 1); /* one 4-byte unit */
+    ASSERT_TRUE(XIMaskIsSet(e->valuators.mask, 3)); /* order of axes is x, y, hwheel, wheel */
+    XFreeEventData(Display(), &ev.xcookie);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_ButtonPress,
+                                                           1000));
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xany.type, GenericEvent);
+    ASSERT_EQ(ev.xcookie.evtype, XI_ButtonPress);
+    XGetEventData(Display(), &ev.xcookie);
+    e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+    ASSERT_EQ(e->detail, 5);
+    ASSERT_EQ(e->flags & XIPointerEmulated, XIPointerEmulated);
+    XFreeEventData(Display(), &ev.xcookie);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_ButtonRelease,
+                                                           1000));
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xany.type, GenericEvent);
+    ASSERT_EQ(ev.xcookie.evtype, XI_ButtonRelease);
+    XGetEventData(Display(), &ev.xcookie);
+    e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+    ASSERT_EQ(e->detail, 5);
+    ASSERT_EQ(e->flags & XIPointerEmulated, XIPointerEmulated);
+    XFreeEventData(Display(), &ev.xcookie);
+}
+
 void scroll_wheel_event(::Display *display,
                         xorg::testing::evemu::Device *dev,
                         int axis, int value, unsigned int button) {
