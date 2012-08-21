@@ -15,6 +15,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
+#include "device-interface.h"
 
 typedef std::pair <int, KeySym> Key_Pair;
 typedef std::multimap<std::string, Key_Pair> Keys_Map;
@@ -27,17 +28,13 @@ typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
  * for the XkbLayout option.
  */
 class KeyboardDriverTest : public InputDriverTest,
+                           public DeviceInterface,
                            public ::testing::WithParamInterface<std::string> {
     /**
      * Initializes a standard keyboard device.
      */
     virtual void SetUp() {
-
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc"
-                    )
-                );
+        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
 
         // Define a map of pair to hold each key/keysym per layout
         // US, QWERTY => qwerty
@@ -92,11 +89,6 @@ class KeyboardDriverTest : public InputDriverTest,
     }
 
     protected:
-    /**
-     * The evemu device to generate events.
-     */
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
-
     /**
      * List of evdev keysyms to X11 keysyms for each layout.
      */
