@@ -119,12 +119,6 @@ TEST_F(SynapticsDriverTest, SmoothScrollingAvailable)
                     FAIL() << "Invalid scroll class: " << scroll->type;
             }
         } else if (any->type == XIValuatorClass) {
-            XIValuatorClassInfo *val = reinterpret_cast<XIValuatorClassInfo*>(any);
-            if (val->number < 2)
-                continue;
-#ifdef HAVE_RHEL6
-            FAIL() << "Only two axes expected.";
-#endif
             nvaluators++;
         }
     }
@@ -135,6 +129,7 @@ TEST_F(SynapticsDriverTest, SmoothScrollingAvailable)
     ASSERT_TRUE(vscroll_class_found);
 #else
     /* RHEL6 disables smooth scrolling */
+    ASSERT_EQ(nvaluators, 2);
     ASSERT_FALSE(hscroll_class_found);
     ASSERT_FALSE(vscroll_class_found);
 #endif
