@@ -22,7 +22,8 @@ GTEST_LDADDS = \
 
 common_sources = input-driver-test.cpp input-driver-test.h \
 		 xorg-conf.cpp xorg-conf.h \
-		 helpers.cpp helpers.h
+		 helpers.cpp helpers.h \
+		 device-interface.cpp device-interface.h
 
 legacy_drivers_SOURCES = legacy-drivers.cpp $(common_sources)
 legacy_drivers_LDADD = $(GTEST_LDADDS)

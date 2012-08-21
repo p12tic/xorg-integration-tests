@@ -17,23 +17,21 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
+#include "device-interface.h"
 #include "helpers.h"
 
 /**
  * Synaptics driver test for touchpad devices. This class uses a traditional
  * touchpad device.
  */
-class SynapticsDriverTest : public InputDriverTest {
+class SynapticsDriverTest : public InputDriverTest,
+                            public DeviceInterface {
 public:
     /**
      * Initializes a standard touchpad device.
      */
     virtual void SetUp() {
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad.desc"
-                    )
-                );
+        SetDevice("touchpads/SynPS2-Synaptics-TouchPad.desc");
         InputDriverTest::SetUp();
     }
 
@@ -62,9 +60,6 @@ public:
     {
         return InputDriverTest::RegisterXI2(2, 1);
     }
-
-protected:
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
 TEST_F(SynapticsDriverTest, DevicePresent)
@@ -286,17 +281,14 @@ INSTANTIATE_TEST_CASE_P(, SynapticsWarpTest,
 /**
  * Synaptics driver test for clickpad devices.
  */
-class SynapticsDriverClickpadTest : public InputDriverTest {
+class SynapticsDriverClickpadTest : public InputDriverTest,
+                                    public DeviceInterface {
 public:
     /**
      * Initializes a clickpad, as the one found on the Lenovo x220t.
      */
     virtual void SetUp() {
-        dev = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.desc"
-                    )
-                );
+        SetDevice("touchpads/SynPS2-Synaptics-TouchPad-Clickpad.desc");
         InputDriverTest::SetUp();
     }
 
@@ -316,9 +308,6 @@ public:
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
         config.WriteConfig("/tmp/synaptics-clickpad.conf");
     }
-
-protected:
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
 };
 
 static void
