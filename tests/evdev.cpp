@@ -315,6 +315,8 @@ TEST_F(EvdevDriverMouseTest, SmoothScrolling)
     ASSERT_EQ(e->flags & XIPointerEmulated, 0);
 #endif
     XFreeEventData(Display(), &ev.xcookie);
+
+    ASSERT_FALSE(XPending(Display()));
 }
 
 void scroll_wheel_event(::Display *display,
