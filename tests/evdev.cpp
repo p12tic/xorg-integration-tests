@@ -261,20 +261,25 @@ TEST_F(EvdevDriverMouseTest, SmoothScrolling)
     delete mask.mask;
 
     dev->PlayOne(EV_REL, REL_WHEEL, -1, true);
+
+    XEvent ev;
+    XIDeviceEvent *e;
+
+#ifndef HAVE_RHEL6
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
                                                            XI_Motion,
                                                            1000));
-    XEvent ev;
     XNextEvent(Display(), &ev);
     ASSERT_EQ(ev.xany.type, GenericEvent);
     ASSERT_EQ(ev.xcookie.evtype, XI_Motion);
     XGetEventData(Display(), &ev.xcookie);
-    XIDeviceEvent *e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+    e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
     ASSERT_GE(e->valuators.mask_len, 1); /* one 4-byte unit */
     ASSERT_TRUE(XIMaskIsSet(e->valuators.mask, 3)); /* order of axes is x, y, hwheel, wheel */
     XFreeEventData(Display(), &ev.xcookie);
+#endif
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -287,7 +292,11 @@ TEST_F(EvdevDriverMouseTest, SmoothScrolling)
     XGetEventData(Display(), &ev.xcookie);
     e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
     ASSERT_EQ(e->detail, 5);
+#ifndef HAVE_RHEL6
     ASSERT_EQ(e->flags & XIPointerEmulated, XIPointerEmulated);
+#else
+    ASSERT_EQ(e->flags & XIPointerEmulated, 0);
+#endif
     XFreeEventData(Display(), &ev.xcookie);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -300,7 +309,11 @@ TEST_F(EvdevDriverMouseTest, SmoothScrolling)
     XGetEventData(Display(), &ev.xcookie);
     e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
     ASSERT_EQ(e->detail, 5);
+#ifndef HAVE_RHEL6
     ASSERT_EQ(e->flags & XIPointerEmulated, XIPointerEmulated);
+#else
+    ASSERT_EQ(e->flags & XIPointerEmulated, 0);
+#endif
     XFreeEventData(Display(), &ev.xcookie);
 }
 
