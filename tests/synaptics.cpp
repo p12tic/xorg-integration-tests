@@ -455,13 +455,22 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
     ASSERT_EQ(format, 8);
     ASSERT_EQ(nitems, 1U);
     ASSERT_EQ(bytes_after, 0U);
+#ifdef INPUT_PROP_BUTTONPAD
     ASSERT_EQ(data[0], 1U);
+#else
+    ASSERT_EQ(data[0], 0U) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
+#endif
     free(data);
 
     /* This option is assigned by the xorg.conf.d, it won't activate for
        xorg.conf devices. */
     Atom softbutton_props = XInternAtom(Display(), "Synaptics Soft Button Areas", True);
+#ifdef INPUT_PROP_BUTTONPAD
     ASSERT_NE(softbutton_props, (Atom)None);
+#else
+    ASSERT_EQ(softbutton_props, (Atom)None) << "Not expecting Soft Buttons property on non-clickpads";
+    return;
+#endif
 
     status = XIGetProperty(Display(), deviceid, softbutton_props, 0, 8, False,
                            AnyPropertyType, &type, &format, &nitems,
@@ -674,13 +683,22 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     ASSERT_EQ(format, 8);
     ASSERT_EQ(nitems, 1U);
     ASSERT_EQ(bytes_after, 0U);
+#ifdef INPUT_PROP_BUTTONPAD
     ASSERT_EQ(data[0], 1U);
+#else
+    ASSERT_EQ(data[0], 0U) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
+#endif
     free(data);
 
     /* This option is assigned by the xorg.conf.d, it won't activate for
        xorg.conf devices. */
     Atom softbutton_props = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
+#ifdef INPUT_PROP_BUTTONPAD
     ASSERT_NE(softbutton_props, (Atom)None);
+#else
+    ASSERT_EQ(softbutton_props, (Atom)None) << "Not expecting Soft Buttons property on non-clickpads";
+    return;
+#endif
 
     status = XIGetProperty(dpy, deviceid, softbutton_props, 0, 8, False,
                            AnyPropertyType, &type, &format, &nitems,
