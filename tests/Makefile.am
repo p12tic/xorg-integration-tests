@@ -5,6 +5,7 @@ noinst_PROGRAMS = legacy-drivers \
                   evdev-driver \
                   synaptics-driver \
                   wacom-driver \
+                  libXi \
                   grab
 
 include $(top_srcdir)/Makefile-xorg-gtest.am
@@ -55,3 +56,6 @@ wacom_driver_LDADD = $(GTEST_LDADDS)
 
 grab_SOURCES = grab.cpp $(common_sources)
 grab_LDADD = $(GTEST_LDADDS)
+
+libXi_SOURCES = libXi.cpp $(common_sources)
+libXi_LDADD = $(GTEST_LDADDS)
