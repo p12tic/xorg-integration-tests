@@ -2,6 +2,7 @@
 #include <config.h>
 #endif
 #include <stdexcept>
+#include <stdint.h>
 #include <map>
 #include <utility>
 #include <sstream>
@@ -632,6 +633,132 @@ TEST_F(SynapticsDriverClickpadSoftButtonsTest, RightClick)
     ASSERT_EQ(btn.xbutton.button, 3U);
 
     XSync(Display(), True);
+}
+
+/**
+ * Synaptics driver test for clickpad devices with the SoftButtonArea set at
+ * runtime.
+ */
+class SynapticsDriverClickpadSoftButtonsRuntimeTest : public SynapticsDriverClickpadTest {
+public:
+    /**
+     * Sets up a single CorePointer synaptics clickpad device with the
+     * SoftButtonArea option set to 50% left/right, 82% from the top.
+     */
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad-softbuttons.log");
+        server.SetOption("-config", "/tmp/synaptics-clickpad-softbuttons.conf");
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("synaptics", "--device--",
+                               "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"ClickPad\"            \"off\"\n"
+                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
+        config.WriteConfig(server.GetConfigPath());
+    }
+};
+
+TEST_F(SynapticsDriverClickpadSoftButtonsRuntimeTest, SoftButtonsFirst)
+{
+    ::Display *dpy = Display();
+    Atom softbutton_prop = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
+    ASSERT_EQ(softbutton_prop, (Atom)None);
+
+    softbutton_prop = XInternAtom(dpy, "Synaptics Soft Button Areas", False);
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    uint32_t propdata[8] = {0};
+    propdata[0] = 3472;
+    propdata[2] = 3900;
+
+    XIChangeProperty(dpy, deviceid, softbutton_prop, XA_INTEGER, 32,
+                     PropModeReplace,
+                     reinterpret_cast<unsigned char*>(propdata), 8);
+    XSync(dpy, False);
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.right-phys-click.events");
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000));
+
+    /* expect left-click, the clickpad prop is still off */
+    XEvent btn;
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 1U);
+
+    Atom clickpad_prop = XInternAtom(dpy, "Synaptics ClickPad", False);
+    unsigned char on = 1;
+    XIChangeProperty(dpy, deviceid, clickpad_prop, XA_INTEGER, 8,
+                     PropModeReplace, &on, 1);
+    XSync(Display(), False);
+
+    /* now expect right click */
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.right-phys-click.events");
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000));
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 3U);
+}
+
+TEST_F(SynapticsDriverClickpadSoftButtonsRuntimeTest, SoftButtonsSecond)
+{
+    ::Display *dpy = Display();
+    Atom softbutton_prop = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
+    ASSERT_EQ(softbutton_prop, (Atom)None);
+
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+
+    Atom clickpad_prop = XInternAtom(dpy, "Synaptics ClickPad", False);
+    unsigned char on = 1;
+    XIChangeProperty(dpy, deviceid, clickpad_prop, XA_INTEGER, 8,
+                     PropModeReplace, &on, 1);
+    XSync(Display(), False);
+
+    /* prop must now be initialized */
+    softbutton_prop = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
+    ASSERT_GT(softbutton_prop, (Atom)None);
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.right-phys-click.events");
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000));
+
+    /* expect left-click, soft button areas should be 0 */
+    XEvent btn;
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 1U);
+
+    uint32_t propdata[8] = {0};
+    propdata[0] = 3472;
+    propdata[2] = 3900;
+
+    XIChangeProperty(dpy, deviceid, softbutton_prop, XA_INTEGER, 32,
+                     PropModeReplace,
+                     reinterpret_cast<unsigned char*>(propdata), 8);
+    XSync(dpy, False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.right-phys-click.events");
+
+    /* now expect right click */
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000));
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 3U);
 }
 
 TEST(SynapticsClickPad, HotPlugSoftButtons)
