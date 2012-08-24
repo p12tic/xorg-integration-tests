@@ -4,8 +4,8 @@
 # or packages in RHEL
 #
 
-rpm -q bzr svn
-if [ $? -ne 0]; then
+rpm -q bzr subversion
+if [ $? -ne 0 ]; then
     echo "Please install bzr and svn."
     exit 1
 fi
