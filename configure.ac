@@ -74,5 +74,9 @@ AC_CONFIG_FILES([Makefile
                  doc/Doxyfile
                  doc/Makefile
                  recordings/Makefile
-                 tests/Makefile])
+                 tests/Makefile
+                 tests/common/Makefile
+                 tests/input/Makefile
+                 tests/server/Makefile
+                 tests/lib/Makefile])
 AC_OUTPUT

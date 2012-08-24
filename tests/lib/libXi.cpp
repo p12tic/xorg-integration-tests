@@ -9,8 +9,8 @@
 #include <X11/extensions/XI2.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
-#include "device-interface.h"
+#include <input-driver-test.h>
+#include <device-interface.h>
 
 /**
  * Test for libXi-related bugs. Initialises a single evdev pointer device ready
