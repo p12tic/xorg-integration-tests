@@ -1,7 +1,7 @@
 include $(top_srcdir)/tests/common/Makefile.am
 
 noinst_PROGRAMS = legacy-drivers \
-                  test-input-load \
+                  input-module-load \
                   kbd-driver \
                   mouse-driver \
                   evdev-driver \
@@ -13,8 +13,8 @@ TESTS=$(noinst_PROGRAMS)
 legacy_drivers_SOURCES = legacy-drivers.cpp $(common_sources)
 legacy_drivers_LDADD = $(GTEST_LDADDS)
 
-test_input_load_SOURCES = test-input-load.cpp $(common_sources)
-test_input_load_LDADD = $(GTEST_LDADDS)
+input_module_load_SOURCES = input-module-load.cpp $(common_sources)
+input_module_load_LDADD = $(GTEST_LDADDS)
 
 kbd_driver_SOURCES = kbd.cpp $(common_sources)
 kbd_driver_LDADD = $(GTEST_LDADDS)

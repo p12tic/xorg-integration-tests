@@ -1,0 +1,8 @@
+legacy-drivers
+input-module-load
+kbd-driver
+mouse-driver
+evdev-driver
+synaptics-driver
+wacom-driver
+
