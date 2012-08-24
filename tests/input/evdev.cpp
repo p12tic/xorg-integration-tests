@@ -194,6 +194,7 @@ public:
     }
 };
 
+#ifdef HAVE_XI22
 TEST_F(EvdevDriverMouseTest, SmoothScrollingAvailable)
 {
     ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
@@ -318,6 +319,8 @@ TEST_F(EvdevDriverMouseTest, SmoothScrolling)
 
     ASSERT_FALSE(XPending(Display()));
 }
+
+#endif /* HAVE_XI22 */
 
 void scroll_wheel_event(::Display *display,
                         xorg::testing::evemu::Device *dev,

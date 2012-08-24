@@ -84,6 +84,7 @@ TEST_F(SynapticsDriverTest, DevicePresent)
     XIFreeDeviceInfo(info);
 }
 
+#ifdef HAVE_XI22
 TEST_F(SynapticsDriverTest, SmoothScrollingAvailable)
 {
     ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
@@ -230,6 +231,7 @@ INSTANTIATE_TEST_CASE_P(, SynapticsDriverSmoothScrollTest,
                             ));
 
 #endif
+#endif /* HAVE_XI22 */
 
 
 void check_buttons_event(::Display *display,

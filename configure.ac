@@ -45,6 +45,9 @@ XORG_WITH_DOXYGEN
 
 PKG_CHECK_MODULES(XI, x11 xi)
 PKG_CHECK_MODULES(EVEMU, [evemu >= 1.0.10])
+PKG_CHECK_MODULES(XI22, [inputproto >= 2.2],
+                  AC_DEFINE(HAVE_XI22, 1, [XI 2.2 available]),
+                  [noop=noop])
 
 PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.4.0])
 
