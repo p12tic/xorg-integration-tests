@@ -32,13 +32,13 @@ protected:
     int xi2_opcode_;
 };
 
-/**
- * XIQueryPointer for XInput 2.1 and earlier should report the first button
- * pressed if a touch is physically active. For XInput 2.2 and later clients,
- * the first button should not be reported.
- */
 TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 {
+    SCOPED_TRACE("\n"
+                 "XIQueryPointer for XInput 2.1 and earlier should report the\n"
+                 "first button pressed if a touch is physically active. For \n"
+                 "XInput 2.2 and later clients, the first button should not be\n"
+                 "reported.");
     XIEventMask mask;
     mask.deviceid = XIAllDevices;
     mask.mask_len = XIMaskLen(XI_HierarchyChanged);
@@ -114,11 +114,10 @@ TEST_P(XInput2Test, XIQueryPointerTouchscreen)
     XFreeEventData(Display(), xcookie);
 }
 
-/**
- * When a device is disabled, any physically active touches should end.
- */
 TEST_P(XInput2Test, DisableDeviceEndTouches)
 {
+    SCOPED_TRACE("When a device is disabled, any physically active touches\n"
+                 "should end.");
     /* This is an XInput 2.2 and later test only */
     if (GetParam() < 2)
         return;
