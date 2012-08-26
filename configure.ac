@@ -28,7 +28,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
 
 # Initialize Automake
-AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip tar-pax])
 AM_MAINTAINER_MODE
 
 # Initialize libtool
