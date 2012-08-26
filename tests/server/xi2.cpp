@@ -114,6 +114,7 @@ TEST_P(XInput2Test, XIQueryPointerTouchscreen)
     XFreeEventData(Display(), xcookie);
 }
 
+#ifdef HAVE_XI22
 TEST_P(XInput2Test, DisableDeviceEndTouches)
 {
     SCOPED_TRACE("When a device is disabled, any physically active touches\n"
@@ -193,5 +194,6 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
                                                            xi2_opcode_,
                                                            XI_TouchEnd));
 }
+#endif
 
 INSTANTIATE_TEST_CASE_P(, XInput2Test, ::testing::Range(0, 3));
