@@ -23,7 +23,8 @@ Notes:
    right CFLAGS and include paths.
 
 === Building this repository ===
-  export ACLOCAL="aclocal -I $HOME/testing/aclocal"
+  export ACLOCAL_PATH="-I $HOME/testing/aclocal"
+  export ACLOCAL="aclocal -I $ACLOCAL_PATH"
   export PKG_CONFIG_PATH="$HOME/testing/lib/pkgconfig"
   ./autogen.sh --with-gtest-source-path="/path/to/googletest" --prefix=$HOME/testing
   make
