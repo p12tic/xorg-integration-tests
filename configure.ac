@@ -26,6 +26,7 @@ AC_INIT([xorg-integration-tests], [0.0.1])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
+AC_CONFIG_MACRO_DIR([m4])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip tar-pax])
@@ -51,6 +52,8 @@ PKG_CHECK_MODULES(XI22, [inputproto >= 2.2],
 
 PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.4.0])
 
+m4_ifndef([CHECK_XORG_GTEST],
+          [m4_fatal([must install xorg-gtest before running autoconf/autogen])])
 CHECK_XORG_GTEST([], AC_MSG_ERROR([xorg-gtest or its dependencies not found.  Did you specify --with-gtest-source-path?]))
 
 # Check for RHEL and define as appropriate
