@@ -707,7 +707,7 @@ TEST_F(SynapticsDriverClickpadSoftButtonsRuntimeTest, SoftButtonsFirst)
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 3U);
+    ASSERT_EQ(btn.xbutton.button, 3U) << "https://bugs.freedesktop.org/show_bug.cgi?id=54102";
 }
 
 TEST_F(SynapticsDriverClickpadSoftButtonsRuntimeTest, SoftButtonsSecond)
