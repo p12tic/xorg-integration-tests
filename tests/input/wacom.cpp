@@ -391,7 +391,7 @@ TEST_P(WacomDriverTest, Rotation)
 
     if (tablet.stylus) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
-        ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 0) <<  "Tool not found " << tool_name <<std::endl;
+        ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
         // Try with no rotation
         status = set_rotate (Display(), deviceid, "none");
