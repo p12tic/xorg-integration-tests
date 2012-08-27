@@ -28,5 +28,5 @@ evdev_driver_LDADD = $(GTEST_LDADDS)
 synaptics_driver_SOURCES = synaptics.cpp $(common_sources)
 synaptics_driver_LDADD = $(GTEST_LDADDS)
 
-wacom_driver_SOURCES = wacom.cpp $(common_sources)
+wacom_driver_SOURCES = wacom.cpp wacom_devs.h $(common_sources)
 wacom_driver_LDADD = $(GTEST_LDADDS)
