@@ -82,6 +82,7 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  tests/common/Makefile
                  tests/input/Makefile
+                 tests/video/Makefile
                  tests/server/Makefile
                  tests/lib/Makefile])
 AC_OUTPUT

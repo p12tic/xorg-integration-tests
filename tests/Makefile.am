@@ -1,1 +1,1 @@
-SUBDIRS = common input server lib 
+SUBDIRS = common input server lib video
