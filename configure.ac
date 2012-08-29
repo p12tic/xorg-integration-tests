@@ -26,7 +26,6 @@ AC_INIT([xorg-integration-tests], [0.0.1])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
-AC_CONFIG_MACRO_DIR([m4])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip tar-pax])
