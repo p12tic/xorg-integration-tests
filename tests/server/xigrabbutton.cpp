@@ -23,11 +23,10 @@ public:
     virtual void SetUp() {
         SetDevice("tablets/Wacom-Cintiq-21UX2.desc");
         InputDriverTest::SetUp();
+        display_string = server.GetDisplayString();
     }
 
     /**
-     * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
-     * the evemu device. The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-xibuttongrab-test.log");
@@ -48,10 +47,12 @@ public:
                                "    Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig("/tmp/xorg-xibuttongrab-test.conf");
     }
+
+   std::string display_string;
 };
 
 static int
-grab_buttons (Display *dpy, Window win, int deviceid, Bool owner)
+grab_buttons (Display *dpy, Window win, int deviceid)
 {
     XIGrabModifiers mods;
     unsigned char mask[1] = { 0 };
@@ -74,30 +75,10 @@ grab_buttons (Display *dpy, Window win, int deviceid, Bool owner)
                            None,
                            GrabModeAsync,
                            GrabModeAsync,
-                           owner,
+                           False,
                            &evmask,
                            1,
                            &mods);
-    XFlush(dpy);
-
-    return status;
-}
-
-static int
-ungrab_buttons (Display *dpy, Window win, int deviceid)
-{
-    XIGrabModifiers mods;
-    int status;
-
-    mods.modifiers = XIAnyModifier;
-
-    status = XIUngrabButton (dpy,
-                             deviceid,
-                             XIAnyButton,
-                             win,
-                             1, 
-                             &mods);
-
     XFlush(dpy);
 
     return status;
@@ -117,9 +98,9 @@ setup_event_mask (Display *dpy, Window win, int deviceid)
     XISetMask (evmask.mask, XI_ButtonPress);
     XISetMask (evmask.mask, XI_ButtonRelease);
 
-    status = XISelectEvents (dpy, 
-                             win, 
-                             &evmask, 
+    status = XISelectEvents (dpy,
+                             win,
+                             &evmask,
                              1);
     return status;
 }
@@ -133,99 +114,102 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
 
     ASSERT_GE(RegisterXI2(), 0) << "This test requires XI2" << std::endl;
 
-    ::Display *dpy = Display();
+    ::Display *dpy1 = XOpenDisplay (display_string.c_str());
+    ::Display *dpy2 = XOpenDisplay (display_string.c_str());
 
     XSetWindowAttributes attr;
 
-    attr.background_pixel  = BlackPixel (dpy, DefaultScreen (dpy));
+    attr.background_pixel  = BlackPixel (dpy2, DefaultScreen (dpy2));
     attr.override_redirect = 1;
     attr.event_mask = ButtonPressMask|
                       ButtonReleaseMask|
                       ExposureMask;
 
-    Window win = XCreateWindow(dpy,
-                               DefaultRootWindow(dpy),
+    Window win = XCreateWindow(dpy2,
+                               DefaultRootWindow(dpy2),
                                0, 0,
-                               DisplayWidth(dpy, DefaultScreen(dpy)),
-                               DisplayHeight(dpy, DefaultScreen(dpy)),
-                               0, 
-                               DefaultDepth (dpy, DefaultScreen (dpy)), 
-                               InputOutput, 
-                               DefaultVisual (dpy, DefaultScreen (dpy)),
+                               DisplayWidth(dpy2, DefaultScreen(dpy2)),
+                               DisplayHeight(dpy2, DefaultScreen(dpy2)),
+                               0,
+                               DefaultDepth (dpy2, DefaultScreen (dpy2)),
+                               InputOutput,
+                               DefaultVisual (dpy2, DefaultScreen (dpy2)),
                                CWBackPixel|CWOverrideRedirect|CWEventMask,
                                &attr);
-    XMapRaised (dpy, win);
-    XFlush(dpy);
-    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+    XMapRaised (dpy2, win);
+    XFlush(dpy2);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy2,
                                                            Expose,
                                                            -1, -1, 1000));
-                                                           
+
     int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy2, "pad", &deviceid), 1);
 
-    ASSERT_EQ(FindInputDeviceByName(Display(), "pad", &deviceid), 1);
+    // First, check without the grab, the top win should get the event
+    XSync(dpy2, False);
 
-    setup_event_mask (dpy, DefaultRootWindow(dpy), deviceid);
-    setup_event_mask (dpy, win, deviceid);
+    dev->PlayOne(EV_KEY, BTN_1, 1, true);
 
-    // First, check with owner_events == False, the root win should get the event
-    grab_buttons (dpy, DefaultRootWindow(dpy), deviceid, False);
-    XSync(dpy, False);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy2,
+                                                           ButtonPressMask,
+                                                           0,
+                                                           ButtonPress,
+                                                           1000));
+
+    XEvent ev;
+    XNextEvent(dpy2, &ev);
+
+    ASSERT_TRUE(ev.type == ButtonPress);
+    XButtonEvent *bev = (XButtonEvent *) &ev;
+    ASSERT_TRUE(bev->window == win);
+
+    while (XPending(dpy1))
+        XNextEvent (dpy1, &ev);
+    ASSERT_FALSE(XPending(dpy1));
+
+    while (XPending(dpy2))
+        XNextEvent (dpy2, &ev);
+    ASSERT_FALSE(XPending(dpy2));
+
+    // Second, check with XIGrabButton on the root win, the root win should get the event
+    setup_event_mask (dpy1, DefaultRootWindow(dpy1), deviceid);
+    grab_buttons (dpy1, DefaultRootWindow(dpy1), deviceid);
+    XSync(dpy1, False);
 
     dev->PlayOne(EV_KEY, BTN_2, 1, true);
-    
-    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy1,
                                                            GenericEvent,
                                                            xi2_opcode,
                                                            XI_ButtonPress,
                                                            1000));
-    XEvent ev;
-    XNextEvent(dpy, &ev);
+    XNextEvent(dpy1, &ev);
 
     XGenericEventCookie *cookie = &ev.xcookie;
 
     ASSERT_TRUE(cookie->type == GenericEvent);
-    ASSERT_TRUE(cookie->extension == xi2_opcode);    
-    ASSERT_TRUE(XGetEventData(dpy, cookie) != 0);
+    ASSERT_TRUE(cookie->extension == xi2_opcode);
+    ASSERT_TRUE(XGetEventData(dpy1, cookie) != 0);
 
     XIDeviceEvent *xev = (XIDeviceEvent *) cookie->data;
     ASSERT_TRUE(cookie->evtype == XI_ButtonPress);
-    ASSERT_TRUE(xev->event == DefaultRootWindow(dpy));
+    ASSERT_TRUE(xev->event == DefaultRootWindow(dpy1));
 
-    XFreeEventData(dpy, cookie);
-    ASSERT_FALSE(XPending(dpy));
+    XFreeEventData(dpy1, cookie);
 
-    ASSERT_FALSE(xorg::testing::XServer::WaitForEventOfType(Display(),
-                                                            ButtonPressMask,
-                                                            0,
-                                                            ButtonPress,
-                                                            1000));
-
-    ungrab_buttons (dpy, DefaultRootWindow(dpy), deviceid);
-
-    // Second, check with owner_events == True, the top win should get the event
-    ungrab_buttons (dpy, DefaultRootWindow(dpy), deviceid);
-    grab_buttons (dpy, DefaultRootWindow(dpy), deviceid, True);
-    XSync(dpy, False);
-
-    dev->PlayOne(EV_KEY, BTN_1, 1, true);
-    
-    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
-                                                           GenericEvent,
-                                                           xi2_opcode,
-                                                           XI_ButtonPress,
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy2,
+                                                           ButtonPressMask,
+                                                           0,
+                                                           ButtonPress,
                                                            1000));
-    XNextEvent(dpy, &ev);
-    cookie = &ev.xcookie;
 
-    ASSERT_TRUE(cookie->type == GenericEvent);
-    ASSERT_TRUE(cookie->extension == xi2_opcode);    
-    ASSERT_TRUE(XGetEventData(dpy, cookie) != 0);
+    XNextEvent(dpy2, &ev);
+    ASSERT_TRUE(ev.type == ButtonPress);
+    bev = (XButtonEvent *) &ev;
+    ASSERT_TRUE(bev->window == win);
 
-    xev = (XIDeviceEvent *) cookie->data;
-    ASSERT_TRUE(cookie->evtype == XI_ButtonPress);
-    ASSERT_TRUE(xev->event == win);
-
-    XFreeEventData(dpy, cookie);
+    XCloseDisplay(dpy1);
+    XCloseDisplay(dpy2);
 }
 
 int main(int argc, char **argv) {
