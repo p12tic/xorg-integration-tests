@@ -23,5 +23,37 @@ void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfi
  */
 int FindInputDeviceByName(Display *dpy, const std::string& device_name, int *deviceid = NULL);
 
+/**
+ * Initialized XRandR support by selecting appropriate events to be
+ * notified of RandR related changes.
+ *
+ * Returns TRUE if the display support XRandR >= 1.2
+ *
+ * @param [out] event_base If not NULL, the value is set to the first event
+ *                         code.
+ * @param [out] error_base If not NULL, the value is set to the first error
+ *                         code.
+ */
+Bool InitRandRSupport (Display *dpy, int *event_base, int *error_base);
+
+/**
+ * Returns the number of connected monitors
+ */
+int GetNMonitors (Display *dpy);
+
+/**
+ * Returns the geometry of the given monitor specified by its number.
+ *
+ * @param [out] x      If not NULL, the value is set to the X position of the 
+ *                     monitor.
+ * @param [out] y      If not NULL, the value is set to the Y position of the 
+ *                     monitor.
+ * @param [out] width  If not NULL, the value is set to the width of the 
+ *                     monitor.
+ * @param [out] height If not NULL, the value is set to the height of the 
+ *                     monitor.
+ */
+void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, int *height);
+
 #endif
 

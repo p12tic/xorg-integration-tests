@@ -4,6 +4,7 @@ noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
 
 AM_CPPFLAGS = \
 	      $(XI_CFLAGS) \
+	      $(XRANDR_CFLAGS) \
 	      $(GTEST_CPPFLAGS) \
 	      $(XORG_GTEST_CPPFLAGS) \
 	      -I$(top_srcdir)/tests/common \
@@ -14,6 +15,7 @@ AM_CXXFLAGS = $(GTEST_CXXFLAGS) $(XORG_GTEST_CXXFLAGS)
 
 GTEST_LDADDS = \
 	       $(XI_LIBS) \
+	       $(XRANDR_LIBS) \
 	       $(XORG_GTEST_LIBS) \
 	       $(EVEMU_LIBS) \
 	       $(XORG_GTEST_MAIN_LIBS)
