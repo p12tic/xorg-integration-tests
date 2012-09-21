@@ -14,8 +14,6 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-#include "wacom_devs.h"
-
 #include <stdexcept>
 #include <fstream>
 #include <xorg/gtest/xorg-gtest.h>
@@ -286,9 +284,4 @@ TEST_F(WacomMatrixTest, InputMatrix)
 
     // Check with bottom left quarter
     test_area (Display(), dev.get(), deviceid, monitor_x + monitor_width / 2, monitor_y + monitor_height / 2, monitor_width / 2, monitor_height / 2);
-}
-
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

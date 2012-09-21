@@ -6,8 +6,7 @@ noinst_PROGRAMS = legacy-drivers \
                   mouse-driver \
                   evdev-driver \
                   synaptics-driver \
-                  wacom-driver \
-                  wacom-input-matrix
+                  wacom-driver
 
 TESTS=$(noinst_PROGRAMS)
 
@@ -29,8 +28,6 @@ evdev_driver_LDADD = $(GTEST_LDADDS)
 synaptics_driver_SOURCES = synaptics.cpp $(common_sources)
 synaptics_driver_LDADD = $(GTEST_LDADDS)
 
-wacom_driver_SOURCES = wacom.cpp wacom_devs.h $(common_sources)
+wacom_driver_SOURCES = wacom.cpp wacom_devs.h wacom-input-matrix.cpp $(common_sources)
 wacom_driver_LDADD = $(GTEST_LDADDS)
 
-wacom_input_matrix_SOURCES = wacom-input-matrix.cpp $(common_sources)
-wacom_input_matrix_LDADD = $(GTEST_LDADDS)
