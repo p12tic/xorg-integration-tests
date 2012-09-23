@@ -85,7 +85,7 @@ int GetNMonitors (Display *dpy)
     for (i = 0; i < resources->noutput; ++i) {
         XRROutputInfo *output = XRRGetOutputInfo (dpy, resources, resources->outputs[i]);
 
-        if ((output->connection != RR_Disconnected) && (output->crtc != NULL))
+        if ((output->connection != RR_Disconnected) && output->crtc)
             n_active_outputs++;
 
         XRRFreeOutputInfo (output);
@@ -105,7 +105,7 @@ void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, 
     for (i = 0; i < resources->noutput; ++i) {
         XRROutputInfo *output = XRRGetOutputInfo (dpy, resources, resources->outputs[i]);
 
-        if ((output->connection == RR_Disconnected) || (output->crtc == NULL)) {
+        if ((output->connection == RR_Disconnected) || !output->crtc) {
             XRRFreeOutputInfo (output);
             continue;
         }
