@@ -92,6 +92,8 @@ int GetNMonitors (Display *dpy)
     }
 
     XRRFreeScreenResources (resources);
+
+    return n_active_outputs;
 }
 
 void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, int *height)
