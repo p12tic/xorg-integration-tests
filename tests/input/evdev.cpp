@@ -648,6 +648,9 @@ public:
 
 TEST_F(EvdevDriverFloatingSlaveTest, FloatingDevice)
 {
+    SCOPED_TRACE("Check that the server does not crash for a device\n"
+                 "with Option Floating set.\n"
+                 "xorg-server-1.12.99.903-49-gd53e6e0\n");
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
 
@@ -665,7 +668,7 @@ TEST_F(EvdevDriverFloatingSlaveTest, FloatingDevice)
         dev->PlayOne(EV_REL, ABS_X, 4, 1);
 
         XSync(Display(), False);
-        ASSERT_FALSE(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000));
+        ASSERT_FALSE(XPending(Display()));
 
         ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
     } else {
