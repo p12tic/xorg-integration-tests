@@ -27,7 +27,14 @@ TEST_P(SimpleVideoDriverTest, DriverDevice)
     }
 }
 
-INSTANTIATE_TEST_CASE_P(, SimpleVideoDriverTest, ::testing::Values("dummy", "intel"));
+INSTANTIATE_TEST_CASE_P(, SimpleVideoDriverTest,
+                        ::testing::Values("ati", "cirrus", "dummy", "fbdev",
+                                          "geode", "imx", "intel", "mga",
+                                          "modesetting", "nv", "qxl",
+                                          "r128", "rendition", "savage",
+                                          "sis", "sisusb", "sunbw2",
+                                          "sunleo", "tdfx", "vermilion",
+                                          "vesa"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
