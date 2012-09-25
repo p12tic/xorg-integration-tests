@@ -28,6 +28,10 @@ evdev_driver_LDADD = $(GTEST_LDADDS)
 synaptics_driver_SOURCES = synaptics.cpp $(common_sources)
 synaptics_driver_LDADD = $(GTEST_LDADDS)
 
-wacom_driver_SOURCES = wacom.cpp wacom_devs.h wacom-input-matrix.cpp $(common_sources)
+wacom_driver_SOURCES = wacom_devs.h				\
+		       wacom-hovering-expresskeys.cpp		\
+		       wacom-input-matrix.cpp			\
+		       wacom.cpp				\
+		       $(common_sources)
 wacom_driver_LDADD = $(GTEST_LDADDS)
 
