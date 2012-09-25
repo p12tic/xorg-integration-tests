@@ -109,6 +109,7 @@ TEST_F(WacomHoveringTest, DevicePresent)
 TEST_F(WacomHoveringTest, HoveringTest)
 {
     XEvent ev;
+    Window win;
 
     /* the server takes a while to start up but the devices may not respond
        to events yet. Add a noop call that just delays everything long
@@ -116,11 +117,31 @@ TEST_F(WacomHoveringTest, HoveringTest)
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
 
-    XSelectInput(Display(), DefaultRootWindow(Display()), PointerMotionMask|ButtonMotionMask|KeymapStateMask|LeaveWindowMask);
+    // Create a fullscreen window 
+    win = XCreateSimpleWindow (Display(),
+                               DefaultRootWindow(Display()),
+                               0, 0,
+                               WidthOfScreen (DefaultScreenOfDisplay (Display())),
+                               HeightOfScreen (DefaultScreenOfDisplay (Display())),
+                               0, 0, 0);
+    XSelectInput(Display(), win, ButtonPressMask|
+                                 ButtonReleaseMask|
+                                 PointerMotionMask|
+                                 ButtonMotionMask|
+                                 KeymapStateMask|
+                                 LeaveWindowMask|
+                                 ExposureMask|
+                                 StructureNotifyMask );
+    XMapWindow (Display(), win);
     XSync(Display(), False);
 
-    while(XPending(Display()))
+    bool mapped = False;
+    while (XPending(Display())) {
         XNextEvent(Display(), &ev);
+        if (ev.type == MapNotify)
+            mapped = True;
+    }
+    EXPECT_TRUE (mapped);
 
     // Play the recorded events
     dev->Play(RECORDINGS_DIR "tablets/hovering-expresskeys.events");
@@ -132,8 +153,8 @@ TEST_F(WacomHoveringTest, HoveringTest)
     while(XPending(Display())) {
         XNextEvent(Display(), &ev);
         // Looking for spurious events caused by hovering the Expresskeys
-        EXPECT_NE (ev.xany.type,   KeymapNotify);
-        EXPECT_NE (ev.xany.type,   LeaveNotify);
+        EXPECT_NE (ev.type,        KeymapNotify);
+        EXPECT_NE (ev.type,        LeaveNotify);
         EXPECT_NE (ev.xany.window, None);
     }
 }
