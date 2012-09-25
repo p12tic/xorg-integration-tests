@@ -25,8 +25,6 @@ TEST_P(SimpleVideoDriverTest, DriverDevice)
             ASSERT_FALSE (error) << "Module " << param << " failed to load" << std::endl << line <<  std::endl;
         }
     }
-
-    FAIL();
 }
 
 INSTANTIATE_TEST_CASE_P(, SimpleVideoDriverTest, ::testing::Values("dummy", "intel"));
