@@ -26,6 +26,13 @@
 #include "device-interface.h"
 #include "helpers.h"
 
+#define EV_MASK     KeyPressMask | KeyReleaseMask | ButtonPressMask | \
+		    ButtonReleaseMask | EnterWindowMask | \
+		    LeaveWindowMask | PointerMotionMask | \
+		    ButtonMotionMask | KeymapStateMask | \
+		    ExposureMask | VisibilityChangeMask | \
+		    StructureNotifyMask
+
 /**
  * Wacom driver test class. This class takes a struct Tablet that defines
  * which device should be initialised.
@@ -48,13 +55,13 @@ public:
     virtual void SetUpConfigAndLog(const std::string &param) {
         server.SetOption("-logfile", "/tmp/Xorg-wacom-hovering-test.log");
         server.SetOption("-config", "/tmp/wacom-hovering-test.conf");
+        server.SetOption("-retro", "");
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("wacom", "Stylus",
-                               "Option \"CorePointer\" \"on\"\n"
                                "Option \"Type\"        \"stylus\"\n"
-                               "Option \"DebugLevel\"  \"12\"\n"
-                               "Option \"CommonDBG\"   \"12\"\n"
+                               "Option \"DebugLevel\"  \"3\"\n"
+                               "Option \"CommonDBG\"   \"3\"\n"
                                "Option \"Device\"      \"" + dev->GetDeviceNode() + "\"\n");
         config.AddInputSection("wacom", "Pad",
                                "Option \"Type\"        \"pad\"\n"
@@ -69,56 +76,17 @@ public:
     }
 };
 
-TEST_F(WacomHoveringTest, DevicePresent)
-{
-    SCOPED_TRACE("Test presence of tools as defined in the xorg.conf");
-
-    int ndevices;
-    XIDeviceInfo *info;
-
-    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
-
-    bool stylus = false;
-    bool pad    = false;
-    bool cursor = false;
-    bool eraser = false;
-
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "Stylus") == 0) {
-            ASSERT_EQ(stylus, false) << "Duplicate stylus found" << std::endl;
-            stylus = true;
-        }
-        if (strcmp(info[ndevices].name, "Pad") == 0) {
-            ASSERT_EQ(pad, false) << "Duplicate pad found" << std::endl;
-            pad = true;
-        }
-        if (strcmp(info[ndevices].name, "Cursor") == 0) {
-            ASSERT_EQ(cursor, false) << "Duplicate cursor found" << std::endl;
-            cursor = true;
-        }
-        if (strcmp(info[ndevices].name, "Eraser") == 0) {
-            ASSERT_EQ(eraser, false) << "Duplicate eraser found" << std::endl;
-            eraser = true;
-        }
-    }
-
-    ASSERT_EQ(stylus, true);
-    ASSERT_EQ(pad,    true);
-    ASSERT_EQ(cursor, true);
-    ASSERT_EQ(eraser, true);
-
-    XIFreeDeviceInfo(info);
-}
-
 TEST_F(WacomHoveringTest, HoveringTest)
 {
-    SCOPED_TRACE("Test that hovering the Expresskeys pad while\n"
-                 "using the stylus does not generate spurious\n"
-                 "motion events to (0,0)\n"
+    SCOPED_TRACE("Test that hovering the Expresskeys pad while "
+                 "using the stylus does not generate spurious "
+                 "motion events to (0,0).\n"
+                 "Note: This test is useless since the problem cannot be reproduced via evemu\n"
                  "https://bugs.freedesktop.org/show_bug.cgi?id=54250");
 
     XEvent ev;
     Window win;
+    unsigned long white, black;
 
     /* the server takes a while to start up but the devices may not respond
        to events yet. Add a noop call that just delays everything long
@@ -126,31 +94,19 @@ TEST_F(WacomHoveringTest, HoveringTest)
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
 
+    white = WhitePixel(Display(), DefaultScreen (Display()));
+    black = BlackPixel(Display(), DefaultScreen (Display()));
+
     // Create a fullscreen window
-    win = XCreateSimpleWindow (Display(),
-                               DefaultRootWindow(Display()),
-                               0, 0,
-                               WidthOfScreen (DefaultScreenOfDisplay (Display())),
-                               HeightOfScreen (DefaultScreenOfDisplay (Display())),
-                               0, 0, 0);
-    XSelectInput(Display(), win, ButtonPressMask|
-                                 ButtonReleaseMask|
-                                 PointerMotionMask|
-                                 ButtonMotionMask|
-                                 KeymapStateMask|
-                                 LeaveWindowMask|
-                                 ExposureMask|
-                                 StructureNotifyMask );
+    win  = XCreateSimpleWindow (Display(),
+                                DefaultRootWindow(Display()),
+                                20, 20, 600, 600, 10, black, white);
+
+    XSelectInput(Display(), win, EV_MASK);
+
     XMapWindow (Display(), win);
     XSync(Display(), False);
-
-    bool mapped = False;
-    while (XPending(Display())) {
-        XNextEvent(Display(), &ev);
-        if (ev.type == MapNotify)
-            mapped = True;
-    }
-    EXPECT_TRUE (mapped);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), Expose, -1, -1, 1000));
 
     // Play the recorded events
     dev->Play(RECORDINGS_DIR "tablets/Wacom-Intuos5-touch-M-Pen-hovering-expresskeys.events");
@@ -158,12 +114,15 @@ TEST_F(WacomHoveringTest, HoveringTest)
     XSync (Display(), False);
     EXPECT_NE(XPending(Display()), 0) << "No event received??" << std::endl;
 
-    // Capture events and check for offending events caused by hovering the Expresskeys
+    // Capture events and check for spurious motion events to (0,0) caused by hovering the Expresskeys
     while(XPending(Display())) {
         XNextEvent(Display(), &ev);
-        // Looking for spurious events caused by hovering the Expresskeys
-        EXPECT_NE (ev.type,        KeymapNotify);
-        EXPECT_NE (ev.type,        LeaveNotify);
-        EXPECT_NE (ev.xany.window, None);
+        if (ev.type == MotionNotify)
+            EXPECT_FALSE (ev.xmotion.x_root == 0 && ev.xmotion.y_root == 0);
+        else if (ev.type == EnterNotify || ev.type == LeaveNotify)
+            EXPECT_FALSE (ev.xcrossing.x_root == 0 && ev.xcrossing.y_root == 0);
     }
+
+    while(XPending(Display()))
+        XNextEvent(Display(), &ev);
 }
