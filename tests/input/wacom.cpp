@@ -420,6 +420,40 @@ TEST_P(WacomDriverTest, Rotation)
 INSTANTIATE_TEST_CASE_P(, WacomDriverTest,
         ::testing::ValuesIn(tablets));
 
+TEST(WacomDriver, PrivToolDoubleFree)
+{
+    SCOPED_TRACE("Two devices with the same device node cause a double-free\n"
+                 "of priv->tool in wcmPreInitParseOptions\n"
+                 "https://bugs.freedesktop.org/show_bug.cgi?id=55200");
+
+    XOrgConfig config;
+    xorg::testing::XServer server;
+
+    std::auto_ptr<xorg::testing::evemu::Device> stylus =
+        std::auto_ptr<xorg::testing::evemu::Device>(
+                new xorg::testing::evemu::Device(RECORDINGS_DIR "tablets/Wacom-Intuos5-touch-M-Pen.desc")
+                );
+
+    config.AddInputSection("wacom", "I5 stylus",
+                           "Option \"Device\" \"" + stylus->GetDeviceNode() + "\"\n"
+                           "Option \"USB\" \"on\"\n"
+                           "Option \"Type\" \"stylus\"\n"
+                           );
+
+    config.AddInputSection("wacom", "I5 stylus 2",
+                           "Option \"Device\" \"" + stylus->GetDeviceNode() + "\"\n"
+                           "Option \"USB\" \"on\"\n"
+                           "Option \"Type\" \"stylus\"\n"
+                           );
+    config.AddDefaultScreenWithDriver();
+
+    EXPECT_NO_THROW(StartServer("wacom-double-free", server, config));
+
+    if (!server.Terminate(100))
+        server.Kill(100);
+}
+
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
