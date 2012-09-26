@@ -315,7 +315,7 @@ bool set_rotate(Display *dpy, int deviceid, const char *rotate)
 
 int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 {
-    int root_x1, root_y1, root_x2, root_y2;
+    int root_x1, root_x2;
     int loop, step;
     XEvent ev;
 
@@ -334,13 +334,10 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 
     // Capture motion events and save screen coordinates
     XSync (dpy, False);
-    while(XCheckMaskEvent (dpy, PointerMotionMask, &ev)) {
+    while(XCheckMaskEvent (dpy, PointerMotionMask, &ev))
         root_x1 = ev.xmotion.x_root;
-        root_y1 = ev.xmotion.y_root;
-    }
 
     root_x2 = root_x1;
-    root_y2 = root_y1;
 
     step = 10;
     for (loop = 1000; loop < 3000; loop += step) {
@@ -353,10 +350,8 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
     EXPECT_NE(XPending(dpy), 0) << "Still no event received??" << std::endl;
 
     XSync (dpy, False);
-    while(XCheckMaskEvent (dpy, PointerMotionMask|PointerMotionHintMask, &ev)) {
+    while(XCheckMaskEvent (dpy, PointerMotionMask|PointerMotionHintMask, &ev))
         root_x2 = ev.xmotion.x_root;
-        root_y2 = ev.xmotion.y_root;
-    }
 
     XSync (dpy, False);
     while(XPending(dpy))
