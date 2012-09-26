@@ -71,6 +71,8 @@ public:
 
 TEST_F(WacomHoveringTest, DevicePresent)
 {
+    SCOPED_TRACE("Test presence of tools as defined in the xorg.conf");
+
     int ndevices;
     XIDeviceInfo *info;
 
@@ -110,6 +112,11 @@ TEST_F(WacomHoveringTest, DevicePresent)
 
 TEST_F(WacomHoveringTest, HoveringTest)
 {
+    SCOPED_TRACE("Test that hovering the Expresskeys pad while\n"
+                 "using the stylus does not generate spurious\n"
+                 "motion events to (0,0)\n"
+                 "https://bugs.freedesktop.org/show_bug.cgi?id=54250");
+
     XEvent ev;
     Window win;
 

@@ -159,6 +159,8 @@ bool test_property(Display *dpy, int deviceid, const char *prop_name)
 
 TEST_P(WacomDriverTest, DeviceNames)
 {
+    SCOPED_TRACE("Test names of the tools and type properties match the tools");
+
     Tablet tablet = GetParam();
 
     int major = 2;
@@ -246,6 +248,8 @@ void check_for_type (Display *dpy, XIDeviceInfo *list, int ndevices, const char 
 
 TEST_P(WacomDriverTest, DeviceType)
 {
+    SCOPED_TRACE("Test type of the tools for the device");
+
     Tablet tablet = GetParam();
     int major = 2;
     int minor = 0;
@@ -366,6 +370,8 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 // not generated...
 TEST_P(WacomDriverTest, Rotation)
 {
+    SCOPED_TRACE("Test rotation is applied on a device");
+
     Tablet tablet = GetParam();
 
     int major = 2;

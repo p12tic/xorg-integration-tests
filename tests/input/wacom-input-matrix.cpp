@@ -75,6 +75,8 @@ protected:
 
 TEST_F(WacomMatrixTest, DevicePresent)
 {
+    SCOPED_TRACE("Test presence of tools as defined in the xorg.conf");
+
     int ndevices;
     XIDeviceInfo *info;
 
@@ -243,6 +245,8 @@ void test_area (Display *dpy, xorg::testing::evemu::Device *dev,
 
 TEST_F(WacomMatrixTest, InputMatrix)
 {
+    SCOPED_TRACE("Test input transformation matrix");
+
     /* the server takes a while to start up but the devices may not respond
        to events yet. Add a noop call that just delays everything long
        enough for this test to work */
