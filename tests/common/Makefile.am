@@ -7,6 +7,7 @@ AM_CPPFLAGS = \
 	      $(XRANDR_CFLAGS) \
 	      $(GTEST_CPPFLAGS) \
 	      $(XORG_GTEST_CPPFLAGS) \
+              -Wall \
 	      -I$(top_srcdir)/tests/common \
 	      -DTEST_ROOT_DIR=\"$(abs_top_srcdir)/tests/\" \
 	      -DRECORDINGS_DIR=\"$(abs_top_srcdir)/recordings/\"
