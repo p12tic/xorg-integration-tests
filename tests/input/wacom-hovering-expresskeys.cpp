@@ -53,6 +53,8 @@ public:
         config.AddInputSection("wacom", "Stylus",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"Type\"        \"stylus\"\n"
+                               "Option \"DebugLevel\"  \"12\"\n"
+                               "Option \"CommonDBG\"   \"12\"\n"
                                "Option \"Device\"      \"" + dev->GetDeviceNode() + "\"\n");
         config.AddInputSection("wacom", "Pad",
                                "Option \"Type\"        \"pad\"\n"
@@ -117,7 +119,7 @@ TEST_F(WacomHoveringTest, HoveringTest)
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
 
-    // Create a fullscreen window 
+    // Create a fullscreen window
     win = XCreateSimpleWindow (Display(),
                                DefaultRootWindow(Display()),
                                0, 0,
@@ -144,7 +146,7 @@ TEST_F(WacomHoveringTest, HoveringTest)
     EXPECT_TRUE (mapped);
 
     // Play the recorded events
-    dev->Play(RECORDINGS_DIR "tablets/hovering-expresskeys.events");
+    dev->Play(RECORDINGS_DIR "tablets/Wacom-Intuos5-touch-M-Pen-hovering-expresskeys.events");
 
     XSync (Display(), False);
     EXPECT_NE(XPending(Display()), 0) << "No event received??" << std::endl;
