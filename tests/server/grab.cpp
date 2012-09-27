@@ -5,7 +5,9 @@
 #include <xorg/gtest/xorg-gtest.h>
 
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <X11/extensions/XInput2.h>
+#include <X11/extensions/XInput.h>
 
 #include "input-driver-test.h"
 #include "device-interface.h"
@@ -127,6 +129,40 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
                                                            1000));
     XNextEvent(dpy, &ev);
     ASSERT_FALSE(XPending(dpy));
+}
+
+TEST_F(PointerGrabTest, GrabDisabledDevices)
+{
+    SCOPED_TRACE("Grabbing a disabled device must not segfault the server.\n"
+                 "https://bugs.freedesktop.org/show_bug.cgi?id=54934");
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        Atom prop = XInternAtom(Display(), "Device Enabled", True);
+        ASSERT_NE(prop, (Atom)None);
+
+        int deviceid;
+        ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+        unsigned char data = 0;
+        XIChangeProperty(Display(), deviceid, prop, XA_INTEGER, 8,
+                PropModeReplace, &data, 1);
+        XFlush(Display());
+
+        XDevice *xdev = XOpenDevice(Display(), deviceid);
+        ASSERT_TRUE(xdev != NULL);
+
+        XGrabDevice(Display(), xdev, DefaultRootWindow(Display()), True,
+                0, NULL, GrabModeAsync, GrabModeAsync, CurrentTime);
+        XSync(Display(), False);
+        ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
+        return;
+    }
+
+    int status;
+    waitpid(pid, &status, 0);
+    ASSERT_TRUE(WIFEXITED(status));
+    ASSERT_EQ(WEXITSTATUS(status), 0);
 }
 
 int main(int argc, char **argv) {
