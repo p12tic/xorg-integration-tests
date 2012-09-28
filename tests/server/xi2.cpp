@@ -1,5 +1,7 @@
 #include <stdexcept>
 
+#include "device-interface.h"
+
 #include <xorg/gtest/xorg-gtest.h>
 
 #include <X11/extensions/XInput.h>
@@ -11,10 +13,13 @@
  * @tparam The XInput 2.x minor version
  */
 class XInput2Test : public xorg::testing::Test,
+                    public DeviceInterface,
                     public ::testing::WithParamInterface<int> {
 protected:
     virtual void SetUp()
     {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+
         ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
 
         int event_start;
@@ -61,20 +66,9 @@ TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 
     XFlush(Display());
 
-    std::auto_ptr<xorg::testing::evemu::Device> device;
-    try {
-      device = std::auto_ptr<xorg::testing::evemu::Device>(
-          new xorg::testing::evemu::Device(
-              RECORDINGS_DIR "tablets/N-Trig MultiTouch.device")
-          );
-    } catch (std::runtime_error &error) {
-      std::cerr << "Failed to create evemu device, skipping test.\n";
-      return;
-    }
-
     ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 
-    device->Play(RECORDINGS_DIR "tablets/N-Trig MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig MultiTouch.touch_1_begin.events");
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -147,20 +141,9 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
 
     XFlush(Display());
 
-    std::auto_ptr<xorg::testing::evemu::Device> device;
-    try {
-      device = std::auto_ptr<xorg::testing::evemu::Device>(
-          new xorg::testing::evemu::Device(
-              RECORDINGS_DIR "tablets/N-Trig MultiTouch.device")
-          );
-    } catch (std::runtime_error &error) {
-      std::cerr << "Failed to create evemu device, skipping test.\n";
-      return;
-    }
-
     ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 
-    device->Play(RECORDINGS_DIR "tablets/N-Trig MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig MultiTouch.touch_1_begin.events");
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
