@@ -173,6 +173,84 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
                                                            xi2_opcode,
                                                            XI_TouchEnd));
 }
+
+/**
+ * Test class for testing
+ * @tparam The device ID
+ */
+class XInput2TouchSelectionTest : public XInput2Test
+{
+protected:
+    virtual int RegisterXI2(int major, int minor)
+    {
+        return InputDriverTest::RegisterXI2(2, 2);
+    }
+};
+
+static bool error_handler_triggered;
+
+/* ASSERT_*() macros can only be used in void functions, hence the
+   indirection here */
+static void _error_handler(XErrorEvent *ev) {
+    ASSERT_EQ((int)ev->error_code, BadAccess);
+    error_handler_triggered = true;
+}
+static int error_handler(Display *dpy, XErrorEvent *ev) {
+    _error_handler(ev);
+    return 0;
+}
+static void _fail_error_handler(XErrorEvent *ev) {
+    FAIL() << "X protocol error: errorcode: " << (int)ev->error_code <<
+    " on request " << (int)ev->request_code << " minor " << (int)ev->minor_code;
+}
+static int fail_error_handler(Display *dpy, XErrorEvent *ev) {
+    _fail_error_handler(ev);
+    return 0;
+}
+
+TEST_P(XInput2TouchSelectionTest, TouchSelectionConflicts)
+{
+    SCOPED_TRACE("If client A has a selection on a device,\n"
+                 "client B selecting on the same device returns BadAccess.\n"
+                 "If client A has a selection on XIAll(Master)Devices, \n"
+                 "selecting on the same or a specific device returns"
+                 "BadAccess\n");
+
+    unsigned char m[XIMaskLen(XI_TouchEnd)] = {0};
+    XIEventMask mask;
+    mask.mask = m;
+    mask.mask_len = sizeof(m);
+
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    int clientA_deviceid = GetParam();
+
+    /* client A */
+    mask.deviceid = clientA_deviceid;
+    XSetErrorHandler(fail_error_handler);
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    ASSERT_TRUE(dpy2);
+
+    XISelectEvents(dpy2, DefaultRootWindow(dpy2), &mask, 1);
+    XSync(dpy2, False);
+
+    XSetErrorHandler(error_handler);
+
+    /* covers XIAllDevices, XIAllMasterDevices and VCP */
+    for (int clientB_deviceid = 0; clientB_deviceid < 3; clientB_deviceid++) {
+        error_handler_triggered = false;
+        mask.deviceid = clientB_deviceid;
+        XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1);
+        XSync(Display(), False);
+        ASSERT_EQ(error_handler_triggered,
+                  (clientA_deviceid <= clientB_deviceid))
+                  << "failed for " << clientA_deviceid << "/" << clientB_deviceid;
+    }
+}
+INSTANTIATE_TEST_CASE_P(, XInput2TouchSelectionTest, ::testing::Range(0, 3));
+
 #endif
 
 INSTANTIATE_TEST_CASE_P(, XInput2Test, ::testing::Range(0, 3));
