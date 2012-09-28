@@ -1,6 +1,7 @@
 #include <stdexcept>
 
 #include "device-interface.h"
+#include "input-driver-test.h"
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -12,29 +13,24 @@
  *
  * @tparam The XInput 2.x minor version
  */
-class XInput2Test : public xorg::testing::Test,
+class XInput2Test : public InputDriverTest,
                     public DeviceInterface,
                     public ::testing::WithParamInterface<int> {
 protected:
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
-
-        ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
-
-        int event_start;
-        int error_start;
-
-        ASSERT_TRUE(XQueryExtension(Display(), "XInputExtension", &xi2_opcode_,
-                                    &event_start, &error_start));
-
-        int major = 2;
-        int minor = GetParam();
-
-        ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
+        InputDriverTest::SetUp();
     }
 
-    int xi2_opcode_;
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        server.SetOption("-logfile", "/tmp/Xorg-xi2-tests.log");
+        /* no config */
+    }
+
+    virtual int RegisterXI2(int major, int minor)
+    {
+        return InputDriverTest::RegisterXI2(2, GetParam());
+    }
 };
 
 TEST_P(XInput2Test, XIQueryPointerTouchscreen)
@@ -72,7 +68,7 @@ TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
-                                                           xi2_opcode_,
+                                                           xi2_opcode,
                                                            XI_ButtonPress));
 
     XEvent event;
@@ -147,7 +143,7 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
-                                                           xi2_opcode_,
+                                                           xi2_opcode,
                                                            XI_TouchBegin));
 
     XEvent event;
@@ -174,9 +170,14 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
-                                                           xi2_opcode_,
+                                                           xi2_opcode,
                                                            XI_TouchEnd));
 }
 #endif
 
 INSTANTIATE_TEST_CASE_P(, XInput2Test, ::testing::Range(0, 3));
+
+int main(int argc, char** argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
