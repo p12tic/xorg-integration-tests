@@ -33,6 +33,137 @@ protected:
     }
 };
 
+TEST_P(XInput2Test, XITouchscreenPointerEmulation)
+{
+    SCOPED_TRACE("\n"
+                 "When an initial touch is made, any movement of the pointer\n"
+                 "should be raised as if button 1 is being held. After the\n"
+                 "touch is released, further movement should have button 1\n"
+                 "released.\n");
+
+    XIEventMask mask;
+    mask.deviceid = XIAllDevices;
+    mask.mask_len = XIMaskLen(XI_HierarchyChanged);
+    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    XISetMask(mask.mask, XI_HierarchyChanged);
+
+    ASSERT_EQ(Success,
+              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
+                             1));
+
+    mask.deviceid = XIAllMasterDevices;
+    XIClearMask(mask.mask, XI_HierarchyChanged);
+    XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_ButtonRelease);
+    XISetMask(mask.mask, XI_Motion);
+
+    ASSERT_EQ(Success,
+              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
+                             1));
+
+    free(mask.mask);
+
+    XFlush(Display());
+
+    std::auto_ptr<xorg::testing::evemu::Device> touch_device;
+    try {
+      touch_device = std::auto_ptr<xorg::testing::evemu::Device>(
+          new xorg::testing::evemu::Device(
+              RECORDINGS_DIR "tablets/N-Trig-MultiTouch.desc")
+          );
+    } catch (std::runtime_error &error) {
+      std::cerr << "Failed to create evemu device, skipping test.\n";
+      return;
+    }
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
+
+    std::auto_ptr<xorg::testing::evemu::Device> mouse_device;
+    try {
+      mouse_device = std::auto_ptr<xorg::testing::evemu::Device>(
+          new xorg::testing::evemu::Device(
+              RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
+          );
+    } catch (std::runtime_error &error) {
+      std::cerr << "Failed to create evemu device, skipping test.\n";
+      return;
+    }
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "PIXART USB OPTICAL MOUSE"));
+
+    XEvent event;
+    XGenericEventCookie *xcookie;
+    XIDeviceEvent *device_event;
+
+
+    /* Move the mouse, check that the button is not pressed. */
+    mouse_device->PlayOne(EV_REL, ABS_X, -1, 1);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_Motion));
+
+    ASSERT_EQ(Success, XNextEvent(Display(), &event));
+    xcookie = &event.xcookie;
+    ASSERT_TRUE(XGetEventData(Display(), xcookie));
+
+    device_event = reinterpret_cast<XIDeviceEvent*>(xcookie->data);
+    ASSERT_FALSE(XIMaskIsSet(device_event->buttons.mask, 1));
+    XFreeEventData(Display(), xcookie);
+
+
+    /* Touch the screen, wait for press event */
+    touch_device->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_ButtonPress));
+
+    ASSERT_EQ(Success, XNextEvent(Display(), &event));
+
+
+    /* Move the mouse again, button 1 should now be pressed. */
+    mouse_device->PlayOne(EV_REL, ABS_X, -1, 1);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_Motion));
+
+    ASSERT_EQ(Success, XNextEvent(Display(), &event));
+    xcookie = &event.xcookie;
+    ASSERT_TRUE(XGetEventData(Display(), xcookie));
+
+    device_event = reinterpret_cast<XIDeviceEvent*>(xcookie->data);
+    ASSERT_TRUE(XIMaskIsSet(device_event->buttons.mask, 1));
+    XFreeEventData(Display(), xcookie);
+
+
+    /* Release the screen, wait for release event */
+    touch_device->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_ButtonRelease));
+
+    ASSERT_EQ(Success, XNextEvent(Display(), &event));
+
+
+    /* Move the mouse again, button 1 should now be released. */
+    mouse_device->PlayOne(EV_REL, ABS_X, -1, 1);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_Motion));
+
+    ASSERT_EQ(Success, XNextEvent(Display(), &event));
+    xcookie = &event.xcookie;
+    ASSERT_TRUE(XGetEventData(Display(), xcookie));
+
+    device_event = reinterpret_cast<XIDeviceEvent*>(xcookie->data);
+    ASSERT_FALSE(XIMaskIsSet(device_event->buttons.mask, 1));
+    XFreeEventData(Display(), xcookie);
+}
+
 TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 {
     SCOPED_TRACE("\n"
