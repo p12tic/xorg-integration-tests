@@ -19,7 +19,6 @@ void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfi
     server.SetOption("-logfile", logfile.str());
     server.SetDisplayNumber(133);
     server.Start();
-    server.WaitForConnections();
 }
 
 int FindInputDeviceByName(Display *dpy, const std::string &device_name, int *deviceid)
