@@ -42,6 +42,7 @@ libxorg_gtest_a_CPPFLAGS = \
 	$(XORG_GTEST_CPPFLAGS) \
 	$(GTEST_CPPFLAGS) \
 	$(AM_CPPFLAGS) \
+	-iquote$(XORG_GTEST_SOURCE) \
 	-w
 libxorg_gtest_a_CXXFLAGS = \
 	$(XORG_GTEST_CXXFLAGS) \
@@ -54,6 +55,7 @@ libxorg_gtest_main_a_CPPFLAGS = \
 	$(XORG_GTEST_CPPFLAGS) \
 	$(GTEST_CPPFLAGS) \
 	$(AM_CPPFLAGS) \
+	-iquote$(XORG_GTEST_SOURCE) \
 	-w
 libxorg_gtest_main_a_CXXFLAGS = \
 	$(XORG_GTEST_CXXFLAGS) \
