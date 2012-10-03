@@ -26,14 +26,16 @@ XORG_GTEST_BUILD_LIBS = \
 	libxorg-gtest.a \
 	libxorg-gtest_main.a
 
+GTEST_CPPFLAGS=-I$(XORG_GTEST_SOURCE)/src/gtest
+
 # Here and below we compile without warnings (-w) because the projects using
 # xorg-gtest will not want to see warnings or fail to build due to warnings in
 # gtest or xorg-gtest.
-nodist_libgtest_a_SOURCES = $(GTEST_SOURCE)/src/gtest-all.cc
+nodist_libgtest_a_SOURCES = $(XORG_GTEST_SOURCE)/src/gtest/gtest-all.cc
 libgtest_a_CPPFLAGS = $(GTEST_CPPFLAGS) $(AM_CPPFLAGS) -w
 libgtest_a_CXXFLAGS = $(GTEST_CXXFLAGS) $(AM_CXXFLAGS)
 
-nodist_libgtest_main_a_SOURCES = $(GTEST_SOURCE)/src/gtest_main.cc
+nodist_libgtest_main_a_SOURCES = $(XORG_GTEST_SOURCE)/src/gtest/gtest_main.cc
 libgtest_main_a_CPPFLAGS = $(GTEST_CPPFLAGS) $(AM_CPPFLAGS) -w
 libgtest_main_a_CXXFLAGS = $(GTEST_CXXFLAGS) $(AM_CXXFLAGS)
 
