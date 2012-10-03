@@ -40,6 +40,10 @@ Tablet tablets[] = {
     { "14", "Wacom-Intuos4-8x13.desc",           "Wacom Intuos4 8x13",           "stylus", "eraser", "cursor", NULL,     NULL     },
 };
 
+Tablet lens_cursor_tablets[] = {
+    { "00", "Wacom-Intuos4-8x13.desc",           "Wacom Intuos4 8x13",           "stylus", "eraser", "cursor", NULL,     NULL     },
+};
+
 #endif /* DOXYGEN_IGNORE_THIS */
 
 #endif

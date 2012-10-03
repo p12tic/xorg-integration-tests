@@ -448,6 +448,34 @@ TEST(WacomDriver, PrivToolDoubleFree)
         server.Kill(100);
 }
 
+class WacomLensCursorTest : public WacomDriverTest
+{
+};
+
+TEST_P(WacomLensCursorTest, CursorMove)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask |
+                                                          ButtonReleaseMask |
+                                                          PointerMotionMask |
+                                                          ButtonMotionMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "tablets/Wacom-Intuos4-8x13.lens-cursor-move.events");
+
+    XSync(Display(), False);
+
+    ASSERT_TRUE(XPending(Display()));
+
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xany.type, MotionNotify);
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xany.type, MotionNotify);
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.xany.type, MotionNotify);
+}
+
+INSTANTIATE_TEST_CASE_P(, WacomLensCursorTest, ::testing::ValuesIn(lens_cursor_tablets));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
