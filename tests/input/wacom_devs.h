@@ -36,7 +36,8 @@ Tablet tablets[] = {
     { "10", "Wacom-Intuos5-touch-M-Finger.desc", "Wacom Intuos5 touch M Finger", NULL,     NULL,     NULL,     NULL,     "touch"  },
     { "11", "Wacom-Intuos5-touch-M-Pen.desc",    "Wacom Intuos5 touch M Pen",    "stylus", "eraser", "cursor", "pad",    NULL     },
     { "12", "Wacom-ISDv4-E6-Finger.desc",        "Wacom ISDv4 E6 Finger",        NULL,     NULL,     NULL,     NULL,     "touch"  },
-    { "13", "Wacom-ISDv4-E6-Pen.desc",           "Wacom ISDv4 E6 Pen",           "stylus", "eraser", NULL,     NULL,     NULL     }
+    { "13", "Wacom-ISDv4-E6-Pen.desc",           "Wacom ISDv4 E6 Pen",           "stylus", "eraser", NULL,     NULL,     NULL     },
+    { "14", "Wacom-Intuos4-8x13.desc",           "Wacom Intuos4 8x13",           "stylus", "eraser", "cursor", NULL,     NULL     },
 };
 
 #endif /* DOXYGEN_IGNORE_THIS */
