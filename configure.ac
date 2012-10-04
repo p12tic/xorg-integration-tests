@@ -51,6 +51,7 @@ PKG_CHECK_MODULES(XI22, [inputproto >= 2.2] [xi >= 1.6],
                   [noop=noop])
 
 PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.4.0])
+PKG_CHECK_MODULES(WACOM, xorg-wacom)
 
 m4_ifndef([CHECK_XORG_GTEST],
           [m4_fatal([must install xorg-gtest before running autoconf/autogen])])
