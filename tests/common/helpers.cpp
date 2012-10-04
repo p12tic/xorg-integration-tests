@@ -79,7 +79,7 @@ Bool InitRandRSupport (Display *dpy, int *event_base, int *error_base)
 int GetNMonitors (Display *dpy)
 {
     XRRScreenResources *resources;
-    int i, n_active_outputs;
+    int i, n_active_outputs = 0;
 
     resources = XRRGetScreenResourcesCurrent (dpy, DefaultRootWindow(dpy));
     for (i = 0; i < resources->noutput; ++i) {
@@ -99,7 +99,7 @@ int GetNMonitors (Display *dpy)
 void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, int *height)
 {
     XRRScreenResources *resources;
-    int i, n_active_outputs;
+    int i, n_active_outputs = 0;
 
     resources = XRRGetScreenResourcesCurrent (dpy, DefaultRootWindow(dpy));
     for (i = 0; i < resources->noutput; ++i) {
