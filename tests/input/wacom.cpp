@@ -323,6 +323,9 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
     while(XPending(dpy))
         XNextEvent(dpy, &ev);
 
+    // Might be considered as uninitialized otherwise
+    root_x1 = 0;
+
     // Move to device coord (1000,1000)
     dev->PlayOne(EV_ABS, ABS_X, 1000, True);
     dev->PlayOne(EV_ABS, ABS_Y, 1000, True);
