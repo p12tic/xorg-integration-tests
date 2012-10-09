@@ -7,7 +7,18 @@
 
 #include "video-driver-test.h"
 
-TEST_P(SimpleVideoDriverTest, DriverDevice)
+class VideoModuleLoadTest : public SimpleVideoDriverTest {
+public:
+    virtual void SetUp() {
+        try {
+            SimpleVideoDriverTest::SetUp();
+        } catch (std::runtime_error &e) {
+            /* We don't care if SetUp() can't connect to the display */
+        }
+    }
+};
+
+TEST_P(VideoModuleLoadTest, DriverDevice)
 {
     std::ifstream in_file(server.GetLogFilePath().c_str());
     std::string line;
@@ -27,7 +38,7 @@ TEST_P(SimpleVideoDriverTest, DriverDevice)
     }
 }
 
-INSTANTIATE_TEST_CASE_P(, SimpleVideoDriverTest,
+INSTANTIATE_TEST_CASE_P(, VideoModuleLoadTest,
                         ::testing::Values("ati", "cirrus", "dummy", "fbdev",
                                           "geode", "imx", "intel", "mga",
                                           "modesetting", "nv", "qxl",
