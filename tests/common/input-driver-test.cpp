@@ -72,9 +72,11 @@ void InputDriverTest::SetUp(const std::string &param) {
 }
 
 void InputDriverTest::TearDown() {
-    if (server.Pid() != -1)
+    if (server.Pid() != -1) {
         if (!server.Terminate(3000))
             server.Kill(3000);
+        EXPECT_EQ(server.GetState(), xorg::testing::Process::FINISHED_SUCCESS) << "Unclean server shutdown";
+    }
 
     if (!Failed()) {
         config.RemoveConfig();
