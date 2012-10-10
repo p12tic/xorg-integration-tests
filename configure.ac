@@ -55,7 +55,7 @@ PKG_CHECK_MODULES(WACOM, xorg-wacom)
 
 m4_ifndef([CHECK_XORG_GTEST],
           [m4_fatal([must install xorg-gtest before running autoconf/autogen])])
-CHECK_XORG_GTEST([], AC_MSG_ERROR([xorg-gtest or its dependencies not found.  Did you specify --with-gtest-source-path?]))
+CHECK_XORG_GTEST([], AC_MSG_ERROR([xorg-gtest or its dependencies not found.]))
 
 # Check for RHEL and define as appropriate
 if test -f /etc/redhat-release; then
