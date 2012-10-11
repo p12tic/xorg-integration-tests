@@ -102,7 +102,7 @@ TEST_F(MouseDriverTest, Move)
     XFlush(Display());
     XSync(Display(), False);
 
-    dev->PlayOne(EV_REL, ABS_X, -1, 1);
+    dev->PlayOne(EV_REL, REL_X, -1, 1);
 
     ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
 
@@ -113,7 +113,7 @@ TEST_F(MouseDriverTest, Move)
     y = ev.xmotion.y_root;
 
     /* left */
-    dev->PlayOne(EV_REL, ABS_X, -1, 1);
+    dev->PlayOne(EV_REL, REL_X, -1, 1);
     ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
 
     XNextEvent(Display(), &ev);
@@ -122,7 +122,7 @@ TEST_F(MouseDriverTest, Move)
     x = ev.xmotion.x_root;
 
     /* right */
-    dev->PlayOne(EV_REL, ABS_X, 1, 1);
+    dev->PlayOne(EV_REL, REL_X, 1, 1);
     ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
 
     XNextEvent(Display(), &ev);
@@ -131,7 +131,7 @@ TEST_F(MouseDriverTest, Move)
     x = ev.xmotion.x_root;
 
     /* up */
-    dev->PlayOne(EV_REL, ABS_Y, -1, 1);
+    dev->PlayOne(EV_REL, REL_Y, -1, 1);
     ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
 
     XNextEvent(Display(), &ev);
@@ -140,7 +140,7 @@ TEST_F(MouseDriverTest, Move)
     y = ev.xmotion.y_root;
 
     /* down */
-    dev->PlayOne(EV_REL, ABS_Y, 1, 1);
+    dev->PlayOne(EV_REL, REL_Y, 1, 1);
     ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1, 1000), true);
 
     XNextEvent(Display(), &ev);
