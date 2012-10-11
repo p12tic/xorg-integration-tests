@@ -194,6 +194,38 @@ public:
     }
 };
 
+TEST_F(EvdevDriverMouseTest, TerminateWithButtonDown)
+{
+    SCOPED_TRACE("TESTCASE: terminate server with button down");
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
+
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000), true);
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    ASSERT_FALSE(XPending(Display()));
+}
+
+TEST_F(EvdevDriverMouseTest, BtnReleaseMaskOnly)
+{
+    SCOPED_TRACE("TESTCASE: ensure button release event is delivered if"
+                 "only the\n release mask is set (not the press mask)");
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonRelease, -1, -1, 1000), true);
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+
+    ASSERT_FALSE(XPending(Display()));
+}
+
 #ifdef HAVE_XI22
 TEST_F(EvdevDriverMouseTest, SmoothScrollingAvailable)
 {
