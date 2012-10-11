@@ -9,7 +9,6 @@
 
 void VideoDriverTest::StartServer() {
     server.Start();
-    server.WaitForConnections();
     xorg::testing::Test::SetDisplayString(server.GetDisplayString());
 
     ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
