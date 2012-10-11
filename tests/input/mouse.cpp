@@ -149,6 +149,34 @@ TEST_F(MouseDriverTest, Move)
     y = ev.xmotion.y_root;
 }
 
+TEST_F(MouseDriverTest, BtnPress)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
+
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000), true);
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    ASSERT_FALSE(XPending(Display()));
+}
+
+TEST_F(MouseDriverTest, BtnRelease)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonRelease, -1, -1, 1000), true);
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+
+    ASSERT_FALSE(XPending(Display()));
+}
+
 TEST_F(MouseDriverTest, DevNode)
 {
     Atom node_prop = XInternAtom(Display(), "Device Node", True);
