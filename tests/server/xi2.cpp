@@ -177,7 +177,7 @@ TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -252,7 +252,7 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
