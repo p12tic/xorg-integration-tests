@@ -1,5 +1,6 @@
 #include <stdexcept>
 
+#include "helpers.h"
 #include "device-interface.h"
 #include "input-driver-test.h"
 
@@ -23,8 +24,11 @@ protected:
     }
 
     virtual void SetUpConfigAndLog(const std::string &param) {
+        config.AddDefaultScreenWithDriver();
+        config.SetAutoAddDevices(true);
+        config.WriteConfig("/tmp/xi2-tests.conf");
         server.SetOption("-logfile", "/tmp/Xorg-xi2-tests.log");
-        /* no config */
+        server.SetOption("-config", config.GetPath());
     }
 
     virtual int RegisterXI2(int major, int minor)
@@ -41,42 +45,21 @@ TEST_P(XInput2Test, XITouchscreenPointerEmulation)
                  "touch is released, further movement should have button 1\n"
                  "released.\n");
 
+    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
+
     XIEventMask mask;
-    mask.deviceid = XIAllDevices;
+    mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_HierarchyChanged);
     mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
-    XISetMask(mask.mask, XI_HierarchyChanged);
-
-    ASSERT_EQ(Success,
-              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
-                             1));
-
-    mask.deviceid = XIAllMasterDevices;
-    XIClearMask(mask.mask, XI_HierarchyChanged);
     XISetMask(mask.mask, XI_ButtonPress);
     XISetMask(mask.mask, XI_ButtonRelease);
     XISetMask(mask.mask, XI_Motion);
 
-    ASSERT_EQ(Success,
-              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
-                             1));
+    XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1);
 
     free(mask.mask);
 
     XFlush(Display());
-
-    std::auto_ptr<xorg::testing::evemu::Device> touch_device;
-    try {
-      touch_device = std::auto_ptr<xorg::testing::evemu::Device>(
-          new xorg::testing::evemu::Device(
-              RECORDINGS_DIR "tablets/N-Trig-MultiTouch.desc")
-          );
-    } catch (std::runtime_error &error) {
-      std::cerr << "Failed to create evemu device, skipping test.\n";
-      return;
-    }
-
-    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 
     std::auto_ptr<xorg::testing::evemu::Device> mouse_device;
     try {
@@ -95,7 +78,6 @@ TEST_P(XInput2Test, XITouchscreenPointerEmulation)
     XGenericEventCookie *xcookie;
     XIDeviceEvent *device_event;
 
-
     /* Move the mouse, check that the button is not pressed. */
     mouse_device->PlayOne(EV_REL, ABS_X, -1, 1);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
@@ -113,7 +95,7 @@ TEST_P(XInput2Test, XITouchscreenPointerEmulation)
 
 
     /* Touch the screen, wait for press event */
-    touch_device->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -139,7 +121,7 @@ TEST_P(XInput2Test, XITouchscreenPointerEmulation)
 
 
     /* Release the screen, wait for release event */
-    touch_device->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
