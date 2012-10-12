@@ -43,7 +43,7 @@ public:
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboardj\" \"on\"\n");
+                               "Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig("/tmp/pointer-grab-test.conf");
     }
 
