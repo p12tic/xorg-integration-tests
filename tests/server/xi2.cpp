@@ -276,8 +276,8 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
     enable_control.enable = false;
     XDeviceControl *control =
         reinterpret_cast<XDeviceControl*>(&enable_control);
-    ASSERT_TRUE(XChangeDeviceControl(Display(), xdevice, DEVICE_ENABLE,
-                                     control));
+    ASSERT_EQ(XChangeDeviceControl(Display(), xdevice, DEVICE_ENABLE, control),
+              Success);
     XCloseDevice(Display(), xdevice);
     XFlush(Display());
 
