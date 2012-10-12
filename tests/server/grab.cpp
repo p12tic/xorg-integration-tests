@@ -156,6 +156,123 @@ TEST_F(PointerGrabTest, GrabDisabledDevices)
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
 
+#if HAVE_XI22
+class TouchGrabTest : public InputDriverTest,
+                      public DeviceInterface,
+                      public ::testing::WithParamInterface<int> {
+public:
+    /**
+     * Initializes a standard mouse device.
+     */
+    virtual void SetUp() {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+        InputDriverTest::SetUp();
+    }
+
+    /**
+     * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
+     * the evemu device. The input from GetParam() is used as XkbLayout.
+     */
+    virtual void SetUpConfigAndLog(const std::string &param) {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig("/tmp/pointer-grab-test.conf");
+        server.SetOption("-logfile", "/tmp/Xorg-touch-grab-test.log");
+        server.SetOption("-config", config.GetPath());
+    }
+
+
+    virtual int RegisterXI2(int major, int minor)
+    {
+        return InputDriverTest::RegisterXI2(2, 2);
+    }
+
+};
+
+TEST_P(TouchGrabTest, ActiveAndPassiveGrab)
+{
+    int mode = GetParam();
+    std::string strmode = (mode == XIAcceptTouch) ? "XIAcceptTouch" : "XIRejectTouch";
+    SCOPED_TRACE("\nTESTCASE: Passive and active grab on the same device\n"
+                 "must receive an equal number of TouchBegin/TouchEnd "
+                 "events\nfor mode" + strmode  + ".\n"
+                 "https://bugs.freedesktop.org/show_bug.cgi?id=55738");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    XIEventMask mask;
+    mask.deviceid = deviceid;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers modifier = {0};
+    modifier.modifiers = XIAnyModifier;
+
+    Window win = XDefaultRootWindow(Display());
+
+    XIGrabButton(Display(), deviceid, 1, win, None, GrabModeAsync, GrabModeAsync, False, &mask, 1, &modifier);
+    ASSERT_EQ(XIGrabTouchBegin(Display(), deviceid, win, False, &mask, 1, &modifier), Success);
+    XIGrabDevice(Display(), deviceid, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XSync(Display(), False);
+
+    int tbegin_received = 0;
+    int tend_received = 0;
+
+    while (XPending(Display())) {
+        XEvent ev;
+        XNextEvent(Display(), &ev);
+
+        if (ev.xcookie.type == GenericEvent &&
+            ev.xcookie.extension == xi2_opcode &&
+            XGetEventData(Display(), &ev.xcookie)) {
+            XIDeviceEvent *event = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+            switch(event->evtype) {
+                case XI_TouchBegin:
+                    tbegin_received++;
+                    XIAllowTouchEvents(Display(), event->deviceid, event->detail, win, mode);
+                    break;
+                case XI_TouchEnd:
+                    tend_received++;
+                    break;
+            }
+        }
+
+        XFreeEventData(Display(), &ev.xcookie);
+        XSync(Display(), False);
+    }
+    ASSERT_FALSE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                GenericEvent,
+                xi2_opcode,
+                XI_TouchEnd,
+                500));
+    if (mode == XIAcceptTouch) {
+        ASSERT_EQ(tbegin_received, 1);
+        ASSERT_EQ(tend_received, 1);
+    } else {
+        ASSERT_EQ(tbegin_received, 2);
+        ASSERT_EQ(tend_received, 2);
+    }
+
+    delete[] mask.mask;
+}
+
+INSTANTIATE_TEST_CASE_P(, TouchGrabTest, ::testing::Values(XIAcceptTouch, XIRejectTouch));
+
+#endif
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
