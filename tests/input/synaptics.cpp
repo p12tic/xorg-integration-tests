@@ -570,6 +570,132 @@ TEST_F(SynapticsDriverClickpadTest, VertScrollUp)
     XSync(Display(), True);
 }
 
+TEST_F(SynapticsDriverClickpadTest, DisableDevice)
+{
+    SCOPED_TRACE("Disable and re-enable the device with no fingers down\n");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    DeviceSetEnabled(Display(), deviceid, false);
+    DeviceSetEnabled(Display(), deviceid, true);
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerDownAndLift)
+{
+    SCOPED_TRACE("Disable the device with one fingers down, lift finger,\n"
+                 "re-enable device.");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, false);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
+    DeviceSetEnabled(Display(), deviceid, true);
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerDown)
+{
+    SCOPED_TRACE("Disable the device with one finger down, re-enable with\n"
+                 "finger still down\n");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, false);
+    DeviceSetEnabled(Display(), deviceid, true);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersDownAndLift)
+{
+    SCOPED_TRACE("Disable the device with two fingers down, lift fingers, "
+                 "re-enable.");
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, false);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
+    DeviceSetEnabled(Display(), deviceid, true);
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersDown)
+{
+    SCOPED_TRACE("Disable the device with two fingers down, re-enable, with\n"
+                 "fingers still down");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, false);
+    DeviceSetEnabled(Display(), deviceid, true);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerResume)
+{
+    SCOPED_TRACE("Disable the device with no fingers down, re-enable with\n"
+                 "one finger down\n");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    DeviceSetEnabled(Display(), deviceid, false);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, true);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersResume)
+{
+    SCOPED_TRACE("Disable the device with no fingers down, re-enable with\n"
+                 "two fingers down");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    DeviceSetEnabled(Display(), deviceid, false);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, true);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerTwoFingersResume)
+{
+    SCOPED_TRACE("Disable the device with one finger down, re-enable with\n"
+                 "two fingers down");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, false);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, true);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
+}
+
+TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersOneFingerResume)
+{
+    SCOPED_TRACE("Disable the device with two fingers down, re-enable with\n"
+                 "one finger down");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, false);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-down.events");
+    DeviceSetEnabled(Display(), deviceid, true);
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
+}
+
 /**
  * Synaptics driver test for clickpad devices with the SoftButtonArea option
  * set.
