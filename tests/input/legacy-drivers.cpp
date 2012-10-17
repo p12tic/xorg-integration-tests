@@ -118,7 +118,6 @@ TEST(AcecadInputDriver, WithOptionDevice)
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     config.RemoveConfig();
-    server.Terminate(3000);
     server.RemoveLogFile();
 }
 
@@ -156,7 +155,6 @@ TEST(AiptekInputDriver, TypeStylus)
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     config.RemoveConfig();
-    server.Terminate(3000);
     server.RemoveLogFile();
 }
 
@@ -188,7 +186,6 @@ TEST(AiptekInputDriver, TypeCursor)
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     config.RemoveConfig();
-    server.Terminate(3000);
     server.RemoveLogFile();
 }
 
@@ -220,7 +217,6 @@ TEST(AiptekInputDriver, TypeEraser)
     ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
     config.RemoveConfig();
-    server.Terminate(3000);
     server.RemoveLogFile();
 }
 
@@ -275,7 +271,6 @@ TEST(ElographicsDriver, Load)
     XIFreeDeviceInfo(info);
 
     config.RemoveConfig();
-    server.Terminate(3000);
     server.RemoveLogFile();
 }
 
@@ -415,7 +410,6 @@ TEST(ElographicsDriver, Move)
     ASSERT_LT(first.xmotion.x_root, second.xmotion.x_root);
 
     config.RemoveConfig();
-    server.Terminate(3000);
     server.RemoveLogFile();
 }
 
