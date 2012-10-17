@@ -662,22 +662,13 @@ TEST_F(EvdevDriverFloatingSlaveTest, FloatingDevice)
 
     XIFreeDeviceInfo(info);
 
-    pid_t pid = fork();
-    if (pid == 0) {
-        dev->PlayOne(EV_REL, ABS_X, 10, 1);
-        dev->PlayOne(EV_REL, ABS_X, 4, 1);
+    dev->PlayOne(EV_REL, ABS_X, 10, 1);
+    dev->PlayOne(EV_REL, ABS_X, 4, 1);
 
-        XSync(Display(), False);
-        ASSERT_FALSE(XPending(Display()));
+    XSync(Display(), False);
+    ASSERT_FALSE(XPending(Display()));
 
-        ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
-    } else {
-        int status;
-        waitpid(pid, &status, 0);
-
-        ASSERT_TRUE(WIFEXITED(status));
-        ASSERT_EQ(WEXITSTATUS(status), 0);
-    }
+    ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
 
 
