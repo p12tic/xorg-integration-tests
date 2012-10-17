@@ -55,5 +55,13 @@ int GetNMonitors (Display *dpy);
  */
 void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, int *height);
 
+/**
+ * Enable or disable the input device
+ *
+ * @param [in] dpy      The display connection
+ * @param [in] deviceid The numerical device ID for this device
+ * @param [in] enabled  true to enable the device, false to disable
+ */
+void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled);
 #endif
 

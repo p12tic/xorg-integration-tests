@@ -3,6 +3,8 @@
 #endif
 #include "helpers.h"
 
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <X11/extensions/XInput2.h>
 #include <X11/extensions/Xrandr.h>
 
@@ -128,4 +130,14 @@ void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, 
     }
 
     XRRFreeScreenResources (resources);
+}
+
+void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled)
+{
+    Atom enabled_prop = XInternAtom(dpy, "Device Enabled", True);
+    ASSERT_NE(enabled_prop, (Atom)None);
+    unsigned char data = enabled ? 1 : 0;
+    XIChangeProperty(dpy, deviceid, enabled_prop, XA_INTEGER, 8,
+                     PropModeReplace, &data, 1);
+    XFlush(dpy);
 }
