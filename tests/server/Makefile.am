@@ -1,6 +1,6 @@
 include $(top_srcdir)/tests/common/Makefile.am
 
-noinst_PROGRAMS = grab xi2 xigrabbutton xtest
+noinst_PROGRAMS = grab xi2 xigrabbutton xtest multihead
 TESTS=$(noinst_PROGRAMS)
 
 grab_SOURCES = grab.cpp $(common_sources)
@@ -14,3 +14,6 @@ xigrabbutton_LDADD = $(GTEST_LDADDS)
 
 xtest_SOURCES = xtest.cpp $(common_sources)
 xtest_LDADD = $(GTEST_LDADDS) $(XTEST_LIBS)
+
+multihead_SOURCES = multihead.cpp $(common_sources)
+multihead_LDADD = $(GTEST_LDADDS)
