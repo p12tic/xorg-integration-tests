@@ -35,6 +35,7 @@ public:
             "	Identifier     \"X.org Configured\"\n"
             "	Screen         0 \"Screen0\"\n"
             "	Screen         1 \"Screen1\" " << ((left_of) ? "LeftOf" : "RightOf") << " \"Screen0\"\n"
+            "	Option         \"Xinerama\" \"" << (xinerama ? "on" : "off") << "\"\n"
             "EndSection\n"
             "\n"
             "Section \"Device\"\n"
@@ -165,13 +166,16 @@ public:
                     ADD_FAILURE() << "Unknown event type " << ev.type;
                     break;
             }
-        } while(on_screen && old_x < DisplayWidth(dpy, 0));
+        } while(on_screen &&
+                old_x < (DisplayWidth(dpy, 0) - 1) &&
+                old_x != 0 && ev.xmotion.x_root != 0);
 
         return on_screen;
     }
 
 protected:
     XServer server;
+    bool xinerama;
 
 private:
     std::string config_path;
@@ -230,6 +234,37 @@ TEST_P(ZaphodTest, ScreenCrossing)
 }
 
 INSTANTIATE_TEST_CASE_P(, ZaphodTest, ::testing::Values(true, false));
+
+class XineramaTest : public ZaphodTest {
+public:
+    virtual void SetUp() {
+        xinerama = true;
+        ZaphodTest::SetUp();
+    }
+};
+
+TEST_P(XineramaTest, ScreenCrossing)
+{
+    SCOPED_TRACE("TESTCASE: in a Xinerama setup, move left right, hitting "
+                 "the screen boundary each time");
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    ASSERT_TRUE(dpy);
+    ASSERT_EQ(ScreenCount(dpy), 1);
+
+    XSelectInput(dpy, RootWindow(dpy, 0), PointerMotionMask | LeaveWindowMask | EnterWindowMask);
+    XFlush(dpy);
+
+    bool left_of = GetParam();
+    int direction = left_of ? -1 : 1;
+    bool on_screen = Move(dpy, direction);
+    ASSERT_TRUE(on_screen);
+    on_screen = Move(dpy, -direction);
+    ASSERT_TRUE(on_screen);
+    on_screen = Move(dpy, direction);
+    ASSERT_TRUE(on_screen);
+}
+
+INSTANTIATE_TEST_CASE_P(, XineramaTest, ::testing::Values(true, false));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
