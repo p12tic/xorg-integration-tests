@@ -85,6 +85,7 @@ void InputDriverTest::TearDown() {
                 size_t found = line.find(bug_warn);
                 bool error = (found != std::string::npos);
                 EXPECT_FALSE(error) << "BUG warning found in log" << std::endl << line << std::endl;
+                break;
             }
         }
     }
