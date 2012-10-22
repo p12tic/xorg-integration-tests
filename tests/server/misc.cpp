@@ -10,6 +10,8 @@
 #include "device-interface.h"
 #include "helpers.h"
 
+using namespace xorg::testing;
+
 class EventQueueTest : public InputDriverTest,
                        public DeviceInterface {
 public:
@@ -63,6 +65,57 @@ TEST_F(EventQueueTest, mieqOverflow)
                        << "but couldn't find it";
 }
 
+TEST(MiscServerTest, DoubleSegfault)
+{
+    SCOPED_TRACE("\n"
+                 "TESTCASE: SIGSEGV the server. The server must catch the "
+                 "signal, clean up and then call abort().\n");
+
+    std::string logpath = "/tmp/Xorg-sigsegv.log";
+    XServer server;
+    server.SetOption("-logfile", logpath);
+    server.Start();
+
+    ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
+
+    /* We connect and run XSync, this usually takes long enough for some
+       devices to come up. That way, input devices are part of the close
+       down procedure */
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    XSync(dpy, False);
+
+    kill(server.Pid(), SIGSEGV);
+
+    int status = 1;
+    while(WIFEXITED(status) == false)
+        if (waitpid(server.Pid(), &status, 0) == -1)
+            break;
+
+    ASSERT_TRUE(WIFSIGNALED(status));
+    int termsig = WTERMSIG(status);
+    ASSERT_EQ(termsig, SIGABRT)
+        << "Expected SIGABRT, got " << termsig << " (" << strsignal(termsig) << ")";
+
+    std::ifstream logfile(server.GetLogFilePath().c_str());
+    std::string line;
+    std::string signal_caught_msg("Caught signal");
+    int signal_count = 0;
+    ASSERT_TRUE(logfile.is_open());
+    while(getline(logfile, line)) {
+        if (line.find(signal_caught_msg) != std::string::npos)
+            signal_count++;
+    }
+
+    ASSERT_EQ(signal_count, 1) << "Expected one signal to show up in the log\n";
+
+    unlink(logpath.c_str());
+
+    /* The XServer destructor tries to terminate the server and prints
+       warnings if it fails */
+    std::cout << "Note: below warnings about server termination failures server are false positives\n";
+    server.Terminate(); /* explicitly terminate instead of destructor to
+                           only get one warning */
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
