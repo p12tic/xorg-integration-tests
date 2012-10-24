@@ -200,8 +200,8 @@ TEST_P(ZaphodTest, ScreenCrossing)
 
     XSelectInput(dpy, RootWindow(dpy, 0), PointerMotionMask | LeaveWindowMask | EnterWindowMask);
     XSelectInput(dpy2, RootWindow(dpy2, 1), PointerMotionMask | EnterWindowMask | LeaveWindowMask);
-    XFlush(dpy);
-    XFlush(dpy2);
+    XSync(dpy, False);
+    XSync(dpy2, False);
 
     bool left_of = GetParam();
     int direction = left_of ? -1 : 1;
