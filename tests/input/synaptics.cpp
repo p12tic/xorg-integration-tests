@@ -259,7 +259,8 @@ void check_buttons_event(::Display *display,
         nevents++;
     }
 
-    ASSERT_EQ(expect_nevents, nevents);
+    /* if we get more than 5 events difference, something is probably wrong */
+    ASSERT_LT(abs(expect_nevents - nevents), 5);
 }
 
 TEST_F(SynapticsDriverTest, ScrollWheel)
@@ -307,7 +308,8 @@ void check_drag_event(::Display *display,
     nevents = 0;
     while (XCheckMaskEvent (display, PointerMotionMask, &ev))
         nevents++;
-    ASSERT_EQ(expect_nmotion, nevents);
+    /* if we get more than 5 events difference, something is probably wrong */
+    ASSERT_LT(abs(expect_nmotion -nevents), 5);
 
     nevents = 0;
     while (XCheckMaskEvent (display, ButtonReleaseMask, &ev))
