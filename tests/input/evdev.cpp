@@ -197,6 +197,7 @@ public:
 TEST_F(EvdevDriverMouseTest, TerminateWithButtonDown)
 {
     SCOPED_TRACE("TESTCASE: terminate server with button down");
+    SCOPED_TRACE("http://patchwork.freedesktop.org/patch/12193/");
 
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);

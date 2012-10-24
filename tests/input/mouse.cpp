@@ -164,6 +164,8 @@ TEST_F(MouseDriverTest, BtnPress)
 
 TEST_F(MouseDriverTest, BtnRelease)
 {
+    SCOPED_TRACE("http://patchwork.freedesktop.org/patch/12193/");
+
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonReleaseMask);
     XSync(Display(), False);
 
