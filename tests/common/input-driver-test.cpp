@@ -10,6 +10,13 @@
 
 #include "input-driver-test.h"
 
+#define TEST_TIMEOUT 60
+
+static void sighandler_alarm(int signal)
+{
+    FAIL() << "Test has timed out (" << __func__ << "). Adjust TEST_TIMEOUT (" << TEST_TIMEOUT << "s) if needed.";
+}
+
 int InputDriverTest::RegisterXI2(int major, int minor)
 {
     int event_start;
@@ -30,6 +37,10 @@ int InputDriverTest::RegisterXI2(int major, int minor)
 }
 
 void InputDriverTest::StartServer() {
+    /* No test takes longer than 60 seconds */
+    alarm(60);
+    signal(SIGALRM, sighandler_alarm);
+
     server.SetOption("-noreset", "");
     server.Start();
     xorg::testing::Test::SetDisplayString(server.GetDisplayString());
@@ -72,6 +83,7 @@ void InputDriverTest::SetUp(const std::string &param) {
 }
 
 void InputDriverTest::TearDown() {
+    alarm(0);
     if (server.Pid() != -1) {
         if (!server.Terminate(3000))
             server.Kill(3000);
