@@ -276,6 +276,7 @@ TEST_F(WacomMatrixTest, InputMatrix)
 
     XSelectInput(Display(), DefaultRootWindow(Display()), PointerMotionMask |
                                                           ButtonMotionMask);
+    XSync(Display(), False);
 
     // Check with upper right quarter
     test_area (Display(), dev.get(), deviceid, monitor_x, monitor_y, monitor_width / 2, monitor_height / 2);
