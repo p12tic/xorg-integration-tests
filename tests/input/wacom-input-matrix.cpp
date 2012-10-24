@@ -233,10 +233,10 @@ void test_area (Display *dpy, xorg::testing::evemu::Device *dev,
     // Capture motion events and check they remain within the mapped area
     XSync (dpy, False);
     while(XCheckMaskEvent (dpy, PointerMotionMask, &ev)) {
-        EXPECT_TRUE (ev.xmotion.x_root >= x);
-        EXPECT_TRUE (ev.xmotion.x_root < x + width);
-        EXPECT_TRUE (ev.xmotion.y_root >= y);
-        EXPECT_TRUE (ev.xmotion.y_root < y + height);
+        EXPECT_GE (ev.xmotion.x_root, x);
+        EXPECT_LT (ev.xmotion.x_root, x + width);
+        EXPECT_GE (ev.xmotion.y_root, y);
+        EXPECT_LE (ev.xmotion.y_root, y + height);
     }
 
     while(XPending(dpy))
