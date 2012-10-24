@@ -76,6 +76,7 @@ void InputDriverTest::TearDown() {
         if (!server.Terminate(3000))
             server.Kill(3000);
         EXPECT_EQ(server.GetState(), xorg::testing::Process::FINISHED_SUCCESS) << "Unclean server shutdown";
+        failed = (server.GetState() != xorg::testing::Process::FINISHED_SUCCESS);
 
         std::ifstream logfile(server.GetLogFilePath().c_str());
         std::string line;
@@ -85,6 +86,7 @@ void InputDriverTest::TearDown() {
                 size_t found = line.find(bug_warn);
                 bool error = (found != std::string::npos);
                 EXPECT_FALSE(error) << "BUG warning found in log" << std::endl << line << std::endl;
+                failed = failed || error;
                 break;
             }
         }
