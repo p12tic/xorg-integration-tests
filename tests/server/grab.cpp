@@ -34,8 +34,7 @@ public:
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-pointer-grab-test.log");
-        server.SetOption("-config", "/tmp/pointer-grab-test.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -44,7 +43,7 @@ public:
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
                                "Option \"CoreKeyboard\" \"on\"\n");
-        config.WriteConfig("/tmp/pointer-grab-test.conf");
+        config.WriteConfig();
     }
 
 
@@ -173,6 +172,7 @@ public:
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
+        InitDefaultLogFiles(server, &config);
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
@@ -180,9 +180,7 @@ public:
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
                                "Option \"CoreKeyboard\" \"on\"\n");
-        config.WriteConfig("/tmp/pointer-grab-test.conf");
-        server.SetOption("-logfile", "/tmp/Xorg-touch-grab-test.log");
-        server.SetOption("-config", config.GetPath());
+        config.WriteConfig();
     }
 
 

@@ -28,7 +28,7 @@ public:
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-
+        InitDefaultLogFiles(server, &config);
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
@@ -36,9 +36,7 @@ public:
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
                                "Option \"CoreKeyboard\" \"on\"\n");
-        config.WriteConfig("/tmp/eventqueue-test.conf");
-        server.SetOption("-logfile", "/tmp/Xorg-eventqueue-test.log");
-        server.SetOption("-config", config.GetPath());
+        config.WriteConfig();
     }
 };
 
@@ -71,9 +69,8 @@ TEST(MiscServerTest, DoubleSegfault)
                  "TESTCASE: SIGSEGV the server. The server must catch the "
                  "signal, clean up and then call abort().\n");
 
-    std::string logpath = "/tmp/Xorg-sigsegv.log";
     XServer server;
-    server.SetOption("-logfile", logpath);
+    InitDefaultLogFiles(server);
     server.Start();
 
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
@@ -108,7 +105,7 @@ TEST(MiscServerTest, DoubleSegfault)
 
     ASSERT_EQ(signal_count, 1) << "Expected one signal to show up in the log\n";
 
-    unlink(logpath.c_str());
+    unlink(server.GetLogFilePath().c_str());
 
     /* The XServer destructor tries to terminate the server and prints
        warnings if it fails */

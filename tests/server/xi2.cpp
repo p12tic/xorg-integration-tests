@@ -24,11 +24,10 @@ protected:
     }
 
     virtual void SetUpConfigAndLog(const std::string &param) {
+        InitDefaultLogFiles(server, &config);
         config.AddDefaultScreenWithDriver();
         config.SetAutoAddDevices(true);
-        config.WriteConfig("/tmp/xi2-tests.conf");
-        server.SetOption("-logfile", "/tmp/Xorg-xi2-tests.log");
-        server.SetOption("-config", config.GetPath());
+        config.WriteConfig();
     }
 
     virtual int RegisterXI2(int major, int minor)

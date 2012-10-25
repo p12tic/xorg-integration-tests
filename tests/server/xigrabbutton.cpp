@@ -29,8 +29,7 @@ public:
     /**
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-xibuttongrab-test.log");
-        server.SetOption("-config", "/tmp/xorg-xibuttongrab-test.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("wacom", "pad",
@@ -45,7 +44,7 @@ public:
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
                                "    Option \"CoreKeyboard\" \"on\"\n");
-        config.WriteConfig("/tmp/xorg-xibuttongrab-test.conf");
+        config.WriteConfig();
     }
 
    std::string display_string;

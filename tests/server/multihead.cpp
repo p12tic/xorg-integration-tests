@@ -24,8 +24,8 @@ class ZaphodTest : public Test,
 public:
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
-        config_path = "/tmp/zaphod-test.conf";
-        log_path = "/tmp/Xorg-zaphod-test.log";
+        InitDefaultLogFiles(server);
+        config_path = server.GetConfigPath();
 
         bool left_of = GetParam();
 
@@ -59,8 +59,6 @@ public:
             "EndSection";
         config.close();
 
-        server.SetOption("-config", config_path);
-        server.SetOption("-logfile", log_path);
         server.SetDisplayNumber(133);
         server.Start();
 
