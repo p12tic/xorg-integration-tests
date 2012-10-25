@@ -12,6 +12,8 @@
 #include <input-driver-test.h>
 #include <device-interface.h>
 
+#include "helpers.h"
+
 /**
  * Test for libXi-related bugs. Initialises a single evdev pointer device ready
  * for uinput-events.
@@ -32,8 +34,7 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-libXi-test.log");
-        server.SetOption("-config", "/tmp/libXi-test.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -42,7 +43,7 @@ public:
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "keyboard-device",
                                "Option \"CoreKeyboard\" \"on\"\n");
-        config.WriteConfig("/tmp/libXi-test.conf");
+        config.WriteConfig();
     }
 
 };
