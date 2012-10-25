@@ -1,0 +1,25 @@
+Writing test for the X.Org Integration Test (XIT) suite
+
+== googletest ==
+You should be familiar with googletest
+http://code.google.com/p/googletest/wiki/Documentation
+
+This document well not detail googletest-only specific issues, it will focus
+on those parts that are specific to XIT.
+
+== Directory layout ==
+Tests are divided by general category:
+tests/input .... tests for specific input driver features or bugs
+tests/video .... tests for specific video driver features or bugs
+tests/server ... tests for server features or bugs
+tests/lib ...... tests for library features or bugs
+
+Each directory has a number of binaries that group the tests further. e.g.
+server/grab is a set of grab-related tests. Tests should go into existing
+binaries where sensible, but tests for new logical features should add new
+binaries. A test binary may have multiple source files.
+
+Ideally, each feature or behaviour group can be tested by running one
+binary.
+
+

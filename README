@@ -56,3 +56,6 @@ allows to investigate logs or attach gdb to the server process.
 
 For further environment variables please refer to the xorg-gtest README
 http://cgit.freedesktop.org/xorg/test/xorg-gtest/tree/README
+
+== Writing tests ==
+Please refer to the HACKING document
