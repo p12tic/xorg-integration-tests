@@ -194,8 +194,8 @@ public:
 
 TEST_F(EvdevMouseTest, TerminateWithButtonDown)
 {
-    SCOPED_TRACE("TESTCASE: terminate server with button down");
-    SCOPED_TRACE("http://patchwork.freedesktop.org/patch/12193/");
+    XORG_TESTCASE("Terminate server with button down.\n"
+                  "http://patchwork.freedesktop.org/patch/12193/");
 
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
@@ -210,8 +210,8 @@ TEST_F(EvdevMouseTest, TerminateWithButtonDown)
 
 TEST_F(EvdevMouseTest, BtnReleaseMaskOnly)
 {
-    SCOPED_TRACE("TESTCASE: ensure button release event is delivered if"
-                 "only the\n release mask is set (not the press mask)");
+    XORG_TESTCASE("Ensure button release event is delivered if"
+                  "only the\n release mask is set (not the press mask)");
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonReleaseMask);
     XSync(Display(), False);
 
@@ -674,9 +674,9 @@ public:
 
 TEST_F(EvdevFloatingSlaveTest, FloatingDevice)
 {
-    SCOPED_TRACE("Check that the server does not crash for a device\n"
-                 "with Option Floating set.\n"
-                 "xorg-server-1.12.99.903-49-gd53e6e0\n");
+    XORG_TESTCASE("Check that the server does not crash for a device\n"
+                  "with Option Floating set.\n"
+                  "xorg-server-1.12.99.903-49-gd53e6e0\n");
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
 

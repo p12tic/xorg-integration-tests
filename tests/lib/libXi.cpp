@@ -50,6 +50,8 @@ public:
 
 TEST_F(libXiTest, DisplayNotGarbage)
 {
+    XORG_TESTCASE("https://bugzilla.redhat.com/show_bug.cgi?id=804907");
+
     ::Display *dpy = Display();
     XIEventMask mask;
     unsigned char data[XIMaskLen(XI_LASTEVENT)] = { 0 };
@@ -79,7 +81,7 @@ TEST_F(libXiTest, DisplayNotGarbage)
     assert(XGetEventData(dpy, &ev.xcookie));
 
     dev = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
-    ASSERT_EQ(dev->display, dpy) << "https://bugzilla.redhat.com/show_bug.cgi?id=804907";
+    ASSERT_EQ(dev->display, dpy);
 
     XFreeEventData(dpy, &ev.xcookie);
 }

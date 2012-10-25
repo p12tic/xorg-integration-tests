@@ -56,10 +56,10 @@ public:
 
 TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
 {
-    SCOPED_TRACE("\n"
-                 "TESTCASE: this test registers for XI_ButtonPress on a \n"
-                 "window and expects raw events to arrive while the \n"
-                 "implicit grab is active.");
+    XORG_TESTCASE("This test registers for XI_ButtonPress on a \n"
+                  "window and expects raw events to arrive while the \n"
+                  "implicit grab is active.\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=53897");
 
     ASSERT_GE(RegisterXI2(2, 1), 1) << "This test requires XI 2.1+";
 
@@ -132,8 +132,8 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
 
 TEST_F(PointerGrabTest, GrabDisabledDevices)
 {
-    SCOPED_TRACE("Grabbing a disabled device must not segfault the server.\n"
-                 "https://bugs.freedesktop.org/show_bug.cgi?id=54934");
+    XORG_TESTCASE("Grabbing a disabled device must not segfault the server.\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=54934");
 
     Atom prop = XInternAtom(Display(), "Device Enabled", True);
     ASSERT_NE(prop, (Atom)None);
@@ -200,10 +200,10 @@ TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
 {
     int mode = GetParam();
     std::string strmode = (mode == XIAcceptTouch) ? "XIAcceptTouch" : "XIRejectTouch";
-    SCOPED_TRACE("\nTESTCASE: Passive and active grab on the same device\n"
-                 "must receive an equal number of TouchBegin/TouchEnd "
-                 "events\nfor mode" + strmode  + ".\n"
-                 "https://bugs.freedesktop.org/show_bug.cgi?id=55738");
+    XORG_TESTCASE("Passive and active grab on the same device\n"
+                  "must receive an equal number of TouchBegin/TouchEnd "
+                  "events\nfor mode" + strmode  + ".\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=55738");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -278,10 +278,10 @@ class TouchGrabTestMultipleTaps : public TouchGrabTest,
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFastSuccession)
 {
-    SCOPED_TRACE("\nTESTCASE: a client selecting for core events on the \n"
-                 "root window must not receive ButtonPress and Release events \n"
-                 "if a passive button grabbing client has GrabModeAsync.\n"
-                 "This test exceeds num_touches on the device.\n");
+    XORG_TESTCASE("A client selecting for core events on the \n"
+                  "root window must not receive ButtonPress and Release events \n"
+                  "if a passive button grabbing client has GrabModeAsync.\n"
+                  "This test exceeds num_touches on the device.\n");
 
     ::Display *dpy1 = Display();
 
@@ -339,10 +339,10 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 {
-    SCOPED_TRACE("\nTESTCASE: if a client has a async passive button grab on the "
-                 "root window,\na client with a touch selection on the next window "
-                 "down must not get touch events.\n"
-                 "This test exceeds num_touches on the device.\n");
+    XORG_TESTCASE("If a client has a async passive button grab on the "
+                  "root window,\na client with a touch selection on the next window "
+                  "down must not get touch events.\n"
+                  "This test exceeds num_touches on the device.\n");
 
     ::Display *dpy1 = Display();
 

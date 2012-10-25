@@ -150,6 +150,9 @@ TEST_F(MouseTest, Move)
 
 TEST_F(MouseTest, BtnPress)
 {
+    XORG_TESTCASE("Terminating the server with a button down crashes the server.\n"
+                  "http://patchwork.freedesktop.org/patch/12193/");
+
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
 
@@ -163,8 +166,6 @@ TEST_F(MouseTest, BtnPress)
 
 TEST_F(MouseTest, BtnRelease)
 {
-    SCOPED_TRACE("http://patchwork.freedesktop.org/patch/12193/");
-
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonReleaseMask);
     XSync(Display(), False);
 

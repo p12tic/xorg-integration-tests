@@ -156,7 +156,7 @@ bool test_property(Display *dpy, int deviceid, const char *prop_name)
 
 TEST_P(WacomDriverTest, DeviceNames)
 {
-    SCOPED_TRACE("Test names of the tools and type properties match the tools");
+    XORG_TESTCASE("Test names of the tools and type properties match the tools");
 
     Tablet tablet = GetParam();
 
@@ -245,7 +245,7 @@ void check_for_type (Display *dpy, XIDeviceInfo *list, int ndevices, const char 
 
 TEST_P(WacomDriverTest, DeviceType)
 {
-    SCOPED_TRACE("Test type of the tools for the device");
+    XORG_TESTCASE("Test type of the tools for the device");
 
     Tablet tablet = GetParam();
     int major = 2;
@@ -365,7 +365,7 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 // not generated...
 TEST_P(WacomDriverTest, Rotation)
 {
-    SCOPED_TRACE("Test rotation is applied on a device");
+    XORG_TESTCASE("Test rotation is applied on a device");
 
     Tablet tablet = GetParam();
 
@@ -417,8 +417,8 @@ INSTANTIATE_TEST_CASE_P(, WacomDriverTest,
 
 TEST(WacomDriver, PrivToolDoubleFree)
 {
-    SCOPED_TRACE("Two devices with the same device node cause a double-free\n"
-                 "of priv->tool in wcmPreInitParseOptions\n"
+    XORG_TESTCASE("Two devices with the same device node cause a double-free\n"
+                 "of priv->tool in wcmPreInitParseOptions.\n"
                  "https://bugs.freedesktop.org/show_bug.cgi?id=55200");
 
     XOrgConfig config;

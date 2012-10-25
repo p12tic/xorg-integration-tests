@@ -77,11 +77,11 @@ public:
 
 TEST_F(WacomHoveringTest, HoveringTest)
 {
-    SCOPED_TRACE("Test that hovering the Expresskeys pad while "
-                 "using the stylus does not generate spurious "
-                 "motion events to (0,0).\n"
-                 "Note: This test is useless since the problem cannot be reproduced via evemu\n"
-                 "https://bugs.freedesktop.org/show_bug.cgi?id=54250");
+    XORG_TESTCASE("Test that hovering the Expresskeys pad while "
+                  "using the stylus does not generate spurious "
+                  "motion events to (0,0).\n"
+                  "Note: This test is useless since the problem cannot be reproduced via evemu\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=54250");
 
     XEvent ev;
     Window win;

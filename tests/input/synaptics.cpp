@@ -350,7 +350,7 @@ class SynapticsWarpTest : public SynapticsTest,
 
 TEST_P(SynapticsWarpTest, WarpScaling)
 {
-    SCOPED_TRACE("https://bugs.freedesktop.org/show_bug.cgi?id=53037");
+    XORG_TESTCASE("https://bugs.freedesktop.org/show_bug.cgi?id=53037");
 
     /* Play one event so this device is lastSlave */
     dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-move.events");
@@ -571,7 +571,7 @@ TEST_F(SynapticsClickpadTest, VertScrollUp)
 
 TEST_F(SynapticsClickpadTest, DisableDevice)
 {
-    SCOPED_TRACE("Disable and re-enable the device with no fingers down\n");
+    XORG_TESTCASE("Disable and re-enable the device with no fingers down\n");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -582,8 +582,8 @@ TEST_F(SynapticsClickpadTest, DisableDevice)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerDownAndLift)
 {
-    SCOPED_TRACE("Disable the device with one fingers down, lift finger,\n"
-                 "re-enable device.");
+    XORG_TESTCASE("Disable the device with one fingers down, lift finger,\n"
+                  "re-enable device.");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -596,8 +596,8 @@ TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerDownAndLift)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerDown)
 {
-    SCOPED_TRACE("Disable the device with one finger down, re-enable with\n"
-                 "finger still down\n");
+    XORG_TESTCASE("Disable the device with one finger down, re-enable with\n"
+                  "finger still down\n");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -610,8 +610,8 @@ TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerDown)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersDownAndLift)
 {
-    SCOPED_TRACE("Disable the device with two fingers down, lift fingers, "
-                 "re-enable.");
+    XORG_TESTCASE("Disable the device with two fingers down, lift fingers, "
+                  "re-enable.");
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
 
@@ -623,8 +623,8 @@ TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersDownAndLift)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersDown)
 {
-    SCOPED_TRACE("Disable the device with two fingers down, re-enable, with\n"
-                 "fingers still down");
+    XORG_TESTCASE("Disable the device with two fingers down, re-enable, with\n"
+                  "fingers still down");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -637,8 +637,8 @@ TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersDown)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerResume)
 {
-    SCOPED_TRACE("Disable the device with no fingers down, re-enable with\n"
-                 "one finger down\n");
+    XORG_TESTCASE("Disable the device with no fingers down, re-enable with\n"
+                  "one finger down\n");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -651,8 +651,8 @@ TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerResume)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersResume)
 {
-    SCOPED_TRACE("Disable the device with no fingers down, re-enable with\n"
-                 "two fingers down");
+    XORG_TESTCASE("Disable the device with no fingers down, re-enable with\n"
+                  "two fingers down");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -665,8 +665,8 @@ TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersResume)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerTwoFingersResume)
 {
-    SCOPED_TRACE("Disable the device with one finger down, re-enable with\n"
-                 "two fingers down");
+    XORG_TESTCASE("Disable the device with one finger down, re-enable with\n"
+                  "two fingers down");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -681,8 +681,8 @@ TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerTwoFingersResume)
 
 TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersOneFingerResume)
 {
-    SCOPED_TRACE("Disable the device with two fingers down, re-enable with\n"
-                 "one finger down");
+    XORG_TESTCASE("Disable the device with two fingers down, re-enable with\n"
+                  "one finger down");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
@@ -786,6 +786,8 @@ public:
 
 TEST_F(SynapticsClickpadSoftButtonsRuntimeTest, SoftButtonsFirst)
 {
+    XORG_TESTCASE("https://bugs.freedesktop.org/show_bug.cgi?id=54102");
+
     ::Display *dpy = Display();
     Atom softbutton_prop = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
     ASSERT_EQ(softbutton_prop, (Atom)None);
@@ -830,7 +832,7 @@ TEST_F(SynapticsClickpadSoftButtonsRuntimeTest, SoftButtonsFirst)
 
     XNextEvent(Display(), &btn);
     ASSERT_EQ(btn.xbutton.type, ButtonPress);
-    ASSERT_EQ(btn.xbutton.button, 3U) << "https://bugs.freedesktop.org/show_bug.cgi?id=54102";
+    ASSERT_EQ(btn.xbutton.button, 3U);
 }
 
 TEST_F(SynapticsClickpadSoftButtonsRuntimeTest, SoftButtonsSecond)

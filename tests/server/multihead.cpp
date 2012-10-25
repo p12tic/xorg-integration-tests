@@ -183,9 +183,9 @@ private:
 
 TEST_P(ZaphodTest, ScreenCrossing)
 {
-    SCOPED_TRACE("TESTCASE: In a setup with two ScreenRec (xinerama off), \n"
-                 "moving the pointer causes the pointer to switch screens.\n"
-                 "https://bugs.freedesktop.org/show_bug.cgi?id=54654");
+    XORG_TESTCASE("In a setup with two ScreenRec (xinerama off), \n"
+                  "moving the pointer causes the pointer to switch screens.\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=54654");
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     ASSERT_TRUE(dpy);
@@ -243,8 +243,8 @@ public:
 
 TEST_P(XineramaTest, ScreenCrossing)
 {
-    SCOPED_TRACE("TESTCASE: in a Xinerama setup, move left right, hitting "
-                 "the screen boundary each time");
+    XORG_TESTCASE("In a Xinerama setup, move left right, hitting "
+                  "the screen boundary each time");
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     ASSERT_TRUE(dpy);
     ASSERT_EQ(ScreenCount(dpy), 1);

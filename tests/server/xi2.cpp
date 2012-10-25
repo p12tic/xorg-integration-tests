@@ -38,11 +38,10 @@ protected:
 
 TEST_P(XInput2Test, XITouchscreenPointerEmulation)
 {
-    SCOPED_TRACE("\n"
-                 "When an initial touch is made, any movement of the pointer\n"
-                 "should be raised as if button 1 is being held. After the\n"
-                 "touch is released, further movement should have button 1\n"
-                 "released.\n");
+    XORG_TESTCASE("When an initial touch is made, any movement of the pointer\n"
+                  "should be raised as if button 1 is being held. After the\n"
+                  "touch is released, further movement should have button 1\n"
+                  "released.\n");
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 

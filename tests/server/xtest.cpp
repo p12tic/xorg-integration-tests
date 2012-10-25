@@ -41,8 +41,9 @@ static void disable_device_property(Display *dpy, std::string name)
 
 TEST(XTest, DisabledDevicesProperty)
 {
-    SCOPED_TRACE("TESTCASE: disabling an XTest device through properties "
-                 "should not be possible\n");
+    XORG_TESTCASE("Disabling an XTest device through properties "
+                 "should not be possible\n"
+                 "https://bugs.freedesktop.org/show_bug.cgi?id=56380");
 
     XServer server;
     XOrgConfig config;
@@ -111,8 +112,9 @@ static void disable_device_devctl(Display *dpy, std::string name)
 
 TEST(XTest, DisabledDevicesCtl)
 {
-    SCOPED_TRACE("TESTCASE: disabling an XTest device through device "
-                 "controls should not possible\n");
+    XORG_TESTCASE("Disabling an XTest device through device "
+                  "controls should not possible\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=56380");
 
     XServer server;
     XOrgConfig config;

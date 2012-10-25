@@ -42,9 +42,8 @@ public:
 
 TEST_F(EventQueueTest, mieqOverflow)
 {
-    SCOPED_TRACE("\n"
-                 "TESTCASE: overflow the event queue and force a resize.\n"
-                 "Search the server log for the error message.\n");
+    XORG_TESTCASE("Overflow the event queue and force a resize.\n"
+                  "Search the server log for the error message.\n");
 
     for (int i = 0; i < 2048; i++)
         dev->PlayOne(EV_REL, REL_X, -1, true);
@@ -65,9 +64,8 @@ TEST_F(EventQueueTest, mieqOverflow)
 
 TEST(MiscServerTest, DoubleSegfault)
 {
-    SCOPED_TRACE("\n"
-                 "TESTCASE: SIGSEGV the server. The server must catch the "
-                 "signal, clean up and then call abort().\n");
+    XORG_TESTCASE("TESTCASE: SIGSEGV the server. The server must catch the "
+                  "signal, clean up and then call abort().\n");
 
     XServer server;
     InitDefaultLogFiles(server);
