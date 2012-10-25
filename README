@@ -25,6 +25,9 @@ Notes:
 
 Notes:
 * This repo does not need to be installed.
+* The default path for config and log files is /tmp. Tests that fail will
+  leave their files there for inspection.
+  Use --with-logpath=/some/path to change this path
 
 == Running the tests ==
 Tests can be run by "make check", or one-by-one. 
