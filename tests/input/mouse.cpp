@@ -39,15 +39,14 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-mouse-driver.log");
-        server.SetOption("-config", "/tmp/mouse-driver.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("mouse", "--device--",
                                "Option \"ZAxisMapping\" \"4 5 6 7\"\n"
                                "Option \"Protocol\" \"ImPS/2\"\n"
                                "Option \"CorePointer\" \"on\"\n");
-        config.WriteConfig("/tmp/mouse-driver.conf");
+        config.WriteConfig();
     }
 };
 

@@ -53,8 +53,7 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-wacom-hovering-test.log");
-        server.SetOption("-config", "/tmp/wacom-hovering-test.conf");
+        InitDefaultLogFiles(server, &config);
         server.SetOption("-retro", "");
 
         config.AddDefaultScreenWithDriver();
@@ -72,7 +71,7 @@ public:
         config.AddInputSection("wacom", "Eraser",
                                "Option \"Type\"        \"eraser\"\n"
                                "Option \"Device\"      \"" + dev->GetDeviceNode() + "\"\n");
-        config.WriteConfig("/tmp/wacom-hovering-test.conf");
+        config.WriteConfig();
     }
 };
 

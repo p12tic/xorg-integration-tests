@@ -78,8 +78,7 @@ class EvdevDriverXKBTest : public InputDriverTest,
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-xkb.log");
-        server.SetOption("-config", "/tmp/evdev-driver-xkb.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -91,7 +90,7 @@ class EvdevDriverXKBTest : public InputDriverTest,
         /* add default mouse device to avoid server adding our device again */
         config.AddInputSection("mouse", "mouse-device",
                                "Option \"CorePointer\" \"on\"\n");
-        config.WriteConfig("/tmp/evdev-driver-xkb.conf");
+        config.WriteConfig();
     }
 
     protected:
@@ -175,8 +174,7 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-mouse.log");
-        server.SetOption("-config", "/tmp/evdev-driver-mouse.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -185,7 +183,7 @@ public:
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "keyboard-device",
                                "Option \"CoreKeyboard\" \"on\"\n");
-        config.WriteConfig("/tmp/evdev-driver-mouse.conf");
+        config.WriteConfig();
     }
 
     virtual int RegisterXI2(int major, int minor)
@@ -577,15 +575,14 @@ public:
                 ss << " ";
         }
 
-        server.SetOption("-logfile", "/tmp/Xorg-evdev-driver-buttonmapping.log");
-        server.SetOption("-config", "/tmp/evdev-driver-buttonmapping.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\""
                                "Option \"ButtonMapping\" \"" + ss.str() + "\"");
-        config.WriteConfig("/tmp/evdev-driver-buttonmapping.conf");
+        config.WriteConfig();
     }
 };
 
@@ -625,16 +622,14 @@ public:
      * Option "ButtonMapping" based on the string provided by GetParam()
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        std::string log_file = "/tmp/Xorg-evdev-driver-buttonmapping-invalid.log";
-        server.SetOption("-logfile", log_file);
-        server.SetOption("-config", "/tmp/evdev-driver-buttonmapping-invalid.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\""
                                "Option \"ButtonMapping\" \"" + GetParam() + "\"");
-        config.WriteConfig("/tmp/evdev-driver-buttonmapping-invalid.conf");
+        config.WriteConfig();
     }
 };
 
@@ -667,15 +662,13 @@ public:
      * Set up a config for a single evdev Floating device.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        std::string log_file = "/tmp/Xorg-evdev-driver-floating.log";
-        server.SetOption("-logfile", log_file);
-        server.SetOption("-config", "/tmp/evdev-driver-floating.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"Floating\" \"on\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
-        config.WriteConfig("/tmp/evdev-driver-floating.conf");
+        config.WriteConfig();
     }
 };
 

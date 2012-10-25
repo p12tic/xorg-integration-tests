@@ -58,8 +58,7 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-wacom-matrix-test.log");
-        server.SetOption("-config", "/tmp/wacom-matrix-test.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("wacom", "Stylus",
@@ -67,7 +66,7 @@ public:
                                "Option \"Type\"        \"stylus\"\n"
                                "Option \"Device\"      \"" + dev->GetDeviceNode() + "\"\n");
 
-        config.WriteConfig("/tmp/wacom-matrix-test.conf");
+        config.WriteConfig();
     }
 protected:
     int xrandr_event, xrandr_error;

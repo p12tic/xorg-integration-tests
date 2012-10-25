@@ -43,8 +43,7 @@ public:
      * vertical scroll.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-SynPS2.log");
-        server.SetOption("-config", "/tmp/synaptics-SynPS2.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("synaptics", "--device--",
@@ -55,7 +54,7 @@ public:
                                "Option \"FastTaps\"            \"1\"\n"
                                "Option \"VertTwoFingerScroll\" \"1\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
-        config.WriteConfig("/tmp/synaptics-SynPS2.conf");
+        config.WriteConfig();
     }
 
     virtual int RegisterXI2(int major, int minor)
@@ -147,8 +146,7 @@ class SynapticsDriverSmoothScrollTest : public SynapticsDriverTest,
      * vertical scroll.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-smooth-scrolling.log");
-        server.SetOption("-config", "/tmp/synaptics-smooth-scrolling.conf");
+        InitDefaultLogFiles(server, &config);
 
         std::pair<int, int> params = GetParam();
 
@@ -167,7 +165,7 @@ class SynapticsDriverSmoothScrollTest : public SynapticsDriverTest,
                                "Option \"VertScrollDelta\" \"" + vdelta + "\"\n"
                                "Option \"HorizScrollDelta\" \"" + hdelta + "\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
-        config.WriteConfig("/tmp/synaptics-smooth-scrolling.conf");
+        config.WriteConfig();
     }
 
 };
@@ -400,8 +398,7 @@ public:
      * Set up a single clickpad CorePointer device.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad.log");
-        server.SetOption("-config", "/tmp/synaptics-clickpad.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("synaptics", "--device--",
@@ -410,7 +407,7 @@ public:
                                "Option \"GrabEventDevice\"     \"0\"\n"
                                "Option \"VertTwoFingerScroll\" \"1\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
-        config.WriteConfig("/tmp/synaptics-clickpad.conf");
+        config.WriteConfig();
     }
 };
 
@@ -709,8 +706,7 @@ public:
      * SoftButtonArea option set to 50% left/right, 82% from the top.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad-softbuttons.log");
-        server.SetOption("-config", "/tmp/synaptics-clickpad-softbuttons.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("synaptics", "--device--",
@@ -719,7 +715,7 @@ public:
                                "Option \"GrabEventDevice\"     \"0\"\n"
                                "Option \"SoftButtonAreas\"     \"50% 0 82% 0 0 0 0 0\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
-        config.WriteConfig("/tmp/synaptics-clickpad-softbuttons.conf");
+        config.WriteConfig();
     }
 };
 
@@ -776,8 +772,7 @@ public:
      * SoftButtonArea option set to 50% left/right, 82% from the top.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-synaptics-driver-clickpad-softbuttons.log");
-        server.SetOption("-config", "/tmp/synaptics-clickpad-softbuttons.conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("synaptics", "--device--",
@@ -785,7 +780,7 @@ public:
                                "Option \"ClickPad\"            \"off\"\n"
                                "Option \"GrabEventDevice\"     \"0\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
-        config.WriteConfig(server.GetConfigPath());
+        config.WriteConfig();
     }
 };
 

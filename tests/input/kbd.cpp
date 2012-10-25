@@ -16,6 +16,7 @@
 
 #include "input-driver-test.h"
 #include "device-interface.h"
+#include "helpers.h"
 
 typedef std::pair <int, KeySym> Key_Pair;
 typedef std::multimap<std::string, Key_Pair> Keys_Map;
@@ -75,8 +76,7 @@ class KeyboardDriverTest : public InputDriverTest,
      * The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        server.SetOption("-logfile", "/tmp/Xorg-kbd-driver.log");
-        server.SetOption("-config", "/tmp/kbd-driver.conf");
+        InitDefaultLogFiles(server, &config);
 
         /* we don't use the dummy driver here, for some reason we won't get
          * key events with it */
@@ -85,7 +85,7 @@ class KeyboardDriverTest : public InputDriverTest,
                                "Option \"XkbRules\"   \"xorg\"\n"
                                "Option \"XkbModel\"   \"dellusbmm\"\n"
                                "Option \"XkbLayout\"  \""+ GetParam() + "\"\n");
-        config.WriteConfig("/tmp/kbd-driver.conf");
+        config.WriteConfig();
     }
 
     protected:

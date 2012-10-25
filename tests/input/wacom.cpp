@@ -47,14 +47,11 @@ protected:
      * dummy video driver.
      */
     virtual void SetUpConfigAndLog(const std::string &param) {
-        Tablet tablet = GetParam();
-
-        server.SetOption("-logfile", "/tmp/Xorg-wacom-" + std::string(tablet.test_id) + ".log");
-        server.SetOption("-config", "/tmp/wacom-test-" + std::string(tablet.test_id) + ".conf");
+        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.SetAutoAddDevices(true);
-        config.WriteConfig(server.GetConfigPath());
+        config.WriteConfig();
     }
 
     /**
