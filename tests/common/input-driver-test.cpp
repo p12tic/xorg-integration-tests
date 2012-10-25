@@ -83,7 +83,7 @@ void InputDriverTest::TearDown() {
         if (!server.Terminate(3000))
             server.Kill(3000);
         EXPECT_EQ(server.GetState(), xorg::testing::Process::FINISHED_SUCCESS) << "Unclean server shutdown";
-        failed = (server.GetState() != xorg::testing::Process::FINISHED_SUCCESS);
+        failed = failed || (server.GetState() != xorg::testing::Process::FINISHED_SUCCESS);
 
         std::ifstream logfile(server.GetLogFilePath().c_str());
         std::string line;
@@ -109,7 +109,7 @@ void InputDriverTest::TearDown() {
 }
 
 void InputDriverTest::OnTestPartResult(const ::testing::TestPartResult &test_part_result) {
-    failed = test_part_result.failed();
+    failed = failed || test_part_result.failed();
 }
 
 bool InputDriverTest::Failed() {
