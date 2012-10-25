@@ -22,4 +22,31 @@ binaries. A test binary may have multiple source files.
 Ideally, each feature or behaviour group can be tested by running one
 binary.
 
+== Writing tests ==
 
+
+== Debugging tests ==
+xorg-gtest supports three environment variables that help with debugging the
+server.
+
+Failing tests usually leave their config and log files around for
+inspection. By default, this directory is /tmp (unless changed at configure
+time with --with-logpath) and each test uses a naming convention that
+includes TestCase.TestName.
+
+Starting the same configuration as a failed test is thus
+  Xorg -config /tmp/EvdevDriverFloatingSlaveTest.FloatingDevice
+
+If tests fail because the server doesn't appear to start, you may set
+  export XORG_GTEST_CHILD_STDOOUT=1
+  sudo -E ./testname --gtest_filter="*blah*" # note the -E to sudo
+
+If this variable is set, stdout from the server will go to stdout of your
+test. It will be interleaved with the test output but nonetheless that's a
+good way to identify failing server starts.
+
+If you need to gdb the server to set breakpoints before a test starts, set
+  export XORG_GTEST_XSERVER_SIGSTOP=1
+
+The server will be sent a SIGSTOP signal after starting, waiting for you to
+attach gdb. It can then be foregrounded and the test continues.
