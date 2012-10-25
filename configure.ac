@@ -50,7 +50,7 @@ PKG_CHECK_MODULES(XI22, [inputproto >= 2.2] [xi >= 1.6],
                   AC_DEFINE(HAVE_XI22, 1, [XI 2.2 available]),
                   [noop=noop])
 
-PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.5.99])
+PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.6.0])
 PKG_CHECK_MODULES(WACOM, xorg-wacom)
 
 m4_ifndef([CHECK_XORG_GTEST],
