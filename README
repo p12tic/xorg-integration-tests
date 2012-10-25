@@ -51,5 +51,8 @@ to the googletest wiki for more information.
 http://code.google.com/p/googletest/wiki/AdvancedGuide#Running_a_Subset_of_the_Tests
 
 xorg-gtest supports the environment variable XORG_GTEST_XSERVER_SIGSTOP. If
-set, the test will SIGSTOP itself once a server has been started. This,
+set, the test will SIGSTOP itself once a server has been started. This
 allows to investigate logs or attach gdb to the server process.
+
+For further environment variables please refer to the xorg-gtest README
+http://cgit.freedesktop.org/xorg/test/xorg-gtest/tree/README
