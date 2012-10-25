@@ -23,7 +23,6 @@ public:
     virtual void SetUp() {
         SetDevice("tablets/Wacom-Cintiq-21UX2.desc");
         InputDriverTest::SetUp();
-        display_string = server.GetDisplayString();
     }
 
     /**
@@ -46,8 +45,6 @@ public:
                                "    Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig();
     }
-
-   std::string display_string;
 };
 
 static int
@@ -113,8 +110,8 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
 
     ASSERT_GE(RegisterXI2(), 0) << "This test requires XI2" << std::endl;
 
-    ::Display *dpy1 = XOpenDisplay (display_string.c_str());
-    ::Display *dpy2 = XOpenDisplay (display_string.c_str());
+    ::Display *dpy1 = XOpenDisplay (server.GetDisplayString().c_str());
+    ::Display *dpy2 = XOpenDisplay (server.GetDisplayString().c_str());
 
     XSetWindowAttributes attr;
 
