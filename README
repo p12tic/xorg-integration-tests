@@ -2,23 +2,17 @@ This is a test suite for X.Org tests.
 
 == Building the code ==
 Required libraries:
- googletest: http://code.google.com/p/googletest/
  xorg-gtest: http://cgit.freedesktop.org/xorg/test/xorg-gtest/
 
 Both of these are source libraries, but they need to be built and installed
 for this repository to build.
 
-=== Building googletest ===
+=== Building xorg-gtest ===
+  ./autogen.sh
   ./configure --prefix=$HOME/testing
   make && make install
 
-=== Building xorg-gtest ===
-  ./autogen.sh
-  ./configure --with-gtest-source-path="/path/to/googletest" --prefix=$HOME/testing
-  make && make install
-
 Notes:
-* The gtest source path must be an absolute path.
 * The repository must be installed for the pkg-config file to provide the
    right CFLAGS and include paths.
 
@@ -26,11 +20,10 @@ Notes:
   export ACLOCAL_PATH="-I $HOME/testing/aclocal"
   export ACLOCAL="aclocal -I $ACLOCAL_PATH"
   export PKG_CONFIG_PATH="$HOME/testing/lib/pkgconfig"
-  ./autogen.sh --with-gtest-source-path="/path/to/googletest" --prefix=$HOME/testing
+  ./autogen.sh --prefix=$HOME/testing
   make
 
 Notes:
-* The gtest source path must be an absolute path.
 * This repo does not need to be installed.
 
 == Running the tests ==
