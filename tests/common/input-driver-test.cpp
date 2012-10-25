@@ -9,6 +9,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
+#include "helpers.h"
 
 #define TEST_TIMEOUT 60
 
@@ -51,13 +52,7 @@ void InputDriverTest::StartServer() {
 }
 
 void InputDriverTest::SetUpConfigAndLog(const std::string& param) {
-    std::stringstream s;
-    s << "/tmp/Xorg-" << param << ".log";
-    server.SetOption("-logfile", s.str());
-
-    s.str(std::string());
-    s << "/tmp/" << param << ".conf";
-    config.SetPath(s.str());
+    InitDefaultLogFiles(server, &config);
 
     config.AddDefaultScreenWithDriver();
     config.AddInputSection(param, "--device--", "Option \"CorePointer\" \"on\"\n");

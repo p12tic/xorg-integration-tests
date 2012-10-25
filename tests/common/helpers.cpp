@@ -9,16 +9,8 @@
 #include <X11/extensions/Xrandr.h>
 
 void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfig &config) {
-    std::stringstream conf;
-    conf << "/tmp/" << prefix << ".conf";
-
-    std::stringstream logfile;
-    logfile << "/tmp/Xorg-" << prefix << ".log";
-
-    config.SetPath(conf.str());
+    InitDefaultLogFiles(server, &config);
     config.WriteConfig();
-    server.SetOption("-config", config.GetPath());
-    server.SetOption("-logfile", logfile.str());
     server.SetDisplayNumber(133);
     server.Start();
 }
@@ -140,4 +132,35 @@ void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled)
     XIChangeProperty(dpy, deviceid, enabled_prop, XA_INTEGER, 8,
                      PropModeReplace, &data, 1);
     XFlush(dpy);
+}
+
+std::string GetNormalizedTestName() {
+    const ::testing::TestInfo *const test_info =
+        ::testing::UnitTest::GetInstance()->current_test_info();
+
+    std::string testname = test_info->test_case_name();
+    testname += ".";
+    testname += test_info->name();
+
+    /* parameterized tests end with /0, replace with '.'*/
+    size_t found;
+    while ((found = testname.find_first_of("/")) != std::string::npos)
+        testname[found] = '.';
+
+    return testname;
+}
+
+std::string GetDefaultLogFile() {
+    return std::string("/tmp/Xorg-") + GetNormalizedTestName() + std::string(".log");
+}
+
+std::string GetDefaultConfigFile() {
+    return std::string("/tmp/") + GetNormalizedTestName() + std::string(".conf");
+}
+
+void InitDefaultLogFiles(xorg::testing::XServer &server, XOrgConfig *config) {
+    server.SetOption("-logfile", GetDefaultLogFile());
+    server.SetOption("-config", GetDefaultConfigFile());
+    if (config)
+        config->SetPath(server.GetConfigPath());
 }

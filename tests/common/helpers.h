@@ -63,5 +63,36 @@ void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, 
  * @param [in] enabled  true to enable the device, false to disable
  */
 void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled);
+
+/**
+ * Return a string of the current test name that's suitable for file names,
+ * i.e. has all slashes in the test name replaced with a period.
+ *
+ * @return Test case name in the form of TestCase.TestName.2 (the .2 part is
+ * only present for parameterized tests.
+ */
+std::string GetNormalizedTestName();
+
+/**
+ * @return a string for the default log file to be used. This log path
+ * contains the test name.
+ */
+std::string GetDefaultLogFile();
+/**
+ * @return a string for the default config file to be used. This config path
+ * contains the test name.
+ */
+std::string GetDefaultConfigFile();
+
+/**
+ * Init the server's log file and config file path to the default paths.
+ * If a config has been specified, init that to the default config path. If
+ * the config is NULL, the server is set to default config path nonetheless.
+ *
+ * @param [in] server The server to set the -logfile and -config options for
+ * @param [in] config The config to set the path for. May be NULL.
+ */
+void InitDefaultLogFiles(xorg::testing::XServer &server, XOrgConfig *config = NULL);
+
 #endif
 
