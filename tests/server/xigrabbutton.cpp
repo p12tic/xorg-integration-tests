@@ -21,7 +21,7 @@ public:
      * Initializes a wacom pad device.
      */
     virtual void SetUp() {
-        SetDevice("tablets/Wacom-Cintiq-21UX2.desc");
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
         InputDriverTest::SetUp();
     }
 
@@ -30,16 +30,11 @@ public:
     virtual void SetUpConfigAndLog(const std::string &param) {
         InitDefaultLogFiles(server, &config);
 
+        config.SetAutoAddDevices(false);
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("wacom", "pad",
-                               "    Option \"Type\" \"pad\"\n"
-                               "    Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
-        config.AddInputSection("wacom", "stylus",
-                               "    Option \"Type\" \"stylus\"\n"
-                               "    Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
-        config.AddInputSection("wacom", "eraser",
-                               "    Option \"Type\" \"eraser\"\n"
-                               "    Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        config.AddInputSection("evdev", "--device--",
+                               "    Option \"Device\" \"" + dev->GetDeviceNode() + "\""
+                               "    Option \"CorePointer\" \"on\"");
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
                                "    Option \"CoreKeyboard\" \"on\"\n");
@@ -139,18 +134,16 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
                                                            -1, -1, 1000));
 
     int deviceid;
-    ASSERT_EQ(FindInputDeviceByName(dpy2, "pad", &deviceid), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy2, "--device--", &deviceid), 1);
 
     // First, check without the grab, the top win should get the event
     XSync(dpy2, False);
 
-    dev->PlayOne(EV_KEY, BTN_1, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
 
-    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy2,
-                                                           ButtonPressMask,
-                                                           0,
-                                                           ButtonPress,
-                                                           1000));
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy2, ButtonPress, -1, -1));
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
 
     XEvent ev;
     XNextEvent(dpy2, &ev);
@@ -167,12 +160,14 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
         XNextEvent (dpy2, &ev);
     ASSERT_FALSE(XPending(dpy2));
 
+
     // Second, check with XIGrabButton on the root win, the root win should get the event
     setup_event_mask (dpy1, DefaultRootWindow(dpy1), deviceid);
     grab_buttons (dpy1, DefaultRootWindow(dpy1), deviceid);
     XSync(dpy1, False);
 
-    dev->PlayOne(EV_KEY, BTN_2, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy1,
                                                            GenericEvent,
@@ -192,17 +187,6 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
     ASSERT_TRUE(xev->event == DefaultRootWindow(dpy1));
 
     XFreeEventData(dpy1, cookie);
-
-    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy2,
-                                                           ButtonPressMask,
-                                                           0,
-                                                           ButtonPress,
-                                                           1000));
-
-    XNextEvent(dpy2, &ev);
-    ASSERT_TRUE(ev.type == ButtonPress);
-    bev = (XButtonEvent *) &ev;
-    ASSERT_TRUE(bev->window == win);
 
     XCloseDisplay(dpy1);
     XCloseDisplay(dpy2);
