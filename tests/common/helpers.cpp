@@ -151,11 +151,11 @@ std::string GetNormalizedTestName() {
 }
 
 std::string GetDefaultLogFile() {
-    return std::string("/tmp/Xorg-") + GetNormalizedTestName() + std::string(".log");
+    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".log");
 }
 
 std::string GetDefaultConfigFile() {
-    return std::string("/tmp/") + GetNormalizedTestName() + std::string(".conf");
+    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".conf");
 }
 
 void InitDefaultLogFiles(xorg::testing::XServer &server, XOrgConfig *config) {

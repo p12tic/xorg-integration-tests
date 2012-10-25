@@ -26,6 +26,7 @@ AC_INIT([xorg-integration-tests], [0.0.1])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
+AC_CONFIG_MACRO_DIR([m4])
 
 # Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip tar-pax])
@@ -76,6 +77,11 @@ if test -f /etc/redhat-release; then
     AC_DEFINE_UNQUOTED(RHEL_VERSION, [$rhel_version], "RHEL version")
 fi
 AM_CONDITIONAL(HAVE_RHEL, [test "x$rhel_version" != "x"])
+
+AC_ARG_WITH(logpath, [AS_HELP_STRING([--with-logpath=/tmp]),
+                      [Base path for server log and config files (default: /tmp)]],
+                      [BASEPATH="$withval"], [BASEPATH="/tmp"])
+AC_DEFINE_DIR(LOG_BASE_PATH, BASEPATH, [log and config file base path])
 
 AC_CONFIG_FILES([Makefile
                  doc/Doxyfile
