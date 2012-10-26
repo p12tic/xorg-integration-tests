@@ -7,7 +7,10 @@
 
 #include "input-driver-test.h"
 
-TEST_P(SimpleInputDriverTest, DriverDevice)
+/* No implementation, class only exists for test naming */
+class InputModuleLoadTest : public SimpleInputDriverTest {};
+
+TEST_P(InputModuleLoadTest, CheckForLoadFailure)
 {
     std::ifstream in_file(server.GetLogFilePath().c_str());
     std::string line;
@@ -27,7 +30,7 @@ TEST_P(SimpleInputDriverTest, DriverDevice)
     }
 }
 
-INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
+INSTANTIATE_TEST_CASE_P(, InputModuleLoadTest,
         ::testing::Values("acecad", "aiptek", "elographics",
                           "fpit", "hyperpen",  "mutouch",
                           "penmount", "wacom", "synaptics",
