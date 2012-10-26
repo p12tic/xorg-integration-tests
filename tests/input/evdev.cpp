@@ -30,9 +30,9 @@ typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
  * Evdev driver test for keyboard devices. Takes a string as parameter,
  * which is later used for the XkbLayout option.
  */
-class EvdevDriverXKBTest : public InputDriverTest,
-                           public DeviceInterface,
-                           public ::testing::WithParamInterface<std::string> {
+class EvdevXKBTest : public InputDriverTest,
+                     public DeviceInterface,
+                     public ::testing::WithParamInterface<std::string> {
     /**
      * Initializes a standard keyboard device.
      */
@@ -106,7 +106,7 @@ class EvdevDriverXKBTest : public InputDriverTest,
 };
 
 
-TEST_P(EvdevDriverXKBTest, DeviceExists)
+TEST_P(EvdevXKBTest, DeviceExists)
 {
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
 }
@@ -131,7 +131,7 @@ void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_P
       XNextEvent(display, &press);
 }
 
-TEST_P(EvdevDriverXKBTest, KeyboardLayout)
+TEST_P(EvdevXKBTest, KeyboardLayout)
 {
     std::string layout = GetParam();
 
@@ -153,13 +153,13 @@ TEST_P(EvdevDriverXKBTest, KeyboardLayout)
         play_key_pair (Display(), dev.get(), (*m_it));
 }
 
-INSTANTIATE_TEST_CASE_P(, EvdevDriverXKBTest, ::testing::Values("us", "de", "fr"));
+INSTANTIATE_TEST_CASE_P(, EvdevXKBTest, ::testing::Values("us", "de", "fr"));
 
 /**
  * Evdev driver test for mouse devices.
  */
-class EvdevDriverMouseTest : public InputDriverTest,
-                             public DeviceInterface {
+class EvdevMouseTest : public InputDriverTest,
+                       public DeviceInterface {
 public:
     /**
      * Initializes a standard mouse device with two wheels.
@@ -192,7 +192,7 @@ public:
     }
 };
 
-TEST_F(EvdevDriverMouseTest, TerminateWithButtonDown)
+TEST_F(EvdevMouseTest, TerminateWithButtonDown)
 {
     SCOPED_TRACE("TESTCASE: terminate server with button down");
     SCOPED_TRACE("http://patchwork.freedesktop.org/patch/12193/");
@@ -208,7 +208,7 @@ TEST_F(EvdevDriverMouseTest, TerminateWithButtonDown)
     ASSERT_FALSE(XPending(Display()));
 }
 
-TEST_F(EvdevDriverMouseTest, BtnReleaseMaskOnly)
+TEST_F(EvdevMouseTest, BtnReleaseMaskOnly)
 {
     SCOPED_TRACE("TESTCASE: ensure button release event is delivered if"
                  "only the\n release mask is set (not the press mask)");
@@ -226,7 +226,7 @@ TEST_F(EvdevDriverMouseTest, BtnReleaseMaskOnly)
 }
 
 #ifdef HAVE_XI22
-TEST_F(EvdevDriverMouseTest, SmoothScrollingAvailable)
+TEST_F(EvdevMouseTest, SmoothScrollingAvailable)
 {
     ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
 
@@ -276,7 +276,7 @@ TEST_F(EvdevDriverMouseTest, SmoothScrollingAvailable)
     XIFreeDeviceInfo(info);
 }
 
-TEST_F(EvdevDriverMouseTest, SmoothScrolling)
+TEST_F(EvdevMouseTest, SmoothScrolling)
 {
     ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
 
@@ -381,7 +381,7 @@ void scroll_wheel_event(::Display *display,
 }
 
 
-TEST_F(EvdevDriverMouseTest, ScrollWheel)
+TEST_F(EvdevMouseTest, ScrollWheel)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     /* the server takes a while to start up bust the devices may not respond
@@ -407,7 +407,7 @@ TEST_F(EvdevDriverMouseTest, ScrollWheel)
     scroll_wheel_event(Display(), dev.get(), REL_HWHEEL, -3, 6);
 }
 
-TEST_F(EvdevDriverMouseTest, DevNode)
+TEST_F(EvdevMouseTest, DevNode)
 {
     Atom node_prop = XInternAtom(Display(), "Device Node", True);
 
@@ -431,7 +431,7 @@ TEST_F(EvdevDriverMouseTest, DevNode)
     XFree(data);
 }
 
-TEST_F(EvdevDriverMouseTest, MiddleButtonEmulation)
+TEST_F(EvdevMouseTest, MiddleButtonEmulation)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XFlush(Display());
@@ -558,8 +558,8 @@ void PrintTo(const Mapping &m, ::std::ostream *os) {
  * Button mapping test for the evdev driver. Takes a struct Mapping as input
  * parameter:
  */
-class EvdevDriverButtonMappingTest : public EvdevDriverMouseTest,
-                                     public ::testing::WithParamInterface<Mapping> {
+class EvdevButtonMappingTest : public EvdevMouseTest,
+                               public ::testing::WithParamInterface<Mapping> {
 public:
     /**
      * Set up a config for a single evdev CorePointer device with
@@ -586,7 +586,7 @@ public:
     }
 };
 
-TEST_P(EvdevDriverButtonMappingTest, ButtonMapping)
+TEST_P(EvdevButtonMappingTest, ButtonMapping)
 {
     Mapping mapping = GetParam();
 
@@ -607,15 +607,15 @@ Mapping mappings[] = {
     { {3, 1, 2}, 3 },
 };
 
-INSTANTIATE_TEST_CASE_P(, EvdevDriverButtonMappingTest,
+INSTANTIATE_TEST_CASE_P(, EvdevButtonMappingTest,
                         ::testing::ValuesIn(mappings));
 
 /**
  * Button mapping test for invalid button mappings the evdev driver. Takes a
  * string as input parameter.
  */
-class EvdevDriverInvalidButtonMappingTest : public EvdevDriverMouseTest,
-                                            public ::testing::WithParamInterface<std::string> {
+class EvdevInvalidButtonMappingTest : public EvdevMouseTest,
+                                      public ::testing::WithParamInterface<std::string> {
 public:
     /**
      * Set up a config for a single evdev CorePointer device with
@@ -633,7 +633,7 @@ public:
     }
 };
 
-TEST_P(EvdevDriverInvalidButtonMappingTest, InvalidButtonMapping)
+TEST_P(EvdevInvalidButtonMappingTest, InvalidButtonMapping)
 {
     std::ifstream in_file(server.GetLogFilePath().c_str());
     std::string line;
@@ -656,7 +656,7 @@ TEST_P(EvdevDriverInvalidButtonMappingTest, InvalidButtonMapping)
 /**
  * Test for the server honouring Option Floating "on".
  */
-class EvdevDriverFloatingSlaveTest : public EvdevDriverMouseTest {
+class EvdevFloatingSlaveTest : public EvdevMouseTest {
 public:
     /**
      * Set up a config for a single evdev Floating device.
@@ -672,7 +672,7 @@ public:
     }
 };
 
-TEST_F(EvdevDriverFloatingSlaveTest, FloatingDevice)
+TEST_F(EvdevFloatingSlaveTest, FloatingDevice)
 {
     SCOPED_TRACE("Check that the server does not crash for a device\n"
                  "with Option Floating set.\n"
@@ -698,7 +698,7 @@ TEST_F(EvdevDriverFloatingSlaveTest, FloatingDevice)
 }
 
 
-INSTANTIATE_TEST_CASE_P(, EvdevDriverInvalidButtonMappingTest,
+INSTANTIATE_TEST_CASE_P(, EvdevInvalidButtonMappingTest,
                         ::testing::Values(" ", "a", "64", "1 2 ", "-1",
                                           "1 a", "1 55", "1 -2"));
 
