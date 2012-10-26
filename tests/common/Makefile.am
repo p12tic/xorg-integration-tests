@@ -33,5 +33,4 @@ common_sources =  \
 		 $(top_srcdir)/tests/common/helpers.h \
 		 $(top_srcdir)/tests/common/device-interface.cpp \
 		 $(top_srcdir)/tests/common/device-interface.h  \
-		 $(top_srcdir)/tests/common/video-driver-test.cpp \
 		 $(top_srcdir)/tests/common/video-driver-test.h
