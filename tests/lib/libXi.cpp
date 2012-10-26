@@ -33,7 +33,7 @@ public:
      * Sets up an xorg.conf for a single evdev CorePointer device based on
      * the evemu device.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();

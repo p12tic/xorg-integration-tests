@@ -46,7 +46,7 @@ protected:
      * Write a configuration file for a hotplug-enabled server using the
      * dummy video driver.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();

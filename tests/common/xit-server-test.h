@@ -34,10 +34,8 @@ protected:
      * Tests that need a different configuration but the same general
      * behavior can override SetUpConfigAndLog() only and leave the rest of
      * the behaviour intact.
-     *
-     * @param param The param used as prefix for the config file and the log file and as input driver.
      */
-    virtual void SetUpConfigAndLog(const std::string& param = "") = 0;
+    virtual void SetUpConfigAndLog() = 0;
 
     /**
      * Default googletest entry point for setup-work during test fixtures.

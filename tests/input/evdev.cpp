@@ -77,7 +77,7 @@ class EvdevDriverXKBTest : public InputDriverTest,
      * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
@@ -173,7 +173,7 @@ public:
      * Sets up an xorg.conf for a single evdev CorePointer device based on
      * the evemu device.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
@@ -565,7 +565,7 @@ public:
      * Set up a config for a single evdev CorePointer device with
      * Option "ButtonMapping" based on the Mapping provided by GetParam()
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
 
         const Mapping mapping = GetParam();
         std::stringstream ss;
@@ -621,7 +621,7 @@ public:
      * Set up a config for a single evdev CorePointer device with
      * Option "ButtonMapping" based on the string provided by GetParam()
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
@@ -661,7 +661,7 @@ public:
     /**
      * Set up a config for a single evdev Floating device.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();

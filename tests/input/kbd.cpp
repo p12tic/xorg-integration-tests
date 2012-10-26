@@ -75,7 +75,7 @@ class KeyboardDriverTest : public InputDriverTest,
      * Sets up an xorg.conf for a single kbd CoreKeyboard device.
      * The input from GetParam() is used as XkbLayout.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         /* we don't use the dummy driver here, for some reason we won't get

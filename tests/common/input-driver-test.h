@@ -7,6 +7,7 @@
 #include <xorg/gtest/xorg-gtest.h>
 
 #include "xit-server-test.h"
+#include "helpers.h"
 
 /**
  * A test fixture for testing input drivers. This class automates basic
@@ -30,7 +31,7 @@ protected:
      *
      * @param param The param used as prefix for the config file and the log file and as input driver.
      */
-    virtual void SetUpConfigAndLog(const std::string& param);
+    virtual void SetUpConfigAndLog();
 
     /**
      * Register for the given XI2 extension. Default is 2.0, will ASSERT if
@@ -52,16 +53,6 @@ protected:
     virtual void StartServer();
 
     /**
-     * Sets up an event listener to watch for test failures and calls
-     * SetUpConfigAndLog() for initalisation of the server config. Finally,
-     * starts the server.
-     *
-     * Most test fixtures will not need any extra other than initializing a
-     * device and then calling SetUp().
-     */
-    virtual void SetUp(const std::string &param);
-
-    /**
      * Opcode for XI2 events
      */
     int xi2_opcode;
@@ -76,11 +67,15 @@ protected:
 class SimpleInputDriverTest : public InputDriverTest,
                               public ::testing::WithParamInterface<std::string> {
 public:
-    /**
-     * Calls InputDriverTest::SetUp() with a parameter value of GetParam().
-     */
-    virtual void SetUp() {
-        InputDriverTest::SetUp(GetParam());
+    virtual void SetUpConfigAndLog() {
+        InitDefaultLogFiles(server, &config);
+
+        std::string driver = GetParam();
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection(driver, "--device--", "Option \"CorePointer\" \"on\"\n");
+        config.WriteConfig();
+        server.SetOption("-config", config.GetPath());
     }
 };
 

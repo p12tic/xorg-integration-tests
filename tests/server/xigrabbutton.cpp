@@ -27,7 +27,7 @@ public:
 
     /**
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.SetAutoAddDevices(false);

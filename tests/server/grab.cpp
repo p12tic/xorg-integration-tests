@@ -33,7 +33,7 @@ public:
      * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
@@ -171,7 +171,7 @@ public:
      * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",

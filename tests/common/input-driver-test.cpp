@@ -34,20 +34,11 @@ void InputDriverTest::StartServer() {
     RegisterXI2();
 }
 
-void InputDriverTest::SetUpConfigAndLog(const std::string& param) {
+void InputDriverTest::SetUpConfigAndLog() {
     InitDefaultLogFiles(server, &config);
-
-    config.AddDefaultScreenWithDriver();
-    config.AddInputSection(param, "--device--", "Option \"CorePointer\" \"on\"\n");
-    config.WriteConfig();
-    server.SetOption("-config", config.GetPath());
 }
 
 void InputDriverTest::SetUp() {
-    SetUp("");
-}
-
-void InputDriverTest::SetUp(const std::string &param) {
-    SetUpConfigAndLog(param);
+    SetUpConfigAndLog();
     XITServerTest::SetUp();
 }

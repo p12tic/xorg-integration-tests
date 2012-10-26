@@ -69,8 +69,13 @@ public:
     /**
      * Initialize an xorg.conf with a single CorePointer void device.
      */
-    virtual void SetUp() {
-        InputDriverTest::SetUp("void");
+    virtual void SetUpConfigAndLog() {
+        InitDefaultLogFiles(server, &config);
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("void", "--device--", "Option \"CorePointer\" \"on\"\n");
+        config.WriteConfig();
+        server.SetOption("-config", config.GetPath());
     }
 };
 

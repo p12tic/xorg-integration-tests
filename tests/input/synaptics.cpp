@@ -42,7 +42,7 @@ public:
      * the evemu device. Options enabled: tapping (1 finger), two-finger
      * vertical scroll.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
@@ -145,7 +145,7 @@ class SynapticsDriverSmoothScrollTest : public SynapticsDriverTest,
      * the evemu device. Options enabled: tapping (1 finger), two-finger
      * vertical scroll.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         std::pair<int, int> params = GetParam();
@@ -397,7 +397,7 @@ public:
     /**
      * Set up a single clickpad CorePointer device.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
@@ -705,7 +705,7 @@ public:
      * Sets up a single CorePointer synaptics clickpad device with the
      * SoftButtonArea option set to 50% left/right, 82% from the top.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
@@ -771,7 +771,7 @@ public:
      * Sets up a single CorePointer synaptics clickpad device with the
      * SoftButtonArea option set to 50% left/right, 82% from the top.
      */
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();

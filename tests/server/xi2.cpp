@@ -23,7 +23,7 @@ protected:
         InputDriverTest::SetUp();
     }
 
-    virtual void SetUpConfigAndLog(const std::string &param) {
+    virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
         config.AddDefaultScreenWithDriver();
         config.SetAutoAddDevices(true);
