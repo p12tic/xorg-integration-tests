@@ -22,7 +22,10 @@ GTEST_LDADDS = \
 	       $(EVEMU_LIBS) \
 	       $(XORG_GTEST_MAIN_LIBS)
 
-common_sources = $(top_srcdir)/tests/common/input-driver-test.cpp \
+common_sources =  \
+		 $(top_srcdir)/tests/common/xit-server-test.cpp \
+		 $(top_srcdir)/tests/common/xit-server-test.h \
+		 $(top_srcdir)/tests/common/input-driver-test.cpp \
 		 $(top_srcdir)/tests/common/input-driver-test.h \
 		 $(top_srcdir)/tests/common/xorg-conf.cpp \
 		 $(top_srcdir)/tests/common/xorg-conf.h \
