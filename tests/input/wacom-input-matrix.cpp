@@ -58,7 +58,6 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("wacom", "Stylus",

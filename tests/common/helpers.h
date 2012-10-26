@@ -84,15 +84,5 @@ std::string GetDefaultLogFile();
  */
 std::string GetDefaultConfigFile();
 
-/**
- * Init the server's log file and config file path to the default paths.
- * If a config has been specified, init that to the default config path. If
- * the config is NULL, the server is set to default config path nonetheless.
- *
- * @param [in] server The server to set the -logfile and -config options for
- * @param [in] config The config to set the path for. May be NULL.
- */
-void InitDefaultLogFiles(xorg::testing::XServer &server, XOrgConfig *config = NULL);
-
 #endif
 

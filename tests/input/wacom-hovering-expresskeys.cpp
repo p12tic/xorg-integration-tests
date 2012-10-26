@@ -53,7 +53,6 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
         server.SetOption("-retro", "");
 
         config.AddDefaultScreenWithDriver();

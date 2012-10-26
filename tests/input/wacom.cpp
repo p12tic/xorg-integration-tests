@@ -47,7 +47,6 @@ protected:
      * dummy video driver.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.SetAutoAddDevices(true);

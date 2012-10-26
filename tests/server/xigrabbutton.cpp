@@ -28,7 +28,6 @@ public:
     /**
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.SetAutoAddDevices(false);
         config.AddDefaultScreenWithDriver();

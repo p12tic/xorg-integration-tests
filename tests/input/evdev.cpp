@@ -78,7 +78,6 @@ class EvdevXKBTest : public InputDriverTest,
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -174,7 +173,6 @@ public:
      * the evemu device.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -575,7 +573,6 @@ public:
                 ss << " ";
         }
 
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -622,7 +619,6 @@ public:
      * Option "ButtonMapping" based on the string provided by GetParam()
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
@@ -662,7 +658,6 @@ public:
      * Set up a config for a single evdev Floating device.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",

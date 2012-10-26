@@ -76,7 +76,6 @@ class KeyboardTest : public InputDriverTest,
      * The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         /* we don't use the dummy driver here, for some reason we won't get
          * key events with it */

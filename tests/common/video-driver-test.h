@@ -29,7 +29,6 @@ class SimpleVideoDriverTest : public VideoDriverTest,
                               public ::testing::WithParamInterface<std::string> {
 public:
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         std::string driver = GetParam();
 

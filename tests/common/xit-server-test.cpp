@@ -17,7 +17,6 @@ void XITServerTest::SetUpEventListener() {
 }
 
 void XITServerTest::SetUpConfigAndLog() {
-    InitDefaultLogFiles(server, &config);
 }
 
 void XITServerTest::SetUp() {

@@ -73,7 +73,6 @@ public:
      * Initialize an xorg.conf with a single CorePointer void device.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("void", "--device--", "Option \"CorePointer\" \"on\"\n");
@@ -138,7 +137,6 @@ TEST(AcecadTest, InputDeviceSectionWithOptionDevice)
 class AiptekTest : public InputDriverTest,
                    public ::testing::WithParamInterface<std::string> {
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
 
         std::string type = GetParam();
 

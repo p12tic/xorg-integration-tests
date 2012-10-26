@@ -25,7 +25,6 @@ class ZaphodTest : public Test,
 public:
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
-        InitDefaultLogFiles(server);
         config_path = server.GetConfigPath();
 
         bool left_of = GetParam();

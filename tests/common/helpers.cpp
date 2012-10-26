@@ -9,7 +9,6 @@
 #include <X11/extensions/Xrandr.h>
 
 void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfig &config) {
-    InitDefaultLogFiles(server, &config);
     config.WriteConfig();
     server.SetDisplayNumber(133);
     server.Start();
@@ -156,11 +155,4 @@ std::string GetDefaultLogFile() {
 
 std::string GetDefaultConfigFile() {
     return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".conf");
-}
-
-void InitDefaultLogFiles(xorg::testing::XServer &server, XOrgConfig *config) {
-    server.SetOption("-logfile", GetDefaultLogFile());
-    server.SetOption("-config", GetDefaultConfigFile());
-    if (config)
-        config->SetPath(server.GetConfigPath());
 }

@@ -28,7 +28,6 @@ public:
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
     virtual void SetUpConfigAndLog() {
-        InitDefaultLogFiles(server, &config);
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
@@ -68,7 +67,6 @@ TEST(MiscServerTest, DoubleSegfault)
                   "signal, clean up and then call abort().\n");
 
     XITServer server;
-    InitDefaultLogFiles(server);
     server.Start();
 
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
