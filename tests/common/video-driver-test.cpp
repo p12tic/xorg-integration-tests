@@ -6,6 +6,7 @@
 #include <xorg/gtest/xorg-gtest.h>
 
 #include "video-driver-test.h"
+#include "helpers.h"
 
 void VideoDriverTest::StartServer() {
     server.Start();
@@ -15,17 +16,10 @@ void VideoDriverTest::StartServer() {
 }
 
 void VideoDriverTest::SetUpConfigAndLog(const std::string& param) {
-    std::stringstream s;
-    s << "/tmp/Xorg-" << param << ".log";
-    server.SetOption("-logfile", s.str());
-
-    s.str(std::string());
-    s << "/tmp/" << param << ".conf";
-    config.SetPath(s.str());
+    InitDefaultLogFiles(server, &config);
 
     config.AddDefaultScreenWithDriver(param, param);
     config.WriteConfig();
-    server.SetOption("-config", config.GetPath());
 }
 
 void VideoDriverTest::SetUpEventListener() {
