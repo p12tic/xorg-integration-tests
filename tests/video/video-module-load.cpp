@@ -18,7 +18,7 @@ public:
     }
 };
 
-TEST_P(VideoModuleLoadTest, DriverDevice)
+TEST_P(VideoModuleLoadTest, CheckForLoadFailure)
 {
     std::ifstream in_file(server.GetLogFilePath().c_str());
     std::string line;
