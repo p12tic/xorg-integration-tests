@@ -21,6 +21,9 @@
 #include "input-driver-test.h"
 #include "helpers.h"
 
+/* no implementation, this class only exists for better test names */
+class LegacyInputDriverTest : public SimpleInputDriverTest {};
+
 static int count_devices(Display *dpy) {
     int ndevices;
     XIDeviceInfo *info;
@@ -30,7 +33,7 @@ static int count_devices(Display *dpy) {
     return ndevices;
 }
 
-TEST_P(SimpleInputDriverTest, LegacyDriver)
+TEST_P(LegacyInputDriverTest, InputDeviceSectionSimple)
 {
     std::string param;
 
@@ -64,7 +67,7 @@ INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
 /**
  * Void input driver test class
  */
-class VoidInputDriverTest : public InputDriverTest {
+class VoidDriverTest : public InputDriverTest {
 public:
     /**
      * Initialize an xorg.conf with a single CorePointer void device.
@@ -79,7 +82,7 @@ public:
     }
 };
 
-TEST_F(VoidInputDriverTest, VoidDriver)
+TEST_F(VoidDriverTest, InputDeviceSectionSimple)
 {
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
 }
@@ -90,7 +93,7 @@ TEST_F(VoidInputDriverTest, VoidDriver)
  *                               ACECAD                                *
  *                                                                     *
  ***********************************************************************/
-TEST(AcecadInputDriver, WithOptionDevice)
+TEST(AcecadDriverTest, InputDeviceSectionWithOptionDevice)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
@@ -132,7 +135,7 @@ TEST(AcecadInputDriver, WithOptionDevice)
  *                                                                     *
  ***********************************************************************/
 
-TEST(AiptekInputDriver, TypeStylus)
+TEST(AiptekDriverTest, InputDeviceSectionWithTypeStylus)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
@@ -163,7 +166,7 @@ TEST(AiptekInputDriver, TypeStylus)
     server.RemoveLogFile();
 }
 
-TEST(AiptekInputDriver, TypeCursor)
+TEST(AiptekDriverTest, InputDeviceSectionWithTypeCursor)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
@@ -194,7 +197,7 @@ TEST(AiptekInputDriver, TypeCursor)
     server.RemoveLogFile();
 }
 
-TEST(AiptekInputDriver, TypeEraser)
+TEST(AiptekDriverTest, InputDeviceSectionWithTypeEraser)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
@@ -230,7 +233,7 @@ TEST(AiptekInputDriver, TypeEraser)
  *                            ELOGRAPHICS                              *
  *                                                                     *
  ***********************************************************************/
-TEST(ElographicsDriver, Load)
+TEST(ElographicsDriverTest, InputDeviceSectionWithOptionDevice)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
@@ -361,7 +364,7 @@ out:
     return rc;
 }
 
-TEST(ElographicsDriver, Move)
+TEST(ElographicsDriverTest, StylusMovement)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
