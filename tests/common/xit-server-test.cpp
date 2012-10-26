@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "xit-server-test.h"
+#include "helpers.h"
 
 #define TEST_TIMEOUT 60
 
@@ -13,6 +14,10 @@ void XITServerTest::SetUpEventListener() {
 
     testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
     listeners.Append(this);
+}
+
+void XITServerTest::SetUpConfigAndLog() {
+    InitDefaultLogFiles(server, &config);
 }
 
 void XITServerTest::SetUp() {

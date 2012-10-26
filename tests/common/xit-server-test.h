@@ -25,17 +25,15 @@ protected:
     void SetUpEventListener();
 
     /**
-     * Set up the config and log file. The param is used for both the
-     * config file ("param.conf") and the log file ("Xorg-param.log").
-     * The default behavior of this function is to set up an xorg.conf with
-     * a single input device, using the param as the driver name.
+     * Set up the config and log file to default file names. These file
+     * names are based on the test case and test name.
      *
      * This function is called from SetUp(), before the server is started.
      * Tests that need a different configuration but the same general
      * behavior can override SetUpConfigAndLog() only and leave the rest of
      * the behaviour intact.
      */
-    virtual void SetUpConfigAndLog() = 0;
+    virtual void SetUpConfigAndLog();
 
     /**
      * Default googletest entry point for setup-work during test fixtures.

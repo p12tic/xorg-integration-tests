@@ -19,33 +19,12 @@
 class InputDriverTest : public XITServerTest {
 protected:
     /**
-     * Set up the config and log file. The param is used for both the
-     * config file ("param.conf") and the log file ("Xorg-param.log").
-     * The default behavior of this function is to set up an xorg.conf with
-     * a single input device, using the param as the driver name.
-     *
-     * This function is called from SetUp(), before the server is started.
-     * Tests that need a different configuration but the same general
-     * behavior can override SetUpConfigAndLog() only and leave the rest of
-     * the behaviour intact.
-     *
-     * @param param The param used as prefix for the config file and the log file and as input driver.
-     */
-    virtual void SetUpConfigAndLog();
-
-    /**
      * Register for the given XI2 extension. Default is 2.0, will ASSERT if
      * the server does not support XI2.
      *
      * @return the minor version number returned by the server.
      */
     virtual int RegisterXI2(int major = 2, int minor = 0);
-
-    /**
-     * Default googletest entry point for setup-work during test fixtures.
-     * This implementation simply calls SetUp() with an empty string.
-     */
-    virtual void SetUp();
 
     /**
      * Starts the server and registers for XI2.

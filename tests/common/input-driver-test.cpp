@@ -8,7 +8,6 @@
 #include <X11/extensions/XInput2.h>
 
 #include "input-driver-test.h"
-#include "helpers.h"
 
 int InputDriverTest::RegisterXI2(int major, int minor)
 {
@@ -32,13 +31,4 @@ int InputDriverTest::RegisterXI2(int major, int minor)
 void InputDriverTest::StartServer() {
     XITServerTest::StartServer();
     RegisterXI2();
-}
-
-void InputDriverTest::SetUpConfigAndLog() {
-    InitDefaultLogFiles(server, &config);
-}
-
-void InputDriverTest::SetUp() {
-    SetUpConfigAndLog();
-    XITServerTest::SetUp();
 }
