@@ -7,6 +7,8 @@
 
 #include <xorg/gtest/xorg-gtest.h>
 
+#include "xorg-conf.h"
+
 /**
  * Wrapper around the xorg-gtest XServer class that provides default setup
  * routines for the XIT suite
@@ -14,6 +16,8 @@
 class XITServer : public xorg::testing::XServer {
 public:
     XITServer();
+    void Start();
+    void Start(XOrgConfig &config);
 };
 
 #endif

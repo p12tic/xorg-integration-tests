@@ -8,10 +8,8 @@
 #include <X11/extensions/XInput2.h>
 #include <X11/extensions/Xrandr.h>
 
-void StartServer(std::string prefix, ::xorg::testing::XServer &server, XOrgConfig &config) {
-    config.WriteConfig();
-    server.SetDisplayNumber(133);
-    server.Start();
+void StartServer(std::string prefix, XITServer &server, XOrgConfig &config) {
+    server.Start(config);
 }
 
 int FindInputDeviceByName(Display *dpy, const std::string &device_name, int *deviceid)

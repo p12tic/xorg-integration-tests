@@ -12,3 +12,13 @@ XITServer::XITServer() : XServer::XServer() {
     SetOption("-config", GetDefaultConfigFile());
     SetDisplayNumber(133);
 }
+
+void XITServer::Start() {
+    XServer::Start();
+}
+
+void XITServer::Start(XOrgConfig &config) {
+    config.WriteConfig();
+    SetOption("-config", config.GetPath());
+    Start();
+}
