@@ -101,7 +101,7 @@ TEST(AcecadTest, InputDeviceSectionWithOptionDevice)
                            "Option \"CorePointer\" \"on\"\n"
                            "Option \"Device\" \"/dev/input/event0\"\n");
     config.AddDefaultScreenWithDriver();
-    StartServer("acecad-type-stylus", server, config);
+    server.Start(config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     int major = 2;
@@ -184,7 +184,7 @@ TEST(ElographicsTest, InputDeviceSectionWithOptionDevice)
                            "Option \"CorePointer\" \"on\"\n"
                            "Option \"Device\" \"/dev/input/event0\"\n");
     config.AddDefaultScreenWithDriver();
-    StartServer("elographics", server, config);
+    server.Start(config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     int major = 2;
@@ -329,7 +329,7 @@ TEST(ElographicsTest, StylusMovement)
     }
 
     /* parent */
-    StartServer("elographics", server, config);
+    server.Start(config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     int major = 2;

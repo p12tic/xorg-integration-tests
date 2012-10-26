@@ -902,7 +902,7 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
 
     config.SetAutoAddDevices(true);
     config.AddDefaultScreenWithDriver();
-    StartServer("synaptics-clickpad-softbuttons", server, config);
+    server.Start(config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     int major = 2;

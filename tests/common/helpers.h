@@ -11,11 +11,6 @@
 #include "xit-server.h"
 
 /**
- * Start the server after writing the config, with the prefix given.
- */
-void StartServer(std::string prefix, XITServer &server, XOrgConfig &config);
-
-/**
  * Find the device in the input device list and return the number of
  * instances found.
  *

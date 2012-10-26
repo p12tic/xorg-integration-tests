@@ -8,10 +8,6 @@
 #include <X11/extensions/XInput2.h>
 #include <X11/extensions/Xrandr.h>
 
-void StartServer(std::string prefix, XITServer &server, XOrgConfig &config) {
-    server.Start(config);
-}
-
 int FindInputDeviceByName(Display *dpy, const std::string &device_name, int *deviceid)
 {
     int ndevices;

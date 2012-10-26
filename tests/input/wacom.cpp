@@ -441,7 +441,7 @@ TEST(WacomDriver, PrivToolDoubleFree)
                            );
     config.AddDefaultScreenWithDriver();
 
-    EXPECT_NO_THROW(StartServer("wacom-double-free", server, config));
+    EXPECT_NO_THROW(server.Start(config));
 }
 
 class WacomLensCursorTest : public WacomDriverTest

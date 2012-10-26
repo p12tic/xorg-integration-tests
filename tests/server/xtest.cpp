@@ -49,7 +49,7 @@ TEST(XTest, DisabledDevicesProperty)
     XITServer server;
     XOrgConfig config;
     config.AddDefaultScreenWithDriver();
-    StartServer("xtest-disable-properties", server, config);
+    server.Start(config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     ASSERT_TRUE(dpy);
@@ -120,7 +120,7 @@ TEST(XTest, DisabledDevicesCtl)
     XITServer server;
     XOrgConfig config;
     config.AddDefaultScreenWithDriver();
-    StartServer("xtest-disable-devctl", server, config);
+    server.Start(config);
 
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     ASSERT_TRUE(dpy);
