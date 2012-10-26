@@ -96,7 +96,7 @@ TEST_F(VoidTest, InputDeviceSectionSimple)
 TEST(AcecadTest, InputDeviceSectionWithOptionDevice)
 {
     XOrgConfig config;
-    xorg::testing::XServer server;
+    XITServer server;
 
     config.AddInputSection("acecad", "--device--",
                            "Option \"CorePointer\" \"on\"\n"
@@ -180,7 +180,7 @@ INSTANTIATE_TEST_CASE_P(, AiptekTest,
 TEST(ElographicsTest, InputDeviceSectionWithOptionDevice)
 {
     XOrgConfig config;
-    xorg::testing::XServer server;
+    XITServer server;
 
     config.AddInputSection("elographics", "--device--",
                            "Option \"CorePointer\" \"on\"\n"
@@ -311,7 +311,7 @@ out:
 TEST(ElographicsTest, StylusMovement)
 {
     XOrgConfig config;
-    xorg::testing::XServer server;
+    XITServer server;
 
     config.AddInputSection("elographics", "--device--",
                            "Option \"CorePointer\" \"on\"\n"

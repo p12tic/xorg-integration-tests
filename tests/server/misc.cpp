@@ -67,7 +67,7 @@ TEST(MiscServerTest, DoubleSegfault)
     XORG_TESTCASE("TESTCASE: SIGSEGV the server. The server must catch the "
                   "signal, clean up and then call abort().\n");
 
-    XServer server;
+    XITServer server;
     InitDefaultLogFiles(server);
     server.Start();
 

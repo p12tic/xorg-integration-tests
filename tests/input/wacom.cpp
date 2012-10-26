@@ -422,7 +422,7 @@ TEST(WacomDriver, PrivToolDoubleFree)
                  "https://bugs.freedesktop.org/show_bug.cgi?id=55200");
 
     XOrgConfig config;
-    xorg::testing::XServer server;
+    XITServer server;
 
     std::auto_ptr<xorg::testing::evemu::Device> stylus =
         std::auto_ptr<xorg::testing::evemu::Device>(

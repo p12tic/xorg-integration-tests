@@ -903,7 +903,7 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
             );
 
     XOrgConfig config;
-    xorg::testing::XServer server;
+    XITServer server;
 
     config.SetAutoAddDevices(true);
     config.AddDefaultScreenWithDriver();

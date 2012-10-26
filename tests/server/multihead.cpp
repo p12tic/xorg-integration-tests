@@ -12,6 +12,7 @@
 #include <X11/Xlib.h>
 
 #include "xorg-conf.h"
+#include "xit-server.h"
 #include "helpers.h"
 #include "device-interface.h"
 
@@ -172,7 +173,7 @@ public:
     }
 
 protected:
-    XServer server;
+    XITServer server;
     bool xinerama;
 
 private:

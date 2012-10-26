@@ -8,6 +8,7 @@
 #include <xorg/gtest/xorg-gtest.h>
 
 #include "xorg-conf.h"
+#include "xit-server.h"
 
 /**
  * Root class for XIT that require an X server to be started.
@@ -62,7 +63,7 @@ protected:
      * The X server instance. This server is started with StartServer() but
      * may be started by child classes directly.
      */
-    xorg::testing::XServer server;
+    XITServer server;
 
     /**
      * The server configuration. SetUpConfigAndLog() by default works on

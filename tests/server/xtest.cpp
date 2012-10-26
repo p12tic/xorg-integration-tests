@@ -11,6 +11,7 @@
 #include <X11/extensions/XTest.h>
 
 #include "xorg-conf.h"
+#include "xit-server.h"
 #include "helpers.h"
 
 using namespace xorg::testing;
@@ -45,7 +46,7 @@ TEST(XTest, DisabledDevicesProperty)
                  "should not be possible\n"
                  "https://bugs.freedesktop.org/show_bug.cgi?id=56380");
 
-    XServer server;
+    XITServer server;
     XOrgConfig config;
     config.AddDefaultScreenWithDriver();
     StartServer("xtest-disable-properties", server, config);
@@ -116,7 +117,7 @@ TEST(XTest, DisabledDevicesCtl)
                   "controls should not possible\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=56380");
 
-    XServer server;
+    XITServer server;
     XOrgConfig config;
     config.AddDefaultScreenWithDriver();
     StartServer("xtest-disable-devctl", server, config);
