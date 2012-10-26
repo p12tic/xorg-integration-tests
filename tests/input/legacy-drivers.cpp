@@ -59,7 +59,7 @@ TEST_P(LegacyInputDriverTest, InputDeviceSectionSimple)
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 0);
 }
 
-INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
+INSTANTIATE_TEST_CASE_P(, LegacyInputDriverTest,
         ::testing::Values("acecad", "aiptek", "elographics",
                           "fpit", "hyperpen",  "mutouch",
                           "penmount"));
@@ -67,7 +67,7 @@ INSTANTIATE_TEST_CASE_P(, SimpleInputDriverTest,
 /**
  * Void input driver test class
  */
-class VoidDriverTest : public InputDriverTest {
+class VoidTest : public InputDriverTest {
 public:
     /**
      * Initialize an xorg.conf with a single CorePointer void device.
@@ -82,7 +82,7 @@ public:
     }
 };
 
-TEST_F(VoidDriverTest, InputDeviceSectionSimple)
+TEST_F(VoidTest, InputDeviceSectionSimple)
 {
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
 }
@@ -93,7 +93,7 @@ TEST_F(VoidDriverTest, InputDeviceSectionSimple)
  *                               ACECAD                                *
  *                                                                     *
  ***********************************************************************/
-TEST(AcecadDriverTest, InputDeviceSectionWithOptionDevice)
+TEST(AcecadTest, InputDeviceSectionWithOptionDevice)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
@@ -135,8 +135,8 @@ TEST(AcecadDriverTest, InputDeviceSectionWithOptionDevice)
  *                                                                     *
  ***********************************************************************/
 
-class AiptekDriverTest : public InputDriverTest,
-                         public ::testing::WithParamInterface<std::string> {
+class AiptekTest : public InputDriverTest,
+                   public ::testing::WithParamInterface<std::string> {
     virtual void SetUpConfigAndLog() {
         InitDefaultLogFiles(server, &config);
 
@@ -151,7 +151,7 @@ class AiptekDriverTest : public InputDriverTest,
     }
 };
 
-TEST_P(AiptekDriverTest, InputDeviceSectionWithType)
+TEST_P(AiptekTest, InputDeviceSectionWithType)
 {
     ::Display *dpy = Display();
 
@@ -169,7 +169,7 @@ TEST_P(AiptekDriverTest, InputDeviceSectionWithType)
     server.RemoveLogFile();
 }
 
-INSTANTIATE_TEST_CASE_P(, AiptekDriverTest,
+INSTANTIATE_TEST_CASE_P(, AiptekTest,
                         ::testing::Values("stylus", "cursor", "eraser"));
 
 /***********************************************************************
@@ -177,7 +177,7 @@ INSTANTIATE_TEST_CASE_P(, AiptekDriverTest,
  *                            ELOGRAPHICS                              *
  *                                                                     *
  ***********************************************************************/
-TEST(ElographicsDriverTest, InputDeviceSectionWithOptionDevice)
+TEST(ElographicsTest, InputDeviceSectionWithOptionDevice)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
@@ -308,7 +308,7 @@ out:
     return rc;
 }
 
-TEST(ElographicsDriverTest, StylusMovement)
+TEST(ElographicsTest, StylusMovement)
 {
     XOrgConfig config;
     xorg::testing::XServer server;
