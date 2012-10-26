@@ -28,9 +28,9 @@ typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
  * Keyboard driver test. This class takes a string as parameter that is used
  * for the XkbLayout option.
  */
-class KeyboardDriverTest : public InputDriverTest,
-                           public DeviceInterface,
-                           public ::testing::WithParamInterface<std::string> {
+class KeyboardTest : public InputDriverTest,
+                     public DeviceInterface,
+                     public ::testing::WithParamInterface<std::string> {
     /**
      * Initializes a standard keyboard device.
      */
@@ -101,7 +101,7 @@ class KeyboardDriverTest : public InputDriverTest,
 };
 
 
-TEST_P(KeyboardDriverTest, DeviceExists)
+TEST_P(KeyboardTest, DeviceExists)
 {
     std::string param;
     int ndevices;
@@ -141,7 +141,7 @@ void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_P
       XNextEvent(display, &press);
 }
 
-TEST_P(KeyboardDriverTest, KeyboardLayout)
+TEST_P(KeyboardTest, KeyboardLayout)
 {
     std::string layout = GetParam();
 
@@ -163,7 +163,7 @@ TEST_P(KeyboardDriverTest, KeyboardLayout)
         play_key_pair (Display(), dev.get(), (*m_it));
 }
 
-INSTANTIATE_TEST_CASE_P(, KeyboardDriverTest, ::testing::Values("us", "de", "fr"));
+INSTANTIATE_TEST_CASE_P(, KeyboardTest, ::testing::Values("us", "de", "fr"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

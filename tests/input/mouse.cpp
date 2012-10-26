@@ -23,8 +23,8 @@
 /**
  * Mouse driver test.
  */
-class MouseDriverTest : public InputDriverTest,
-                        public DeviceInterface {
+class MouseTest : public InputDriverTest,
+                  public DeviceInterface {
 public:
     /**
      * Initializes a standard mouse device with two wheels.
@@ -78,7 +78,7 @@ void scroll_wheel_event(::Display *display,
 }
 
 
-TEST_F(MouseDriverTest, ScrollWheel)
+TEST_F(MouseTest, ScrollWheel)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XFlush(Display());
@@ -95,7 +95,7 @@ TEST_F(MouseDriverTest, ScrollWheel)
     /* Vertical scrolling only, it appears we can't send HScroll events */
 }
 
-TEST_F(MouseDriverTest, Move)
+TEST_F(MouseTest, Move)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), PointerMotionMask);
     XFlush(Display());
@@ -148,7 +148,7 @@ TEST_F(MouseDriverTest, Move)
     y = ev.xmotion.y_root;
 }
 
-TEST_F(MouseDriverTest, BtnPress)
+TEST_F(MouseTest, BtnPress)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
@@ -161,7 +161,7 @@ TEST_F(MouseDriverTest, BtnPress)
     ASSERT_FALSE(XPending(Display()));
 }
 
-TEST_F(MouseDriverTest, BtnRelease)
+TEST_F(MouseTest, BtnRelease)
 {
     SCOPED_TRACE("http://patchwork.freedesktop.org/patch/12193/");
 
@@ -178,7 +178,7 @@ TEST_F(MouseDriverTest, BtnRelease)
     ASSERT_FALSE(XPending(Display()));
 }
 
-TEST_F(MouseDriverTest, DevNode)
+TEST_F(MouseTest, DevNode)
 {
     Atom node_prop = XInternAtom(Display(), "Device Node", True);
 

@@ -26,8 +26,8 @@
  * Synaptics driver test for touchpad devices. This class uses a traditional
  * touchpad device.
  */
-class SynapticsDriverTest : public InputDriverTest,
-                            public DeviceInterface {
+class SynapticsTest : public InputDriverTest,
+                      public DeviceInterface {
 public:
     /**
      * Initializes a standard touchpad device.
@@ -63,7 +63,7 @@ public:
     }
 };
 
-TEST_F(SynapticsDriverTest, DevicePresent)
+TEST_F(SynapticsTest, DevicePresent)
 {
     int ndevices;
     XIDeviceInfo *info;
@@ -84,7 +84,7 @@ TEST_F(SynapticsDriverTest, DevicePresent)
 }
 
 #ifdef HAVE_XI22
-TEST_F(SynapticsDriverTest, SmoothScrollingAvailable)
+TEST_F(SynapticsTest, SmoothScrollingAvailable)
 {
     ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
 
@@ -138,8 +138,8 @@ TEST_F(SynapticsDriverTest, SmoothScrollingAvailable)
 /**
  * Synaptics driver test for smooth scrolling increments.
  */
-class SynapticsDriverSmoothScrollTest : public SynapticsDriverTest,
-                                        public ::testing::WithParamInterface<std::pair<int, int> > {
+class SynapticsSmoothScrollTest : public SynapticsTest,
+                                  public ::testing::WithParamInterface<std::pair<int, int> > {
     /**
      * Sets up an xorg.conf for a single synaptics CorePointer device based on
      * the evemu device. Options enabled: tapping (1 finger), two-finger
@@ -170,7 +170,7 @@ class SynapticsDriverSmoothScrollTest : public SynapticsDriverTest,
 
 };
 
-TEST_P(SynapticsDriverSmoothScrollTest, ScrollDelta)
+TEST_P(SynapticsSmoothScrollTest, ScrollDelta)
 {
     ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
 
@@ -219,7 +219,7 @@ TEST_P(SynapticsDriverSmoothScrollTest, ScrollDelta)
     XIFreeDeviceInfo(info);
 }
 
-INSTANTIATE_TEST_CASE_P(, SynapticsDriverSmoothScrollTest,
+INSTANTIATE_TEST_CASE_P(, SynapticsSmoothScrollTest,
                         ::testing::Values(std::make_pair(0, 0),
                                           std::make_pair(1, 1),
                                           std::make_pair(100, 100),
@@ -261,7 +261,7 @@ void check_buttons_event(::Display *display,
     ASSERT_LT(abs(expect_nevents - nevents), 5);
 }
 
-TEST_F(SynapticsDriverTest, ScrollWheel)
+TEST_F(SynapticsTest, ScrollWheel)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     /* the server takes a while to start up bust the devices may not respond
@@ -273,7 +273,7 @@ TEST_F(SynapticsDriverTest, ScrollWheel)
     check_buttons_event(Display(), dev.get(), "SynPS2-Synaptics-TouchPad-two-finger-scroll-down.events", 5, 10);
 }
 
-TEST_F(SynapticsDriverTest, TapEvent)
+TEST_F(SynapticsTest, TapEvent)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     /* the server takes a while to start up bust the devices may not respond
@@ -319,7 +319,7 @@ void check_drag_event(::Display *display,
         XNextEvent(display, &ev);
 }
 
-TEST_F(SynapticsDriverTest, TapAndDragEvent)
+TEST_F(SynapticsTest, TapAndDragEvent)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
     /* the server takes a while to start up bust the devices may not respond
@@ -344,7 +344,7 @@ TEST_F(SynapticsDriverTest, TapAndDragEvent)
  *
  * Takes a pair of integers, not used by the class itself.
  */
-class SynapticsWarpTest : public SynapticsDriverTest,
+class SynapticsWarpTest : public SynapticsTest,
                           public ::testing::WithParamInterface<std::pair<int, int> >{
 };
 
@@ -383,8 +383,8 @@ INSTANTIATE_TEST_CASE_P(, SynapticsWarpTest,
 /**
  * Synaptics driver test for clickpad devices.
  */
-class SynapticsDriverClickpadTest : public InputDriverTest,
-                                    public DeviceInterface {
+class SynapticsClickpadTest : public InputDriverTest,
+                              public DeviceInterface {
 public:
     /**
      * Initializes a clickpad, as the one found on the Lenovo x220t.
@@ -427,7 +427,7 @@ set_clickpad_property(Display *dpy, const char* name)
     XSync(dpy, False);
 }
 
-TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
+TEST_F(SynapticsClickpadTest, ClickpadProperties)
 {
 #ifndef INPUT_PROP_BUTTONPAD
     SCOPED_TRACE("<linux/input.h>'s INPUT_PROP_BUTTONPAD is missing.\n"
@@ -497,7 +497,7 @@ TEST_F(SynapticsDriverClickpadTest, ClickpadProperties)
 
 }
 
-TEST_F(SynapticsDriverClickpadTest, Tap)
+TEST_F(SynapticsClickpadTest, Tap)
 {
     set_clickpad_property(Display(), "--device--");
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
@@ -521,7 +521,7 @@ TEST_F(SynapticsDriverClickpadTest, Tap)
     XSync(Display(), True);
 }
 
-TEST_F(SynapticsDriverClickpadTest, VertScrollDown)
+TEST_F(SynapticsClickpadTest, VertScrollDown)
 {
     set_clickpad_property(Display(), "--device--");
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
@@ -545,7 +545,7 @@ TEST_F(SynapticsDriverClickpadTest, VertScrollDown)
     XSync(Display(), True);
 }
 
-TEST_F(SynapticsDriverClickpadTest, VertScrollUp)
+TEST_F(SynapticsClickpadTest, VertScrollUp)
 {
     set_clickpad_property(Display(), "--device--");
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
@@ -569,7 +569,7 @@ TEST_F(SynapticsDriverClickpadTest, VertScrollUp)
     XSync(Display(), True);
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDevice)
+TEST_F(SynapticsClickpadTest, DisableDevice)
 {
     SCOPED_TRACE("Disable and re-enable the device with no fingers down\n");
 
@@ -580,7 +580,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDevice)
     DeviceSetEnabled(Display(), deviceid, true);
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerDownAndLift)
+TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerDownAndLift)
 {
     SCOPED_TRACE("Disable the device with one fingers down, lift finger,\n"
                  "re-enable device.");
@@ -594,7 +594,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerDownAndLift)
     DeviceSetEnabled(Display(), deviceid, true);
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerDown)
+TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerDown)
 {
     SCOPED_TRACE("Disable the device with one finger down, re-enable with\n"
                  "finger still down\n");
@@ -608,7 +608,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerDown)
     dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersDownAndLift)
+TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersDownAndLift)
 {
     SCOPED_TRACE("Disable the device with two fingers down, lift fingers, "
                  "re-enable.");
@@ -621,7 +621,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersDownAndLift)
     DeviceSetEnabled(Display(), deviceid, true);
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersDown)
+TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersDown)
 {
     SCOPED_TRACE("Disable the device with two fingers down, re-enable, with\n"
                  "fingers still down");
@@ -635,7 +635,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersDown)
     dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerResume)
+TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerResume)
 {
     SCOPED_TRACE("Disable the device with no fingers down, re-enable with\n"
                  "one finger down\n");
@@ -649,7 +649,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerResume)
     dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersResume)
+TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersResume)
 {
     SCOPED_TRACE("Disable the device with no fingers down, re-enable with\n"
                  "two fingers down");
@@ -663,7 +663,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersResume)
     dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerTwoFingersResume)
+TEST_F(SynapticsClickpadTest, DisableDeviceOneFingerTwoFingersResume)
 {
     SCOPED_TRACE("Disable the device with one finger down, re-enable with\n"
                  "two fingers down");
@@ -679,7 +679,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceOneFingerTwoFingersResume)
     dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.two-finger-up.events");
 }
 
-TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersOneFingerResume)
+TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersOneFingerResume)
 {
     SCOPED_TRACE("Disable the device with two fingers down, re-enable with\n"
                  "one finger down");
@@ -699,7 +699,7 @@ TEST_F(SynapticsDriverClickpadTest, DisableDeviceTwoFingersOneFingerResume)
  * Synaptics driver test for clickpad devices with the SoftButtonArea option
  * set.
  */
-class SynapticsDriverClickpadSoftButtonsTest : public SynapticsDriverClickpadTest {
+class SynapticsClickpadSoftButtonsTest : public SynapticsClickpadTest {
 public:
     /**
      * Sets up a single CorePointer synaptics clickpad device with the
@@ -719,7 +719,7 @@ public:
     }
 };
 
-TEST_F(SynapticsDriverClickpadSoftButtonsTest, LeftClick)
+TEST_F(SynapticsClickpadSoftButtonsTest, LeftClick)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
@@ -740,7 +740,7 @@ TEST_F(SynapticsDriverClickpadSoftButtonsTest, LeftClick)
     XSync(Display(), True);
 }
 
-TEST_F(SynapticsDriverClickpadSoftButtonsTest, RightClick)
+TEST_F(SynapticsClickpadSoftButtonsTest, RightClick)
 {
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
     XSync(Display(), False);
@@ -765,7 +765,7 @@ TEST_F(SynapticsDriverClickpadSoftButtonsTest, RightClick)
  * Synaptics driver test for clickpad devices with the SoftButtonArea set at
  * runtime.
  */
-class SynapticsDriverClickpadSoftButtonsRuntimeTest : public SynapticsDriverClickpadTest {
+class SynapticsClickpadSoftButtonsRuntimeTest : public SynapticsClickpadTest {
 public:
     /**
      * Sets up a single CorePointer synaptics clickpad device with the
@@ -784,7 +784,7 @@ public:
     }
 };
 
-TEST_F(SynapticsDriverClickpadSoftButtonsRuntimeTest, SoftButtonsFirst)
+TEST_F(SynapticsClickpadSoftButtonsRuntimeTest, SoftButtonsFirst)
 {
     ::Display *dpy = Display();
     Atom softbutton_prop = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
@@ -833,7 +833,7 @@ TEST_F(SynapticsDriverClickpadSoftButtonsRuntimeTest, SoftButtonsFirst)
     ASSERT_EQ(btn.xbutton.button, 3U) << "https://bugs.freedesktop.org/show_bug.cgi?id=54102";
 }
 
-TEST_F(SynapticsDriverClickpadSoftButtonsRuntimeTest, SoftButtonsSecond)
+TEST_F(SynapticsClickpadSoftButtonsRuntimeTest, SoftButtonsSecond)
 {
     ::Display *dpy = Display();
     Atom softbutton_prop = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
