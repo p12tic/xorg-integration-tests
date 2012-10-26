@@ -135,22 +135,25 @@ TEST(AcecadDriverTest, InputDeviceSectionWithOptionDevice)
  *                                                                     *
  ***********************************************************************/
 
-TEST(AiptekDriverTest, InputDeviceSectionWithTypeStylus)
+class AiptekDriverTest : public InputDriverTest,
+                         public ::testing::WithParamInterface<std::string> {
+    virtual void SetUpConfigAndLog() {
+        InitDefaultLogFiles(server, &config);
+
+        std::string type = GetParam();
+
+        config.AddInputSection("aiptek", "--device--",
+                "Option \"CorePointer\" \"on\"\n"
+                "Option \"Device\" \"/dev/input/event0\"\n"
+                "Option \"Type\" \"" + type + "\"");
+        config.AddDefaultScreenWithDriver();
+        config.WriteConfig();
+    }
+};
+
+TEST_P(AiptekDriverTest, InputDeviceSectionWithType)
 {
-    XOrgConfig config;
-    xorg::testing::XServer server;
-
-    config.AddInputSection("aiptek", "--device--",
-                           "Option \"CorePointer\" \"on\"\n"
-                           "Option \"Device\" \"/dev/input/event0\"\n"
-                           "Option \"Type\" \"stylus\"");
-    config.AddDefaultScreenWithDriver();
-    StartServer("aiptek-type-stylus", server, config);
-
-    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
-    int major = 2;
-    int minor = 0;
-    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
+    ::Display *dpy = Display();
 
     /* VCP, VCK, xtest, mouse, keyboard, aiptek */
     int expected_devices = 7;
@@ -166,67 +169,8 @@ TEST(AiptekDriverTest, InputDeviceSectionWithTypeStylus)
     server.RemoveLogFile();
 }
 
-TEST(AiptekDriverTest, InputDeviceSectionWithTypeCursor)
-{
-    XOrgConfig config;
-    xorg::testing::XServer server;
-
-    config.AddInputSection("aiptek", "--device--",
-                           "Option \"CorePointer\" \"on\"\n"
-                           "Option \"Device\" \"/dev/input/event0\"\n"
-                           "Option \"Type\" \"cursor\"");
-    config.AddDefaultScreenWithDriver();
-    StartServer("aiptek-type-cursor", server, config);
-
-    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
-    int major = 2;
-    int minor = 0;
-    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
-
-    /* VCP, VCK, xtest, mouse, keyboard, aiptek */
-    int expected_devices = 7;
-
-    /* xserver git 1357cd7251, no <default pointer> */
-    if (server.GetVersion().compare("1.11.0") > 0)
-	    expected_devices--;
-
-    ASSERT_EQ(count_devices(dpy), expected_devices);
-    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
-
-    config.RemoveConfig();
-    server.RemoveLogFile();
-}
-
-TEST(AiptekDriverTest, InputDeviceSectionWithTypeEraser)
-{
-    XOrgConfig config;
-    xorg::testing::XServer server;
-
-    config.AddInputSection("aiptek", "--device--",
-                           "Option \"CorePointer\" \"on\"\n"
-                           "Option \"Device\" \"/dev/input/event0\"\n"
-                           "Option \"Type\" \"eraser\"");
-    config.AddDefaultScreenWithDriver();
-    StartServer("aiptek-type-eraser", server, config);
-
-    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
-    int major = 2;
-    int minor = 0;
-    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
-
-    /* VCP, VCK, xtest, mouse, keyboard, aiptek */
-    int expected_devices = 7;
-
-    /* xserver git 1357cd7251, no <default pointer> */
-    if (server.GetVersion().compare("1.11.0") > 0)
-	    expected_devices--;
-
-    ASSERT_EQ(count_devices(dpy), expected_devices);
-    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
-
-    config.RemoveConfig();
-    server.RemoveLogFile();
-}
+INSTANTIATE_TEST_CASE_P(, AiptekDriverTest,
+                        ::testing::Values("stylus", "cursor", "eraser"));
 
 /***********************************************************************
  *                                                                     *
