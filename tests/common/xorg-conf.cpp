@@ -20,10 +20,10 @@ XOrgConfig::XOrgConfig(const std::string& path) {
     auto_add_devices = false;
 }
 
-void XOrgConfig::WriteConfig(const std::string &param) {
-    if (!param.empty()) {
-        config_file = param;
-        SetPath(param);
+void XOrgConfig::WriteConfig(const std::string &path) {
+    if (!path.empty()) {
+        config_file = path;
+        SetPath(path);
     }
 
     std::ofstream conffile(config_file.c_str());
