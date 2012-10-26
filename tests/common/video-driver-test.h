@@ -5,7 +5,8 @@
 #define _VIDEO_DRIVER_TEST_H_
 
 #include <xorg/gtest/xorg-gtest.h>
-#include "xorg-conf.h"
+
+#include "xit-server-test.h"
 
 /**
  * A test fixture for testing Video drivers. This class automates basic
@@ -14,8 +15,7 @@
  * Do not instanciate this class directly, subclass it from the test case
  * instead. For simple test cases, use SimpleVideoDriverTest.
  */
-class VideoDriverTest : public xorg::testing::Test,
-                        private ::testing::EmptyTestEventListener {
+class VideoDriverTest : public XITServerTest {
 protected:
     /**
      * Set up the config and log file. The param is used for both the
@@ -31,12 +31,6 @@ protected:
      * @param param The param used as prefix for the config file and the log file and as input driver.
      */
     virtual void SetUpConfigAndLog(const std::string& param = "");
-
-    /**
-     * Set up an event listener that listens for test results. If any result
-     * fails, Failed() will return true.
-     */
-    void SetUpEventListener();
 
     /**
      * Starts the server and waits for connections. Once completed,
@@ -61,38 +55,6 @@ protected:
      */
     virtual void SetUp(const std::string &param);
 
-    /**
-     * Default googletest entry point for clean-up work after test
-     * fixtures were run.
-     */
-    virtual void TearDown();
-
-    /**
-     * @return false if all tests succeeded, true if one failed
-     */
-    virtual bool Failed();
-
-    /**
-     * The X server instance. This server is started with StartServer() but
-     * may be started by child classes directly.
-     */
-    xorg::testing::XServer server;
-
-    /**
-     * The server configuration. SetUpConfigAndLog() by default works on
-     * this configuration and the server started by StartServer() will then
-     * use this configuration.
-     */
-    XOrgConfig config;
-
-private:
-    bool failed;
-
-    /**
-     * Callback for test results. If any test fails, ::Failed() will return
-     * false.
-     */
-    void OnTestPartResult(const ::testing::TestPartResult &test_part_result);
 };
 
 /**

@@ -22,13 +22,6 @@ void VideoDriverTest::SetUpConfigAndLog(const std::string& param) {
     config.WriteConfig();
 }
 
-void VideoDriverTest::SetUpEventListener() {
-    failed = false;
-
-    testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    listeners.Append(this);
-}
-
 void VideoDriverTest::SetUp() {
     SetUp("");
 }
@@ -39,24 +32,3 @@ void VideoDriverTest::SetUp(const std::string &param) {
     StartServer();
 }
 
-void VideoDriverTest::TearDown() {
-    if (server.Pid() != -1)
-        if (!server.Terminate(3000))
-            server.Kill(3000);
-
-    if (!Failed()) {
-        config.RemoveConfig();
-        server.RemoveLogFile();
-    }
-
-    testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    listeners.Release(this);
-}
-
-void VideoDriverTest::OnTestPartResult(const ::testing::TestPartResult &test_part_result) {
-    failed = test_part_result.failed();
-}
-
-bool VideoDriverTest::Failed() {
-    return failed;
-}
