@@ -6,9 +6,11 @@
 #include <unistd.h>
 
 #include "xorg-conf.h"
+#include "helpers.h"
 
 XOrgConfig::XOrgConfig(const std::string& path) {
-    config_file = path;
+    if (path.empty())
+        SetPath(GetDefaultConfigFile());
 
     std::stringstream section;
     section << ""

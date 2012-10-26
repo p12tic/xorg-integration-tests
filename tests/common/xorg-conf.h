@@ -30,7 +30,7 @@ public:
      * @param path The future default path to write to, or a default path if
      * none is given
      */
-    XOrgConfig(const std::string& path = "/tmp/xorg.conf");
+    XOrgConfig(const std::string& path = "");
 
     /**
      * Write the current config to the path given. If no path is specified,
