@@ -81,3 +81,26 @@ void XITServerTest::OnTestPartResult(const ::testing::TestPartResult &test_part_
     failed = failed || test_part_result.failed();
 }
 
+std::string XITServer::GetNormalizedTestName() {
+    const ::testing::TestInfo *const test_info =
+        ::testing::UnitTest::GetInstance()->current_test_info();
+
+    std::string testname = test_info->test_case_name();
+    testname += ".";
+    testname += test_info->name();
+
+    /* parameterized tests end with /0, replace with '.'*/
+    size_t found;
+    while ((found = testname.find_first_of("/")) != std::string::npos)
+        testname[found] = '.';
+
+    return testname;
+}
+
+std::string XITServer::GetDefaultLogFile() {
+    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".log");
+}
+
+std::string XITServer::GetDefaultConfigFile() {
+    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".conf");
+}

@@ -7,10 +7,11 @@
 
 #include "xorg-conf.h"
 #include "helpers.h"
+#include "xit-server.h"
 
 XOrgConfig::XOrgConfig(const std::string& path) {
     if (path.empty())
-        SetPath(GetDefaultConfigFile());
+        SetPath(XITServer::GetDefaultConfigFile());
 
     std::stringstream section;
     section << ""

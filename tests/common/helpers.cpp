@@ -127,26 +127,3 @@ void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled)
     XFlush(dpy);
 }
 
-std::string GetNormalizedTestName() {
-    const ::testing::TestInfo *const test_info =
-        ::testing::UnitTest::GetInstance()->current_test_info();
-
-    std::string testname = test_info->test_case_name();
-    testname += ".";
-    testname += test_info->name();
-
-    /* parameterized tests end with /0, replace with '.'*/
-    size_t found;
-    while ((found = testname.find_first_of("/")) != std::string::npos)
-        testname[found] = '.';
-
-    return testname;
-}
-
-std::string GetDefaultLogFile() {
-    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".log");
-}
-
-std::string GetDefaultConfigFile() {
-    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".conf");
-}

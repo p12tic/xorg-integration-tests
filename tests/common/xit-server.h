@@ -18,6 +18,29 @@ public:
     XITServer();
     void Start();
     void Start(XOrgConfig &config);
+
+    /**
+     * @return a string for the default log file to be used. This log path
+     * contains the test name.
+     */
+    static std::string GetDefaultLogFile();
+
+    /**
+     * @return a string for the default config file to be used. This config path
+     * contains the test name.
+     */
+    static std::string GetDefaultConfigFile();
+
+protected:
+    /**
+     * Return a string of the current test name that's suitable for file names,
+     * i.e. has all slashes in the test name replaced with a period.
+     *
+     * @return Test case name in the form of TestCase.TestName.2 (the .2 part is
+     * only present for parameterized tests.
+     */
+    static std::string GetNormalizedTestName();
+
 };
 
 #endif
