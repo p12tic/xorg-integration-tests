@@ -361,7 +361,7 @@ TEST_P(XInput2TouchSelectionTest, TouchSelectionConflicts)
 }
 INSTANTIATE_TEST_CASE_P(, XInput2TouchSelectionTest, ::testing::Range(0, 3));
 
-#endif
+#endif /* HAVE_XI22 */
 
 INSTANTIATE_TEST_CASE_P(, XInput2Test, ::testing::Range(0, 3));
 
