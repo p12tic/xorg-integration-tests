@@ -145,11 +145,10 @@ TEST_P(XInput2Test, XITouchscreenPointerEmulation)
 
 TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 {
-    SCOPED_TRACE("\n"
-                 "XIQueryPointer for XInput 2.1 and earlier should report the\n"
-                 "first button pressed if a touch is physically active. For \n"
-                 "XInput 2.2 and later clients, the first button should not be\n"
-                 "reported.");
+    XORG_TESTCASE("XIQueryPointer for XInput 2.1 and earlier should report the\n"
+                  "first button pressed if a touch is physically active. For \n"
+                  "XInput 2.2 and later clients, the first button should not be\n"
+                  "reported.");
     XIEventMask mask;
     mask.deviceid = XIAllDevices;
     mask.mask_len = XIMaskLen(XI_HierarchyChanged);
@@ -217,8 +216,8 @@ TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 #ifdef HAVE_XI22
 TEST_P(XInput2Test, DisableDeviceEndTouches)
 {
-    SCOPED_TRACE("When a device is disabled, any physically active touches\n"
-                 "should end.");
+    XORG_TESTCASE("When a device is disabled, any physically active touches\n"
+                  "should end.");
     /* This is an XInput 2.2 and later test only */
     if (GetParam() < 2)
         return;
@@ -320,11 +319,11 @@ static int fail_error_handler(Display *dpy, XErrorEvent *ev) {
 
 TEST_P(XInput2TouchSelectionTest, TouchSelectionConflicts)
 {
-    SCOPED_TRACE("If client A has a selection on a device,\n"
-                 "client B selecting on the same device returns BadAccess.\n"
-                 "If client A has a selection on XIAll(Master)Devices, \n"
-                 "selecting on the same or a specific device returns"
-                 "BadAccess\n");
+    XORG_TESTCASE("If client A has a selection on a device,\n"
+                  "client B selecting on the same device returns BadAccess.\n"
+                  "If client A has a selection on XIAll(Master)Devices, \n"
+                  "selecting on the same or a specific device returns"
+                  "BadAccess\n");
 
     unsigned char m[XIMaskLen(XI_TouchEnd)] = {0};
     XIEventMask mask;
