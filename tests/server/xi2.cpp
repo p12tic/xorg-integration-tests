@@ -484,6 +484,75 @@ TEST_P(XInput2TouchSelectionTest, TouchSelectionConflicts)
 }
 INSTANTIATE_TEST_CASE_P(, XInput2TouchSelectionTest, ::testing::Range(0, 3));
 
+
+TEST_P(XInput2Test, TouchEventsButtonState)
+{
+    if (GetParam() < 2)
+        return;
+
+    XORG_TESTCASE("Select for touch events on the root window.\n"
+                  "Create a pointer-emulating touch event.\n"
+                  "The button mask in the touch begin event must be 0.\n"
+                  "The button mask in the touch update events must be set for button 1.\n"
+                  "The button mask in the touch end event must be set for button 1.");
+
+    XIEventMask mask;
+    mask.deviceid = 2; /* VCP */
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    ASSERT_EQ(Success,
+              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1));
+    XSync(Display(), False);
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_TouchBegin));
+
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.type, GenericEvent);
+    ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
+    ASSERT_EQ(ev.xcookie.evtype, XI_TouchBegin);
+    ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
+
+    XIDeviceEvent *begin = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+    for (int i = 0; i < begin->buttons.mask_len * 8; i++)
+        EXPECT_FALSE(XIMaskIsSet(begin->buttons.mask, i)) << "mask down for button " << i;
+
+    XFreeEventData(Display(), &ev.xcookie);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_TouchEnd));
+
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.type, GenericEvent);
+    ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
+    ASSERT_EQ(ev.xcookie.evtype, XI_TouchEnd);
+    ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
+
+    XIDeviceEvent *end = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+    EXPECT_GT(end->buttons.mask_len, 0);
+    EXPECT_TRUE(XIMaskIsSet(end->buttons.mask, 1)) << "ButtonRelease must have button 1 down";
+    for (int i = 0; i < end->buttons.mask_len * 8; i++) {
+        if (i == 1)
+            continue;
+        EXPECT_FALSE(XIMaskIsSet(end->buttons.mask, i)) << "mask down for button " << i;
+    }
+
+    XFreeEventData(Display(), &ev.xcookie);
+}
+
 #endif /* HAVE_XI22 */
 
 INSTANTIATE_TEST_CASE_P(, XInput2Test, ::testing::Range(0, 3));
