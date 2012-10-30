@@ -62,9 +62,13 @@ static void sighandler_alarm(int signal)
 }
 
 void XITServerTest::StartServer() {
-    /* No test takes longer than 60 seconds */
-    alarm(60);
-    signal(SIGALRM, sighandler_alarm);
+    /* No test takes longer than 60 seconds unless we have some envs set
+       that suggest we're actually debugging the server */
+    if (!getenv("XORG_GTEST_XSERVER_SIGSTOP") &&
+        !getenv("XORG_GTEST_XSERVER_KEEPALIVE")) {
+        alarm(60);
+        signal(SIGALRM, sighandler_alarm);
+    }
 
     server.SetOption("-noreset", "");
     server.Start();
