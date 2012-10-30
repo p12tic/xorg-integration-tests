@@ -49,7 +49,8 @@ PKG_CHECK_MODULES(EVEMU, [evemu >= 1.0.10])
 PKG_CHECK_MODULES(XI22, [inputproto >= 2.2] [xi >= 1.6],
                   AC_DEFINE(HAVE_XI22, 1, [XI 2.2 available]),
                   [noop=noop])
-PKG_CHECK_MODULES(XTEST, [xtst]);
+PKG_CHECK_MODULES(XTEST, [xtst])
+PKG_CHECK_MODULES(XFIXES, [xfixes])
 
 PKG_CHECK_MODULES(XORGGTEST, [xorg-gtest >= 0.6.0])
 PKG_CHECK_MODULES(WACOM, xorg-wacom)

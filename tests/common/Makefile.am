@@ -4,6 +4,7 @@ noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
 
 AM_CPPFLAGS = \
 	      $(XI_CFLAGS) \
+	      $(XFIXES_CFLAGS) \
 	      $(XRANDR_CFLAGS) \
 	      $(WACOM_CFLAGS) \
 	      $(GTEST_CPPFLAGS) \

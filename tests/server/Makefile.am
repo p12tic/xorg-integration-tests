@@ -1,6 +1,6 @@
 include $(top_srcdir)/tests/common/Makefile.am
 
-noinst_PROGRAMS = grab touch xtest multihead misc
+noinst_PROGRAMS = grab touch xtest multihead misc barriers
 TESTS=$(noinst_PROGRAMS)
 
 grab_SOURCES = grab.cpp xigrabbutton.cpp $(common_sources)
@@ -17,3 +17,6 @@ multihead_LDADD = $(GTEST_LDADDS)
 
 misc_SOURCES = misc.cpp $(common_sources)
 misc_LDADD = $(GTEST_LDADDS)
+
+barriers_SOURCES = barrires-common.h barriers-validity.cpp barriers-directions.cpp $(common_sources)
+barriers_LDADD = $(GTEST_LDADDS) $(XFIXES_LIBS)
