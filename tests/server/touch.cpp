@@ -46,7 +46,7 @@ TEST_P(TouchTest, XITouchscreenPointerEmulation)
 
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_HierarchyChanged);
+    mask.mask_len = XIMaskLen(XI_Motion);
     mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
     XISetMask(mask.mask, XI_ButtonPress);
     XISetMask(mask.mask, XI_ButtonRelease);
@@ -274,24 +274,16 @@ TEST_P(TouchTest, XIQueryPointerTouchscreen)
                   "XInput 2.2 and later clients, the first button should not be\n"
                   "reported.");
     XIEventMask mask;
-    mask.deviceid = XIAllDevices;
-    mask.mask_len = XIMaskLen(XI_HierarchyChanged);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
-    XISetMask(mask.mask, XI_HierarchyChanged);
-
-    ASSERT_EQ(Success,
-              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
-                             1));
-
     mask.deviceid = XIAllMasterDevices;
-    XIClearMask(mask.mask, XI_HierarchyChanged);
+    mask.mask_len = XIMaskLen(XI_ButtonPress);
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_ButtonPress);
 
     ASSERT_EQ(Success,
               XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
                              1));
 
-    free(mask.mask);
+    delete[] mask.mask;
 
     XFlush(Display());
 
@@ -347,17 +339,9 @@ TEST_P(TouchTest, DisableDeviceEndTouches)
         return;
 
     XIEventMask mask;
-    mask.deviceid = XIAllDevices;
-    mask.mask_len = XIMaskLen(XI_TouchEnd);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
-    XISetMask(mask.mask, XI_HierarchyChanged);
-
-    ASSERT_EQ(Success,
-              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
-                             1));
-
     mask.deviceid = XIAllMasterDevices;
-    XIClearMask(mask.mask, XI_HierarchyChanged);
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_TouchBegin);
     XISetMask(mask.mask, XI_TouchUpdate);
     XISetMask(mask.mask, XI_TouchEnd);
@@ -366,7 +350,7 @@ TEST_P(TouchTest, DisableDeviceEndTouches)
               XISelectEvents(Display(), DefaultRootWindow(Display()), &mask,
                              1));
 
-    free(mask.mask);
+    delete[] mask.mask;
 
     XFlush(Display());
 
