@@ -408,10 +408,11 @@ TEST_P(TouchTest, DisableDeviceEndTouches)
 }
 
 /**
- * Test class for testing
+ * Test class for testing XISelectEvents on touch masks
+ *
  * @tparam The device ID
  */
-class XInput2TouchSelectionTest : public TouchTest
+class XISelectEventsTouchTest : public TouchTest
 {
 protected:
     virtual int RegisterXI2(int major, int minor)
@@ -441,7 +442,7 @@ static int fail_error_handler(Display *dpy, XErrorEvent *ev) {
     return 0;
 }
 
-TEST_P(XInput2TouchSelectionTest, TouchSelectionConflicts)
+TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
 {
     XORG_TESTCASE("If client A has a selection on a device,\n"
                   "client B selecting on the same device returns BadAccess.\n"
@@ -482,7 +483,7 @@ TEST_P(XInput2TouchSelectionTest, TouchSelectionConflicts)
                   << "failed for " << clientA_deviceid << "/" << clientB_deviceid;
     }
 }
-INSTANTIATE_TEST_CASE_P(, XInput2TouchSelectionTest, ::testing::Range(0, 3));
+INSTANTIATE_TEST_CASE_P(, XISelectEventsTouchTest, ::testing::Range(0, 3));
 
 
 TEST_P(TouchTest, TouchEventsButtonState)
