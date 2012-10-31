@@ -37,10 +37,13 @@ protected:
 
 TEST_P(TouchTest, XITouchscreenPointerEmulation)
 {
-    XORG_TESTCASE("When an initial touch is made, any movement of the pointer\n"
-                  "should be raised as if button 1 is being held. After the\n"
-                  "touch is released, further movement should have button 1\n"
-                  "released.\n");
+    XORG_TESTCASE("Register for button and motion events.\n"
+                  "Create a touch and a pointer device.\n"
+                  "Moving the mouse must have a zero button mask.\n"
+                  "Create a touch point on the screen.\n"
+                  "Moving the mouse now must have button 1 set.\n"
+                  "Release the touch point.\n"
+                  "Moving the mouse now must have a zero button mask.\n");
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 
@@ -269,10 +272,11 @@ TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndXI2)
 
 TEST_P(TouchTest, XIQueryPointerTouchscreen)
 {
-    XORG_TESTCASE("XIQueryPointer for XInput 2.1 and earlier should report the\n"
-                  "first button pressed if a touch is physically active. For \n"
-                  "XInput 2.2 and later clients, the first button should not be\n"
-                  "reported.");
+    XORG_TESTCASE("Create a touch device, create a touch point from that device\n"
+                  "XIQueryPointer() should return:\n"
+                  " - button 1 state down for XI 2.0 and 2.1 clients\n"
+                  " - button 1 state up for XI 2.2+ clients");
+
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_ButtonPress);
@@ -332,8 +336,11 @@ TEST_P(TouchTest, XIQueryPointerTouchscreen)
 #ifdef HAVE_XI22
 TEST_P(TouchTest, DisableDeviceEndTouches)
 {
-    XORG_TESTCASE("When a device is disabled, any physically active touches\n"
-                  "should end.");
+    XORG_TESTCASE("Register for touch events.\n"
+                  "Create a touch device, create a touch point.\n"
+                  "Disable the touch device.\n"
+                  "Ensure a TouchEnd is sent for that touch point\n");
+
     /* This is an XInput 2.2 and later test only */
     if (GetParam() < 2)
         return;
