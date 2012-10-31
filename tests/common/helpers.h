@@ -10,6 +10,9 @@
 
 #include "xit-server.h"
 
+#define VIRTUAL_CORE_POINTER_ID 2
+#define VIRTUAL_CORE_KEYBOARD_ID 3
+
 /**
  * Find the device in the input device list and return the number of
  * instances found.
