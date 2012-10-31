@@ -23,7 +23,162 @@ Ideally, each feature or behaviour group can be tested by running one
 binary.
 
 == Writing tests ==
+Generally, when writing a new tests you should check if there are similar
+tests. Copy and rename such a test, then add the test-specific code.  Do
+look up the class definitions of the various helper classes, especially the
+ones in the tests/common directory.
 
+A test name should stay constant so bugs, patches and commits can refer to
+those test names. Pick a descriptive name for the test. Ideally, a test name
+describes enough to figure out what the test does approximately and is
+specific enough that name collision is unlikely.
+
+Each test should start with XORG_TESTCASE(), containing a human-readable
+description of the test and the steps it takes. This description is printed
+when a test fails and should be precise enough to explain what the tests
+attempts to verify.
+
+The central class to know is XITServer. It's a wrapper around
+xorg::testing::XServer with some automated features. You should always use
+XITServer to create an X Server in your test, never xorg-gtest's XServer
+class. The XITServer initialises itself on DISPLAY=:133, with config and log
+file names named after the test name.
+
+The second class to know is the XOrgConfig class. It provides simple hooks
+for writing a config file with some of the options automated.
+
+Thus, your basic test could look like this:
+
+TEST(SomeTest, TestForFeature) {
+    XORG_TESTCASE("Create simple input device section.\n"
+                  "Start server.\n"
+                  "Run tests against the server.\n");
+
+    XOrgConfig config;
+    // Add evdev input device section
+    config.AddInputSection("evdev", "some device name",
+                           "Option \"Device\" \"/dev/input/event0\");
+    // Add dummy video section
+    config.AddDefaultScreenWithDriver();
+
+    // Start a server based on that config
+    XITServer server;
+    server.Start(config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+
+    // now run your tests
+
+    // clean up
+    server.Terminate();
+
+    // A test should remove its files on success but leave them on failure
+    config.RemoveConfig();
+    server.RemoveLogFile();
+}
+
+This test will show up as
+  SomeTest.TestForFeature
+in the test logs, and use log and config files named the same way.
+
+The above is a simple structure for starting a server and testing against
+it. In most cases, several tests want the same configuration and moving the
+common parts out into shared code is useful.
+
+class MyFeatureTest : public XITServerTest {
+public:
+   virtual void SetUpConfigAndLog() {
+       config.AddDefaultScreenWithDriver();
+       config.AddInputSection("evdev", "some device name", ...
+   }
+};
+
+SetUpConfigAndLog() will be called during the setup of the test, before the
+server is started. This is the hook to change your configuration file. For
+most tests, you do not need to override any other calls.
+Your test case based on that class can now look like this:
+
+TEST_F(MyFeatureTest, TestForFeature) {
+    XORG_TESTCASE( .... )
+    ::Display *dpy = Display();
+
+    // now run your tests against the display
+}
+
+Of course, you can just use Display() directly instead of dpy. XITServerTest
+will write the config file, start the server, and remove the config and log
+files if the test succeeds. A new server is started for every TEST_F you
+have written, and there is no state dependency between tests.
+
+Both of the tests above used a specific input device. But we need to ensure
+that device actually exists, so it's best to create it ourselves:
+
+class MyFeatureTestWithDevice : public XITServerTest,
+                                public DeviceInterface {
+public:
+    virtual void SetUp() {
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        XITServerTest::SetUp(); // always call the parent's SetUp
+    }
+
+    // set up config and log as above
+};
+
+This class initiates a uinput device based on
+recordings/mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc. By the time our TEST_F
+is called, we have that uinput device available for usage:
+
+TEST_F(MyFeatureTestWithDevice, TestForFeature) {
+    XORG_TESTCASE( .... )
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), PointerMotionMask);
+    XSync(Display(), False);
+
+    dev->PlayOne(EV_REL, REL_X, -1, true); /* true to send a EV_SYN after the event */
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify, -1, -1));
+
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    // ev is our motion event
+}
+
+So, what does this do? Register for pointer motion events on the root
+window, then play one relative x axis motion event on the device. Then it
+waits for the motion event to appear.
+
+Note: the X protocol is asynchronous and Xlib buffers generously. You should
+_always_ call XSync() before triggering anything in the server. If not, your
+event selection may still be in the local buffer when the events are
+generated and you'll never see the events.
+
+If you have more than one event, you can replay a sequence with:
+   dev->PlayOne(RECORDINGS_DIR "mice/somefile.events");
+
+Finally, if you're writing tests that require XI2, use the
+XITServerInputTest as parent class. This class will automatically register
+for XI2 on startup, and lets you override that call.
+
+class MyFeatureTestXI2 : public XITServerInputTest {
+public:
+    virtual int RegisterXI2(int major, int minor) {
+        return XITServerInputTest::RegisterXI2(2, 2); // Force XI2.2 for this test
+    }
+}
+
+In your TEST_F, you now have xi2_opcode available.
+
+TEST_F(MyFeatureTestXI2, TestForFeature) {
+    XORG_TESTCASE( .... )
+
+    ... select for events, play, etc.
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), GenericEvent, xi2_opcode, XI_ButtonPress));
+}
+
+That's the gist of writing tests. There are several helpers and other
+functions that make writing tests easier. Read other tests to get a feel for
+what those calls are.
 
 == Debugging tests ==
 xorg-gtest supports three environment variables that help with debugging the
