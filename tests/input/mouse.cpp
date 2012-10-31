@@ -16,14 +16,14 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
 /**
  * Mouse driver test.
  */
-class MouseTest : public InputDriverTest,
+class MouseTest : public XITServerInputTest,
                   public DeviceInterface {
 public:
     /**
@@ -31,7 +31,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**

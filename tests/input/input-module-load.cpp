@@ -5,7 +5,7 @@
 #include <fstream>
 #include <xorg/gtest/xorg-gtest.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 
 /* No implementation, class only exists for test naming */
 class InputModuleLoadTest : public SimpleInputDriverTest {};

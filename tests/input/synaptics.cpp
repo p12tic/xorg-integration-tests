@@ -18,7 +18,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -26,7 +26,7 @@
  * Synaptics driver test for touchpad devices. This class uses a traditional
  * touchpad device.
  */
-class SynapticsTest : public InputDriverTest,
+class SynapticsTest : public XITServerInputTest,
                       public DeviceInterface {
 public:
     /**
@@ -34,7 +34,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("touchpads/SynPS2-Synaptics-TouchPad.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**
@@ -58,7 +58,7 @@ public:
 
     virtual int RegisterXI2(int major, int minor)
     {
-        return InputDriverTest::RegisterXI2(2, 1);
+        return XITServerInputTest::RegisterXI2(2, 1);
     }
 };
 
@@ -381,7 +381,7 @@ INSTANTIATE_TEST_CASE_P(, SynapticsWarpTest,
 /**
  * Synaptics driver test for clickpad devices.
  */
-class SynapticsClickpadTest : public InputDriverTest,
+class SynapticsClickpadTest : public XITServerInputTest,
                               public DeviceInterface {
 public:
     /**
@@ -389,7 +389,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("touchpads/SynPS2-Synaptics-TouchPad-Clickpad.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**

@@ -7,9 +7,9 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 
-int InputDriverTest::RegisterXI2(int major, int minor)
+int XITServerInputTest::RegisterXI2(int major, int minor)
 {
     int event_start;
     int error_start;
@@ -32,7 +32,7 @@ int InputDriverTest::RegisterXI2(int major, int minor)
     return minor_return;
 }
 
-void InputDriverTest::StartServer() {
+void XITServerInputTest::StartServer() {
     XITServerTest::StartServer();
     RegisterXI2();
 }

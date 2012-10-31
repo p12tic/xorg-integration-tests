@@ -9,7 +9,7 @@
 #include <X11/extensions/XI2.h>
 #include <X11/extensions/XInput2.h>
 
-#include <input-driver-test.h>
+#include <xit-server-input-test.h>
 #include <device-interface.h>
 
 #include "helpers.h"
@@ -18,7 +18,7 @@
  * Test for libXi-related bugs. Initialises a single evdev pointer device ready
  * for uinput-events.
  */
-class libXiTest : public InputDriverTest,
+class libXiTest : public XITServerInputTest,
                   public DeviceInterface {
 public:
     /**
@@ -26,7 +26,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**

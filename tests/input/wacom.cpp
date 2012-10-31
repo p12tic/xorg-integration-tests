@@ -29,7 +29,7 @@
 #include <xorg/wacom-properties.h>
 #include <unistd.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -37,7 +37,7 @@
  * Wacom driver test class. This class takes a struct Tablet that defines
  * which device should be initialised.
  */
-class WacomDriverTest : public InputDriverTest,
+class WacomDriverTest : public XITServerInputTest,
                         public DeviceInterface,
                         public ::testing::WithParamInterface<Tablet> {
 protected:
@@ -123,7 +123,7 @@ protected:
         Tablet tablet = GetParam();
         SetDevice("tablets/" + std::string (tablet.descfile));
 
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
 
         SetUpXIEventMask ();
         VerifyDevice(tablet);

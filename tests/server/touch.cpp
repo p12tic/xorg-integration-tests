@@ -2,7 +2,7 @@
 
 #include "helpers.h"
 #include "device-interface.h"
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -14,13 +14,13 @@
  *
  * @tparam The XInput 2.x minor version
  */
-class TouchTest : public InputDriverTest,
+class TouchTest : public XITServerInputTest,
                   public DeviceInterface,
                   public ::testing::WithParamInterface<int> {
 protected:
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     virtual void SetUpConfigAndLog() {
@@ -31,7 +31,7 @@ protected:
 
     virtual int RegisterXI2(int major, int minor)
     {
-        return InputDriverTest::RegisterXI2(2, GetParam());
+        return XITServerInputTest::RegisterXI2(2, GetParam());
     }
 };
 
@@ -417,7 +417,7 @@ class XISelectEventsTouchTest : public TouchTest
 protected:
     virtual int RegisterXI2(int major, int minor)
     {
-        return InputDriverTest::RegisterXI2(2, 2);
+        return XITServerInputTest::RegisterXI2(2, 2);
     }
 };
 

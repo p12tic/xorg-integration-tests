@@ -16,7 +16,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -30,7 +30,7 @@ typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
  * Evdev driver test for keyboard devices. Takes a string as parameter,
  * which is later used for the XkbLayout option.
  */
-class EvdevXKBTest : public InputDriverTest,
+class EvdevXKBTest : public XITServerInputTest,
                      public DeviceInterface,
                      public ::testing::WithParamInterface<std::string> {
     /**
@@ -70,7 +70,7 @@ class EvdevXKBTest : public InputDriverTest,
         Multimedia_Keys.push_back (Key_Pair (KEY_NEXTSONG,       XF86XK_AudioNext));
         Multimedia_Keys.push_back (Key_Pair (KEY_PREVIOUSSONG,   XF86XK_AudioPrev));
 
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**
@@ -157,7 +157,7 @@ INSTANTIATE_TEST_CASE_P(, EvdevXKBTest, ::testing::Values("us", "de", "fr"));
 /**
  * Evdev driver test for mouse devices.
  */
-class EvdevMouseTest : public InputDriverTest,
+class EvdevMouseTest : public XITServerInputTest,
                        public DeviceInterface {
 public:
     /**
@@ -165,7 +165,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**
@@ -186,7 +186,7 @@ public:
 
     virtual int RegisterXI2(int major, int minor)
     {
-        return InputDriverTest::RegisterXI2(2, 1);
+        return XITServerInputTest::RegisterXI2(2, 1);
     }
 };
 

@@ -7,14 +7,14 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
 
 /**
  */
-class XIGrabButtonTest : public InputDriverTest,
+class XIGrabButtonTest : public XITServerInputTest,
                          public DeviceInterface {
 public:
     /**
@@ -22,7 +22,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**

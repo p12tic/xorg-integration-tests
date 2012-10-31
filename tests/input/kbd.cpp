@@ -14,7 +14,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -28,7 +28,7 @@ typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
  * Keyboard driver test. This class takes a string as parameter that is used
  * for the XkbLayout option.
  */
-class KeyboardTest : public InputDriverTest,
+class KeyboardTest : public XITServerInputTest,
                      public DeviceInterface,
                      public ::testing::WithParamInterface<std::string> {
     /**
@@ -68,7 +68,7 @@ class KeyboardTest : public InputDriverTest,
         Multimedia_Keys.push_back (Key_Pair (KEY_NEXTSONG,       XF86XK_AudioNext));
         Multimedia_Keys.push_back (Key_Pair (KEY_PREVIOUSSONG,   XF86XK_AudioPrev));
 
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**

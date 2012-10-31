@@ -18,7 +18,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "helpers.h"
 
 /* no implementation, this class only exists for better test names */
@@ -67,7 +67,7 @@ INSTANTIATE_TEST_CASE_P(, LegacyInputDriverTest,
 /**
  * Void input driver test class
  */
-class VoidTest : public InputDriverTest {
+class VoidTest : public XITServerInputTest {
 public:
     /**
      * Initialize an xorg.conf with a single CorePointer void device.
@@ -134,7 +134,7 @@ TEST(AcecadTest, InputDeviceSectionWithOptionDevice)
  *                                                                     *
  ***********************************************************************/
 
-class AiptekTest : public InputDriverTest,
+class AiptekTest : public XITServerInputTest,
                    public ::testing::WithParamInterface<std::string> {
     virtual void SetUpConfigAndLog() {
 

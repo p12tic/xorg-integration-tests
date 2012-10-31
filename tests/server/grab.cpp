@@ -9,7 +9,7 @@
 #include <X11/extensions/XInput2.h>
 #include <X11/extensions/XInput.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -18,7 +18,7 @@
  * Evdev driver test for keyboard devices. Takes a string as parameter,
  * which is later used for the XkbLayout option.
  */
-class PointerGrabTest : public InputDriverTest,
+class PointerGrabTest : public XITServerInputTest,
                         public DeviceInterface {
 public:
     /**
@@ -26,7 +26,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**
@@ -48,7 +48,7 @@ public:
 
     virtual int RegisterXI2(int major, int minor)
     {
-        return InputDriverTest::RegisterXI2(2, 1);
+        return XITServerInputTest::RegisterXI2(2, 1);
     }
 
 };
@@ -155,7 +155,7 @@ TEST_F(PointerGrabTest, GrabDisabledDevices)
 }
 
 #if HAVE_XI22
-class TouchGrabTest : public InputDriverTest,
+class TouchGrabTest : public XITServerInputTest,
                       public DeviceInterface {
 public:
     /**
@@ -163,7 +163,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**
@@ -184,7 +184,7 @@ public:
 
     virtual int RegisterXI2(int major, int minor)
     {
-        return InputDriverTest::RegisterXI2(2, 2);
+        return XITServerInputTest::RegisterXI2(2, 2);
     }
 
 };

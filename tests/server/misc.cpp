@@ -6,13 +6,13 @@
 
 #include <xorg/gtest/xorg-gtest.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
 using namespace xorg::testing;
 
-class EventQueueTest : public InputDriverTest,
+class EventQueueTest : public XITServerInputTest,
                        public DeviceInterface {
 public:
     /**
@@ -20,7 +20,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**

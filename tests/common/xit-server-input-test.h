@@ -1,8 +1,8 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#ifndef _INPUT_DRIVER_TEST_H_
-#define _INPUT_DRIVER_TEST_H_
+#ifndef _XIT_SERVER_INPUT_TEST_H_
+#define _XIT_SERVER_INPUT_TEST_H_
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -16,7 +16,7 @@
  * Do not instanciate this class directly, subclass it from the test case
  * instead. For simple test cases, use SimpleInputDriverTest.
  */
-class InputDriverTest : public XITServerTest {
+class XITServerInputTest : public XITServerTest {
 protected:
     /**
      * Register for the given XI2 extension. Default is 2.0, will ASSERT if
@@ -53,7 +53,7 @@ protected:
  * Will set up a AAD off X Server with one input device section that points
  * to a CorePointer device as provided.
  */
-class SimpleInputDriverTest : public InputDriverTest,
+class SimpleInputDriverTest : public XITServerInputTest,
                               public ::testing::WithParamInterface<std::string> {
 public:
     virtual void SetUpConfigAndLog() {

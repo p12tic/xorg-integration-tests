@@ -22,7 +22,7 @@
 #include <xorg/xserver-properties.h>
 #include <unistd.h>
 
-#include "input-driver-test.h"
+#include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -37,7 +37,7 @@
  * Wacom driver test class. This class takes a struct Tablet that defines
  * which device should be initialised.
  */
-class WacomHoveringTest : public InputDriverTest,
+class WacomHoveringTest : public XITServerInputTest,
                           public DeviceInterface {
 public:
     /**
@@ -45,7 +45,7 @@ public:
      */
     virtual void SetUp() {
         SetDevice("tablets/Wacom-Intuos5-touch-M-Pen.desc");
-        InputDriverTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
     /**
