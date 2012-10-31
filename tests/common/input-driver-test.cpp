@@ -17,6 +17,10 @@ int InputDriverTest::RegisterXI2(int major, int minor)
     if (!XQueryExtension(Display(), "XInputExtension", &xi2_opcode,
                          &event_start, &error_start))
         ADD_FAILURE() << "XQueryExtension returned FALSE";
+    else {
+        xi_event_base = event_start;
+        xi_error_base = error_start;
+    }
 
     int major_return = major;
     int minor_return = minor;

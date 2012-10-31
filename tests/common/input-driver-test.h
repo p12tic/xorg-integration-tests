@@ -35,6 +35,16 @@ protected:
      * Opcode for XI2 events
      */
     int xi2_opcode;
+
+    /**
+     * Event base for XI events
+     */
+    int xi_event_base;
+
+    /**
+     * Error base for XI events
+     */
+    int xi_error_base;
 };
 
 /**
