@@ -421,27 +421,6 @@ protected:
     }
 };
 
-static bool error_handler_triggered;
-
-/* ASSERT_*() macros can only be used in void functions, hence the
-   indirection here */
-static void _error_handler(XErrorEvent *ev) {
-    ASSERT_EQ((int)ev->error_code, BadAccess);
-    error_handler_triggered = true;
-}
-static int error_handler(Display *dpy, XErrorEvent *ev) {
-    _error_handler(ev);
-    return 0;
-}
-static void _fail_error_handler(XErrorEvent *ev) {
-    FAIL() << "X protocol error: errorcode: " << (int)ev->error_code <<
-    " on request " << (int)ev->request_code << " minor " << (int)ev->minor_code;
-}
-static int fail_error_handler(Display *dpy, XErrorEvent *ev) {
-    _fail_error_handler(ev);
-    return 0;
-}
-
 TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
 {
     XORG_TESTCASE("If client A has a selection on a device,\n"
@@ -463,24 +442,24 @@ TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
 
     /* client A */
     mask.deviceid = clientA_deviceid;
-    XSetErrorHandler(fail_error_handler);
     ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
     ASSERT_TRUE(dpy2);
 
     XISelectEvents(dpy2, DefaultRootWindow(dpy2), &mask, 1);
     XSync(dpy2, False);
 
-    XSetErrorHandler(error_handler);
-
     /* covers XIAllDevices, XIAllMasterDevices and VCP */
     for (int clientB_deviceid = 0; clientB_deviceid < 3; clientB_deviceid++) {
-        error_handler_triggered = false;
+        SetErrorTrap(Display());
         mask.deviceid = clientB_deviceid;
         XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1);
-        XSync(Display(), False);
-        ASSERT_EQ(error_handler_triggered,
-                  (clientA_deviceid <= clientB_deviceid))
-                  << "failed for " << clientA_deviceid << "/" << clientB_deviceid;
+        XErrorEvent *error = ReleaseErrorTrap(Display());
+
+        if (clientA_deviceid <= clientB_deviceid) {
+            ASSERT_ERROR(error, BadAccess) << "failed for " << clientA_deviceid << "/" << clientB_deviceid;
+        } else {
+            ASSERT_NO_ERROR(error) << "failed for " << clientA_deviceid << "/" << clientB_deviceid;
+        }
     }
 }
 INSTANTIATE_TEST_CASE_P(, XISelectEventsTouchTest, ::testing::Range(0, 3));

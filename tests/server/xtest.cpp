@@ -15,17 +15,6 @@
 #include "helpers.h"
 
 using namespace xorg::testing;
-static bool error_received;
-
-static void AssertBadAccess(XErrorEvent *error) {
-    ASSERT_EQ(error->error_code, BadAccess) << "Expected BadAccess";
-}
-
-static int XBadAccessErrorHandler(Display *dpy, XErrorEvent *error) {
-    AssertBadAccess(error);
-    error_received = true;
-    return 0;
-}
 
 static void disable_device_property(Display *dpy, std::string name)
 {
@@ -54,26 +43,21 @@ TEST(XTest, DisabledDevicesProperty)
     ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
     ASSERT_TRUE(dpy);
 
-    XErrorHandler old_handler;
-    old_handler = XSetErrorHandler(XBadAccessErrorHandler);
-
-    error_received = false;
+    SetErrorTrap(dpy);
     disable_device_property(dpy, "Virtual core pointer");
-    ASSERT_TRUE(error_received);
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadAccess);
 
-    error_received = false;
+    SetErrorTrap(dpy);
     disable_device_property(dpy, "Virtual core keyboard");
-    ASSERT_TRUE(error_received);
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadAccess);
 
-    error_received = false;
+    SetErrorTrap(dpy);
     disable_device_property(dpy, "Virtual core XTEST pointer");
-    ASSERT_TRUE(error_received);
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadAccess);
 
-    error_received = false;
+    SetErrorTrap(dpy);
     disable_device_property(dpy, "Virtual core XTEST keyboard");
-    ASSERT_TRUE(error_received);
-
-    XSetErrorHandler(old_handler);
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadAccess);
 
     /* if disabled, this will crash the server */
     XTestFakeButtonEvent(dpy, 1, 1, 0);
@@ -83,16 +67,6 @@ TEST(XTest, DisabledDevicesProperty)
     XSync(dpy, False);
 
     config.RemoveConfig();
-}
-
-static void AssertBadMatch(XErrorEvent *error) {
-    ASSERT_EQ(error->error_code, BadMatch) << "Expected BadMatch";
-}
-
-static int XBadMatchErrorHandler(Display *dpy, XErrorEvent *error) {
-    AssertBadMatch(error);
-    error_received = true;
-    return 0;
 }
 
 static void disable_device_devctl(Display *dpy, std::string name)
@@ -126,18 +100,14 @@ TEST(XTest, DisabledDevicesCtl)
     ASSERT_TRUE(dpy);
 
     XSync(dpy, False);
-    XErrorHandler old_handler;
-    old_handler = XSetErrorHandler(XBadMatchErrorHandler);
 
-    error_received = false;
+    SetErrorTrap(dpy);
     disable_device_devctl(dpy, "Virtual core XTEST pointer");
-    ASSERT_TRUE(error_received);
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadMatch);
 
-    error_received = false;
+    SetErrorTrap(dpy);
     disable_device_devctl(dpy, "Virtual core XTEST keyboard");
-    ASSERT_TRUE(error_received);
-
-    XSetErrorHandler(old_handler);
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadMatch);
 
     /* if disabled, this will crash the server */
     XTestFakeButtonEvent(dpy, 1, 1, 0);

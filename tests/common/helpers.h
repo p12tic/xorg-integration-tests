@@ -64,5 +64,42 @@ void GetMonitorGeometry (Display *dpy, int monitor, int *x, int *y, int *width, 
  */
 void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled);
 
+/**
+ * Set an error trap. This is designed to be wound tightly
+ * around an Xlib call that you're expecting an error for:
+ *
+ *   // Ensure that bad devices raise an error.
+ *   SetErrorTrap(dpy);
+ *   XIQueryDevice(dpy, 0xBAD, &ndevice);
+ *   XErrorEvent *err = ReleaseErrorTrap(dpy);
+ *   ASSERT_EQ(BadDevice, err->code);
+ *
+ * Note that if multiple errors come in, the second will
+ * overwrite the first. These functions are also meant to
+ * tightly wrap Xlib calls, and don't really do any state, so
+ * calling SetErrorTrap() twice, and then ReleaseErrorTrap() once
+ * will remove the error trap entirely.
+ *
+ * @param [in] dpy The display to trap errors for.
+ */
+void SetErrorTrap(Display *dpy);
+
+/**
+ * Release an error trap. See the documentation of SetErrorTrap()
+ * for more details.
+ *
+ * @param [in] dpy The display to release error trapping for.
+ *
+ * @return An XErrorEvent that was trapped.
+ */
+XErrorEvent * ReleaseErrorTrap(Display *dpy);
+
+#define ASSERT_ERROR(err, code)                                         \
+    ASSERT_TRUE(err != NULL) << ("Expected " #code);                    \
+    ASSERT_EQ(code, (int)err->error_code) << ("Expected " #code)
+
+#define ASSERT_NO_ERROR(err)                            \
+    ASSERT_TRUE(err == NULL) << "Expected no error"
+
 #endif
 

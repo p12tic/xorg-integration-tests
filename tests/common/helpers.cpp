@@ -127,3 +127,43 @@ void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled)
     XFlush(dpy);
 }
 
+/* Basic error trapping */
+static struct {
+    bool is_trapping;
+    XErrorEvent *error;
+    XErrorHandler prev_error_handler;
+} trap_state = { False, NULL, NULL };
+
+static int
+ErrorHandler(Display *dpy,
+             XErrorEvent *error)
+{
+    if (!trap_state.is_trapping)
+        ADD_FAILURE() << "Error trap received error while not trapping. WTF?";
+
+    trap_state.error = error;
+    return 0;
+}
+
+void SetErrorTrap(Display *dpy) {
+    if (trap_state.is_trapping)
+        ADD_FAILURE() << "SetErrorTrap() called while already trapping.";
+
+    XSync(dpy, False);
+    trap_state.prev_error_handler = XSetErrorHandler(ErrorHandler);
+    trap_state.is_trapping = True;
+}
+
+XErrorEvent * ReleaseErrorTrap(Display *dpy) {
+    if (!trap_state.is_trapping)
+        ADD_FAILURE() << "ReleaseErrorTrap() called while not trapping.";
+
+    XSync(dpy, False);
+    XSetErrorHandler(trap_state.prev_error_handler);
+    trap_state.prev_error_handler = NULL;
+
+    XErrorEvent *error = trap_state.error;
+    trap_state.error = NULL;
+    trap_state.is_trapping = False;
+    return error;
+}
