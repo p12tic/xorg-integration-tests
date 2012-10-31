@@ -446,7 +446,8 @@ TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
         }
     }
 }
-INSTANTIATE_TEST_CASE_P(, XISelectEventsTouchTest, ::testing::Range(0, 3));
+INSTANTIATE_TEST_CASE_P(, XISelectEventsTouchTest,
+        ::testing::Values(XIAllDevices, XIAllMasterDevices, VIRTUAL_CORE_POINTER_ID));
 
 
 TEST_P(TouchTest, TouchEventsButtonState)
