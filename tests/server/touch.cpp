@@ -14,9 +14,9 @@
  *
  * @tparam The XInput 2.x minor version
  */
-class XInput2Test : public InputDriverTest,
-                    public DeviceInterface,
-                    public ::testing::WithParamInterface<int> {
+class TouchTest : public InputDriverTest,
+                  public DeviceInterface,
+                  public ::testing::WithParamInterface<int> {
 protected:
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
@@ -35,7 +35,7 @@ protected:
     }
 };
 
-TEST_P(XInput2Test, XITouchscreenPointerEmulation)
+TEST_P(TouchTest, XITouchscreenPointerEmulation)
 {
     XORG_TESTCASE("When an initial touch is made, any movement of the pointer\n"
                   "should be raised as if button 1 is being held. After the\n"
@@ -143,7 +143,7 @@ TEST_P(XInput2Test, XITouchscreenPointerEmulation)
     XFreeEventData(Display(), xcookie);
 }
 
-TEST_P(XInput2Test, EmulatedButtonMaskOnTouchBeginEndCore)
+TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndCore)
 {
     XORG_TESTCASE("Select for core Motion and ButtonPress/Release events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
@@ -186,7 +186,7 @@ TEST_P(XInput2Test, EmulatedButtonMaskOnTouchBeginEndCore)
     EXPECT_EQ(ev.xbutton.button, 1U) << "ButtonRelease must have button 1 mask down";
 }
 
-TEST_P(XInput2Test, EmulatedButtonMaskOnTouchBeginEndXI2)
+TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndXI2)
 {
     XORG_TESTCASE("Select for XI_Motion and XI_ButtonPress/Release events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
@@ -267,7 +267,7 @@ TEST_P(XInput2Test, EmulatedButtonMaskOnTouchBeginEndXI2)
     XFreeEventData(Display(), &ev.xcookie);
 }
 
-TEST_P(XInput2Test, XIQueryPointerTouchscreen)
+TEST_P(TouchTest, XIQueryPointerTouchscreen)
 {
     XORG_TESTCASE("XIQueryPointer for XInput 2.1 and earlier should report the\n"
                   "first button pressed if a touch is physically active. For \n"
@@ -338,7 +338,7 @@ TEST_P(XInput2Test, XIQueryPointerTouchscreen)
 }
 
 #ifdef HAVE_XI22
-TEST_P(XInput2Test, DisableDeviceEndTouches)
+TEST_P(TouchTest, DisableDeviceEndTouches)
 {
     XORG_TESTCASE("When a device is disabled, any physically active touches\n"
                   "should end.");
@@ -411,7 +411,7 @@ TEST_P(XInput2Test, DisableDeviceEndTouches)
  * Test class for testing
  * @tparam The device ID
  */
-class XInput2TouchSelectionTest : public XInput2Test
+class XInput2TouchSelectionTest : public TouchTest
 {
 protected:
     virtual int RegisterXI2(int major, int minor)
@@ -485,7 +485,7 @@ TEST_P(XInput2TouchSelectionTest, TouchSelectionConflicts)
 INSTANTIATE_TEST_CASE_P(, XInput2TouchSelectionTest, ::testing::Range(0, 3));
 
 
-TEST_P(XInput2Test, TouchEventsButtonState)
+TEST_P(TouchTest, TouchEventsButtonState)
 {
     if (GetParam() < 2)
         return;
@@ -555,7 +555,7 @@ TEST_P(XInput2Test, TouchEventsButtonState)
 
 #endif /* HAVE_XI22 */
 
-INSTANTIATE_TEST_CASE_P(, XInput2Test, ::testing::Range(0, 3));
+INSTANTIATE_TEST_CASE_P(, TouchTest, ::testing::Range(0, 3));
 
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
