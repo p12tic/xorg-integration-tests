@@ -199,6 +199,27 @@ TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndCore)
     EXPECT_EQ(ev.xbutton.button, 1U) << "ButtonRelease must have button 1 mask down";
 }
 
+TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)
+{
+    XORG_TESTCASE("Select for core Pointer1Motion mask on the root window.\n"
+                  "Create a pointer-emulating touch event.\n"
+                  "Expect a motion event with the button mask 1.\n")
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), Button1MotionMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           MotionNotify,
+                                                           -1, -1));
+    XEvent ev;
+    XNextEvent(Display(), &ev);
+    ASSERT_EQ(ev.type, MotionNotify);
+    EXPECT_EQ(ev.xmotion.state, (unsigned int)Button1Mask);
+}
+
 TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndXI2)
 {
     XORG_TESTCASE("Select for XI_Motion and XI_ButtonPress/Release events on the root window.\n"
