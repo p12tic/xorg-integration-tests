@@ -10,14 +10,8 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
-/**
- * A test fixture for testing the XInput 2.x extension.
- *
- * @tparam The XInput 2.x minor version
- */
 class TouchTest : public XITServerInputTest,
-                  public DeviceInterface,
-                  public ::testing::WithParamInterface<int> {
+                  public DeviceInterface {
 protected:
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
@@ -32,11 +26,25 @@ protected:
 
     virtual int RegisterXI2(int major, int minor)
     {
+        return XITServerInputTest::RegisterXI2(2, 2);
+    }
+};
+
+/**
+ * A test fixture for testing touch across XInput 2.x extension versions.
+ *
+ * @tparam The XInput 2.x minor version
+ */
+class TouchTestXI2Version : public TouchTest,
+                            public ::testing::WithParamInterface<int> {
+protected:
+    virtual int RegisterXI2(int major, int minor)
+    {
         return XITServerInputTest::RegisterXI2(2, GetParam());
     }
 };
 
-TEST_P(TouchTest, XITouchscreenPointerEmulation)
+TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
 {
     XORG_TESTCASE("Register for button and motion events.\n"
                   "Create a touch and a pointer device.\n"
@@ -147,7 +155,7 @@ TEST_P(TouchTest, XITouchscreenPointerEmulation)
     XFreeEventData(Display(), xcookie);
 }
 
-TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndCore)
+TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndCore)
 {
     XORG_TESTCASE("Select for core Motion and ButtonPress/Release events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
@@ -190,7 +198,7 @@ TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndCore)
     EXPECT_EQ(ev.xbutton.button, 1U) << "ButtonRelease must have button 1 mask down";
 }
 
-TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndXI2)
+TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndXI2)
 {
     XORG_TESTCASE("Select for XI_Motion and XI_ButtonPress/Release events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
@@ -271,7 +279,7 @@ TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndXI2)
     XFreeEventData(Display(), &ev.xcookie);
 }
 
-TEST_P(TouchTest, XIQueryPointerTouchscreen)
+TEST_P(TouchTestXI2Version, XIQueryPointerTouchscreen)
 {
     XORG_TESTCASE("Create a touch device, create a touch point from that device\n"
                   "XIQueryPointer() should return:\n"
@@ -335,16 +343,14 @@ TEST_P(TouchTest, XIQueryPointerTouchscreen)
 }
 
 #ifdef HAVE_XI22
-TEST_P(TouchTest, DisableDeviceEndTouches)
+class TouchDeviceTest : public TouchTest {};
+
+TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
 {
     XORG_TESTCASE("Register for touch events.\n"
                   "Create a touch device, create a touch point.\n"
                   "Disable the touch device.\n"
                   "Ensure a TouchEnd is sent for that touch point\n");
-
-    /* This is an XInput 2.2 and later test only */
-    if (GetParam() < 2)
-        return;
 
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
@@ -458,11 +464,8 @@ INSTANTIATE_TEST_CASE_P(, XISelectEventsTouchTest,
         ::testing::Values(XIAllDevices, XIAllMasterDevices, VIRTUAL_CORE_POINTER_ID));
 
 
-TEST_P(TouchTest, TouchEventsButtonState)
+TEST_P(TouchTestXI2Version, TouchEventsButtonState)
 {
-    if (GetParam() < 2)
-        return;
-
     XORG_TESTCASE("Select for touch events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
                   "The button mask in the touch begin event must be 0.\n"
@@ -528,7 +531,7 @@ TEST_P(TouchTest, TouchEventsButtonState)
 
 #endif /* HAVE_XI22 */
 
-INSTANTIATE_TEST_CASE_P(, TouchTest, ::testing::Range(0, XI_2_Minor + 1));
+INSTANTIATE_TEST_CASE_P(, TouchTestXI2Version, ::testing::Range(0, XI_2_Minor + 1));
 
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
