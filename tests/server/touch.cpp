@@ -6,6 +6,7 @@
 
 #include <xorg/gtest/xorg-gtest.h>
 
+#include <X11/extensions/XI2.h>
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
@@ -527,7 +528,7 @@ TEST_P(TouchTest, TouchEventsButtonState)
 
 #endif /* HAVE_XI22 */
 
-INSTANTIATE_TEST_CASE_P(, TouchTest, ::testing::Range(0, 3));
+INSTANTIATE_TEST_CASE_P(, TouchTest, ::testing::Range(0, XI_2_Minor + 1));
 
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
