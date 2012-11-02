@@ -101,5 +101,14 @@ XErrorEvent * ReleaseErrorTrap(Display *dpy);
 #define ASSERT_NO_ERROR(err)                            \
     ASSERT_TRUE(err == NULL) << "Expected no error"
 
+
+/**
+ * Does not much for normal device IDs, but returns
+ * XIAllDevices/XIAllMasterDevices where applicable.
+ *
+ * @return string representing this deviceID.
+ */
+std::string DeviceIDToString(int deviceid);
+
 #endif
 

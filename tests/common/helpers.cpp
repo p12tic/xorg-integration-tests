@@ -3,6 +3,8 @@
 #endif
 #include "helpers.h"
 
+#include <sstream>
+
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/XInput2.h>
@@ -166,4 +168,15 @@ XErrorEvent * ReleaseErrorTrap(Display *dpy) {
     trap_state.error = NULL;
     trap_state.is_trapping = False;
     return error;
+}
+
+std::string DeviceIDToString(int deviceid) {
+    switch (deviceid) {
+        case XIAllDevices:
+            return "XIAllDevices";
+        case XIAllMasterDevices:
+            return "XIAllMasterDevices";
+        default:
+            return static_cast<std::ostringstream*>(&(std::ostringstream() << deviceid) )->str();
+    }
 }
