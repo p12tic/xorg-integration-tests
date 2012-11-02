@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <tr1/tuple>
 
 #include "helpers.h"
 #include "device-interface.h"
@@ -410,7 +411,8 @@ TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
  *
  * @tparam The device ID
  */
-class XISelectEventsTouchTest : public TouchTest
+class XISelectEventsTouchTest : public TouchTest,
+                                public ::testing::WithParamInterface<std::tr1::tuple<int, int> >
 {
 protected:
     virtual int RegisterXI2(int major, int minor)
@@ -421,11 +423,13 @@ protected:
 
 TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
 {
-    XORG_TESTCASE("If client A has a selection on a device,\n"
-                  "client B selecting on the same device returns BadAccess.\n"
-                  "If client A has a selection on XIAll(Master)Devices, \n"
-                  "selecting on the same or a specific device returns"
-                  "BadAccess\n");
+    XORG_TESTCASE("Client A selects for touch events on a device.\n"
+                  "Client B selects for touch events, expected behavior:\n"
+                  "- if B selects on the same specific device as A, generate an error.\n"
+                  "- if A has XIAll(Master)Devices and B selects the same, generate an error.\n"
+                  "- if A has XIAllDevices and B selects XIAllMasterDevices, allow.\n"
+                  "- if A has XIAll(Master)Device and B selects a specific device, allow.\n"
+                  "Same results with A and B swapped");
 
     unsigned char m[XIMaskLen(XI_TouchEnd)] = {0};
     XIEventMask mask;
@@ -436,7 +440,9 @@ TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
     XISetMask(mask.mask, XI_TouchUpdate);
     XISetMask(mask.mask, XI_TouchEnd);
 
-    int clientA_deviceid = GetParam();
+    std::tr1::tuple<int, int> t = GetParam();
+    int clientA_deviceid = std::tr1::get<0>(t);
+    int clientB_deviceid = std::tr1::get<1>(t);
 
     /* client A */
     mask.deviceid = clientA_deviceid;
@@ -446,22 +452,70 @@ TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
     XISelectEvents(dpy2, DefaultRootWindow(dpy2), &mask, 1);
     XSync(dpy2, False);
 
-    /* covers XIAllDevices, XIAllMasterDevices and VCP */
-    for (int clientB_deviceid = 0; clientB_deviceid < 3; clientB_deviceid++) {
-        SetErrorTrap(Display());
-        mask.deviceid = clientB_deviceid;
-        XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1);
-        XErrorEvent *error = ReleaseErrorTrap(Display());
+    bool want_error = false, received_error = false;
 
-        if (clientA_deviceid <= clientB_deviceid) {
-            ASSERT_ERROR(error, BadAccess) << "failed for " << clientA_deviceid << "/" << clientB_deviceid;
-        } else {
-            ASSERT_NO_ERROR(error) << "failed for " << clientA_deviceid << "/" << clientB_deviceid;
-        }
+    mask.deviceid = clientB_deviceid;
+    SetErrorTrap(Display());
+    XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1);
+    XSync(Display(), False);
+    received_error = (ReleaseErrorTrap(Display()) != NULL);
+
+#define A(mask) (mask)
+#define B(mask) (mask << 8)
+
+    switch (clientA_deviceid | clientB_deviceid << 8) {
+        /* A on XIAllDevices */
+        case A(XIAllDevices) | B(XIAllDevices):
+            want_error = true;
+            break;
+        case A(XIAllDevices) | B(XIAllMasterDevices):
+            want_error = false; /* XXX: Really? */
+            break;
+        case A(XIAllDevices) | B(VIRTUAL_CORE_POINTER_ID):
+            want_error = false;
+            break;
+
+        /* A on XIAllMasterDevices */
+        case A(XIAllMasterDevices) | B(XIAllDevices):
+            want_error = false; /* XXX: really? */
+            break;
+        case A(XIAllMasterDevices) | B(XIAllMasterDevices):
+            want_error = true;
+            break;
+        case A(XIAllMasterDevices) | B(VIRTUAL_CORE_POINTER_ID):
+            want_error = false;
+            break;
+
+        /* A on VCP */
+        case A(VIRTUAL_CORE_POINTER_ID) | B(XIAllDevices):
+            want_error = false;
+            break;
+        case A(VIRTUAL_CORE_POINTER_ID) | B(XIAllMasterDevices):
+            want_error = false;
+            break;
+        case A(VIRTUAL_CORE_POINTER_ID) | B(VIRTUAL_CORE_POINTER_ID):
+            want_error = true;
+            break;
+        default:
+            FAIL();
+            break;
+#undef A
+#undef B
+    }
+
+    if (want_error != received_error) {
+        ADD_FAILURE() << "Event selection failed\n"
+                     "  Client A selected on " << DeviceIDToString(clientA_deviceid) << "\n"
+                     "  Client B selected on " << DeviceIDToString(clientB_deviceid) << "\n"
+                     "  Expected an error? " << want_error << "\n"
+                     "  Received an error? " << received_error;
     }
 }
+
 INSTANTIATE_TEST_CASE_P(, XISelectEventsTouchTest,
-        ::testing::Values(XIAllDevices, XIAllMasterDevices, VIRTUAL_CORE_POINTER_ID));
+        ::testing::Combine(
+            ::testing::Values(XIAllDevices, XIAllMasterDevices, VIRTUAL_CORE_POINTER_ID),
+            ::testing::Values(XIAllDevices, XIAllMasterDevices, VIRTUAL_CORE_POINTER_ID)));
 
 
 TEST_P(TouchTestXI2Version, TouchEventsButtonState)
