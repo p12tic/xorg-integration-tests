@@ -110,6 +110,14 @@ will write the config file, start the server, and remove the config and log
 files if the test succeeds. A new server is started for every TEST_F you
 have written, and there is no state dependency between tests.
 
+For general feature tests, you should _always_ use a base class to derive
+your feature tests from. Do not directly base your tests on any class in
+tests/common. If necessary, write an empty class to ensure consistent naming
+if the shared classes in tests/common change. So even if you don't need any
+actual special code, base your test of a named empty class:
+
+class MyFeatureTest : public XITServerTest {}
+
 Both of the tests above used a specific input device. But we need to ensure
 that device actually exists, so it's best to create it ourselves:
 
