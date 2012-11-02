@@ -518,7 +518,7 @@ INSTANTIATE_TEST_CASE_P(, XISelectEventsTouchTest,
             ::testing::Values(XIAllDevices, XIAllMasterDevices, VIRTUAL_CORE_POINTER_ID)));
 
 
-TEST_P(TouchTestXI2Version, TouchEventsButtonState)
+TEST_F(TouchTest, TouchEventsButtonState)
 {
     XORG_TESTCASE("Select for touch events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
