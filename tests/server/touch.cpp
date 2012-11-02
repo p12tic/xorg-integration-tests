@@ -522,9 +522,7 @@ TEST_P(TouchTestXI2Version, TouchEventsButtonState)
 {
     XORG_TESTCASE("Select for touch events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
-                  "The button mask in the touch begin event must be 0.\n"
-                  "The button mask in the touch update events must be set for button 1.\n"
-                  "The button mask in the touch end event must be set for button 1.");
+                  "The button mask in the touch begin, update, and end event must be 0.");
 
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -573,12 +571,8 @@ TEST_P(TouchTestXI2Version, TouchEventsButtonState)
 
     XIDeviceEvent *end = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
     EXPECT_GT(end->buttons.mask_len, 0);
-    EXPECT_TRUE(XIMaskIsSet(end->buttons.mask, 1)) << "ButtonRelease must have button 1 down";
-    for (int i = 0; i < end->buttons.mask_len * 8; i++) {
-        if (i == 1)
-            continue;
+    for (int i = 0; i < end->buttons.mask_len * 8; i++)
         EXPECT_FALSE(XIMaskIsSet(end->buttons.mask, i)) << "mask down for button " << i;
-    }
 
     XFreeEventData(Display(), &ev.xcookie);
 }
