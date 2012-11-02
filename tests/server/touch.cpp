@@ -199,7 +199,7 @@ TEST_P(TouchTest, EmulatedButtonMaskOnTouchBeginEndXI2)
                   "The button mask in the button release event must be set for button 1.");
 
     XIEventMask mask;
-    mask.deviceid = 2; /* VCP */
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
     mask.mask_len = XIMaskLen(XI_Motion);
     mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_Motion);
@@ -469,7 +469,7 @@ TEST_P(TouchTest, TouchEventsButtonState)
                   "The button mask in the touch end event must be set for button 1.");
 
     XIEventMask mask;
-    mask.deviceid = 2; /* VCP */
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
     mask.mask_len = XIMaskLen(XI_TouchEnd);
     mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_TouchBegin);

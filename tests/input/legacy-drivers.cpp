@@ -216,7 +216,7 @@ TEST(ElographicsTest, InputDeviceSectionWithOptionDevice)
     ASSERT_EQ(ndevices, 1);
 
     ASSERT_EQ(info->use, XISlavePointer) << "https://bugs.freedesktop.org/show_bug.cgi?id=40870";
-    ASSERT_EQ(info->attachment, 2); /* VCP */
+    ASSERT_EQ(info->attachment, VIRTUAL_CORE_POINTER_ID);
 
     XIFreeDeviceInfo(info);
 

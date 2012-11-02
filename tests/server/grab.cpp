@@ -291,7 +291,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
 
     XIGrabModifiers mods;
     mods.modifiers = XIAnyModifier;
-    XIGrabButton(dpy1, 2 /* VCP */, 1, DefaultRootWindow(dpy1),
+    XIGrabButton(dpy1, VIRTUAL_CORE_POINTER_ID, 1, DefaultRootWindow(dpy1),
                  None, GrabModeAsync, GrabModeAsync, False, &mask, 1, &mods);
     delete[] mask.mask;
 
@@ -352,7 +352,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 
     XIGrabModifiers mods;
     mods.modifiers = XIAnyModifier;
-    XIGrabButton(dpy1, 2 /* VCP */, 1, DefaultRootWindow(dpy1),
+    XIGrabButton(dpy1, VIRTUAL_CORE_POINTER_ID, 1, DefaultRootWindow(dpy1),
                  None, GrabModeAsync, GrabModeAsync, False, &mask, 1, &mods);
     delete[] mask.mask;
 
