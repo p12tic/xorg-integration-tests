@@ -134,7 +134,7 @@ static struct {
     bool is_trapping;
     XErrorEvent *error;
     XErrorHandler prev_error_handler;
-} trap_state = { False, NULL, NULL };
+} trap_state = { false, NULL, NULL };
 
 static int
 ErrorHandler(Display *dpy,
@@ -153,7 +153,7 @@ void SetErrorTrap(Display *dpy) {
 
     XSync(dpy, False);
     trap_state.prev_error_handler = XSetErrorHandler(ErrorHandler);
-    trap_state.is_trapping = True;
+    trap_state.is_trapping = true;
 }
 
 XErrorEvent * ReleaseErrorTrap(Display *dpy) {
@@ -166,7 +166,7 @@ XErrorEvent * ReleaseErrorTrap(Display *dpy) {
 
     XErrorEvent *error = trap_state.error;
     trap_state.error = NULL;
-    trap_state.is_trapping = False;
+    trap_state.is_trapping = false;
     return error;
 }
 
