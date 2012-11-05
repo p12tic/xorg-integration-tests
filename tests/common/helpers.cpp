@@ -132,9 +132,10 @@ void DeviceSetEnabled(Display *dpy, int deviceid, bool enabled)
 /* Basic error trapping */
 static struct {
     bool is_trapping;
-    XErrorEvent *error;
+    bool have_error;
+    XErrorEvent error;
     XErrorHandler prev_error_handler;
-} trap_state = { false, NULL, NULL };
+} trap_state;
 
 static int
 ErrorHandler(Display *dpy,
@@ -143,7 +144,8 @@ ErrorHandler(Display *dpy,
     if (!trap_state.is_trapping)
         ADD_FAILURE() << "Error trap received error while not trapping. WTF?";
 
-    trap_state.error = error;
+    trap_state.have_error = true;
+    trap_state.error = *error;
     return 0;
 }
 
@@ -156,7 +158,7 @@ void SetErrorTrap(Display *dpy) {
     trap_state.is_trapping = true;
 }
 
-XErrorEvent * ReleaseErrorTrap(Display *dpy) {
+const XErrorEvent* ReleaseErrorTrap(Display *dpy) {
     if (!trap_state.is_trapping)
         ADD_FAILURE() << "ReleaseErrorTrap() called while not trapping.";
 
@@ -164,9 +166,9 @@ XErrorEvent * ReleaseErrorTrap(Display *dpy) {
     XSetErrorHandler(trap_state.prev_error_handler);
     trap_state.prev_error_handler = NULL;
 
-    XErrorEvent *error = trap_state.error;
-    trap_state.error = NULL;
+    const XErrorEvent *error = trap_state.have_error ? &trap_state.error : NULL;
     trap_state.is_trapping = false;
+    trap_state.have_error = false;
     return error;
 }
 

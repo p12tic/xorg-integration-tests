@@ -92,7 +92,7 @@ void SetErrorTrap(Display *dpy);
  *
  * @return An XErrorEvent that was trapped.
  */
-XErrorEvent * ReleaseErrorTrap(Display *dpy);
+const XErrorEvent* ReleaseErrorTrap(Display *dpy);
 
 #define ASSERT_ERROR(err, code)                                         \
     ASSERT_TRUE(err != NULL) << ("Expected " #code);                    \

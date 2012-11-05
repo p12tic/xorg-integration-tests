@@ -43,7 +43,7 @@ TEST_F(BarrierSimpleTest, DestroyInvalidBarrier)
 
     SetErrorTrap(Display());
     XFixesDestroyPointerBarrier(Display(), -1);
-    XErrorEvent *error = ReleaseErrorTrap(Display());
+    const XErrorEvent *error = ReleaseErrorTrap(Display());
     ASSERT_ERROR(error, xfixes_error_base + BadBarrier);
 }
 
@@ -83,7 +83,7 @@ TEST_P(BarrierZeroLength, InvalidZeroLengthBarrier)
 
     SetErrorTrap(dpy);
     XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 20, directions, 0, NULL);
-    XErrorEvent *error = ReleaseErrorTrap(dpy);
+    const XErrorEvent *error = ReleaseErrorTrap(dpy);
     ASSERT_ERROR(error, BadValue);
 }
 
@@ -104,7 +104,7 @@ TEST_P(BarrierNonZeroArea, InvalidNonZeroAreaBarrier)
 
     SetErrorTrap(dpy);
     XFixesCreatePointerBarrier(dpy, root, 20, 20, 40, 40, directions, 0, NULL);
-    XErrorEvent *error = ReleaseErrorTrap(dpy);
+    const XErrorEvent *error = ReleaseErrorTrap(dpy);
     ASSERT_ERROR(error, BadValue);
 }
 INSTANTIATE_TEST_CASE_P(, BarrierNonZeroArea, VALID_DIRECTIONS);
@@ -143,7 +143,7 @@ TEST_P(BarrierConflictingDirections, InvalidConflictingDirectionsBarrier)
 
     SetErrorTrap(dpy);
     XFixesCreatePointerBarrier(dpy, root, x1, y1, x2, y2, directions, 0, NULL);
-    XErrorEvent *error = ReleaseErrorTrap(dpy);
+    const XErrorEvent *error = ReleaseErrorTrap(dpy);
 
     /* Nonsensical directions are ignored -- they don't
      * raise a BadValue. Unfortunately, there's no way
