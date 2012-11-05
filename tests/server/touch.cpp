@@ -470,6 +470,9 @@ TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
     ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
     ASSERT_TRUE(dpy2);
 
+    int major = 2, minor = 2;
+    XIQueryVersion(dpy2, &major, &minor);
+
     XISelectEvents(dpy2, DefaultRootWindow(dpy2), &mask, 1);
     XSync(dpy2, False);
 
