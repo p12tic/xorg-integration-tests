@@ -95,8 +95,11 @@ void SetErrorTrap(Display *dpy);
 const XErrorEvent* ReleaseErrorTrap(Display *dpy);
 
 #define ASSERT_ERROR(err, code)                                         \
-    ASSERT_TRUE(err != NULL) << ("Expected " #code);                    \
-    ASSERT_EQ(code, (int)err->error_code) << ("Expected " #code)
+{                                                                       \
+    const XErrorEvent* e = (err);                                       \
+    ASSERT_TRUE(e != NULL) << ("Expected " #code);                      \
+    ASSERT_EQ(code, (int)e->error_code) << ("Expected " #code);         \
+}
 
 #define ASSERT_NO_ERROR(err)                            \
     ASSERT_TRUE(err == NULL) << "Expected no error"
