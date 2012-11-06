@@ -1,0 +1,649 @@
+#!/usr/bin/env python
+#
+# This program is a bug registry to compare test results between different
+# runs of a test suite. It's prime purpose is to track known failures and
+# alarm if a test does not yield the result expected.
+#
+# Input files are either xml files created by this registry, or JUnit XML
+# files obtained from the test suite if --gtest_output="xml:filename.xml" is
+# set.
+#
+# Usage examples:
+#       xit-bug-registry create some-results.xml > registry.xml
+#       xit-bug-registry verify some-results.xml < registry.xml
+#       xit-bug-registry merge first-registry.xml second-registry.xml
+#       xit-bug-registry info MyTestSuite TestName < registry.xml
+#       xit-bug-registry edit MyTestSuite TestName add-bug http://bugs.freedesktop.org/1234556 < registry.xml
+#       xit-bug-registry edit MyTestSuite TestName rm-bug http://bugs.freedesktop.org/1234556 < registry.xml
+#       xit-bug-registry edit MyTestSuite TestName add-rpm xorg-x11-server-1.23-4.fc18.rpm < registry.xml
+#       xit-bug-registry edit MyTestSuite TestName rm-rpm xorg-x11-server-1.23-4.fc18.rpm < registry.xml
+#       xit-bug-registry edit MyTestSuite TestName add-commit 12354534deadbeef < registry.xml
+#       xit-bug-registry edit MyTestSuite TestName rm-commit 12354534deadbeef < registry.xml
+#
+
+import sys
+import os
+import argparse
+from lxml import objectify
+import lxml.etree
+
+XMLNS = "http://www.x.org/xorg-integration-testing"
+def xmlns_tag(tag, ns=XMLNS):
+    """Helper function to create a namespaced tag from the tag. Needed for
+       iterchildren() which only takes fully qualified tags, apparently"""
+    return "{" + ns + "}" + tag
+
+def str2bool(val):
+    if val in ["True", "true", "1"]:
+        return True
+    elif val in ["False", "false", "0"]:
+        return False
+    else:
+        raise ValueError
+
+class XITTestRegistry:
+    """Central class keeping a set of test cases and their results"""
+
+    def __init__(self, name="", test_cases = []):
+        """Initialise with a registry name and a list of """
+        self.tests = self._from_list(test_cases)
+        self.name = name
+
+    @classmethod
+    def fromXML(self, filename):
+        """Generate and returns a list of XITTestRegistry from the xml file at filename"""
+        registries = objectify.parse(filename).getroot()
+        regs = []
+        for registry in registries.iterchildren(tag=xmlns_tag("registry")):
+            reg = XITTestRegistry(name=registry.attrib["name"])
+            for suite in registry.iterchildren(tag=xmlns_tag("testsuite")):
+                for testcase in suite.iterchildren(tag=xmlns_tag("testcase")):
+                    tcase = XITTest(suite.attrib["name"],
+                                    testcase.attrib["name"],
+                                    str2bool(testcase.attrib["success"]))
+                    for bug in testcase.iterchildren(tag=xmlns_tag("bug")):
+                        try:
+                            type = bug.attrib["type"]
+                        except KeyError:
+                            type = "bugzilla"
+                        tcase.addBug(XITBug(type, bug.text))
+
+                    for info in testcase.iterchildren(tag=xmlns_tag("testinfo")):
+                        try:
+                            type = info.attrib["type"]
+                        except KeyError:
+                            type = "text"
+                        tcase.addInfo(XITInfo.createFromType(type, info.text))
+
+                    for fix in testcase.iterchildren(tag=xmlns_tag("fix")):
+                        type = fix.attrib["type"]
+                        tcase.addFix(XITFix.createFromType(type, fix.text))
+
+                    reg.addTest(tcase)
+            regs.append(reg)
+        return regs
+
+    def toXML(self):
+        """Generate XML output from this registry and return it"""
+        NSMAP = { "xit" : "http://www.x.org/xorg-integration-testing" }
+        E = objectify.ElementMaker(annotate = False,
+                                   namespace = NSMAP['xit'],
+                                   nsmap = NSMAP)
+        xit_registries = E.registries()
+        xit_registry = E.registry()
+        xit_registry.set("name", self.name)
+        xit_registries.append(xit_registry)
+
+        for suite_name, suite in self.tests.iteritems():
+            xit_suite = E.testsuite()
+            xit_suite.set("name", suite_name)
+            for name, test in suite.iteritems():
+                xit_testcase = E.testcase()
+                xit_testcase.set("name", test.name)
+                xit_testcase.set("success", str(test.status).lower())
+
+                for bug in test.getBugs():
+                    xit_bug = E.bug(bug.url)
+                    xit_bug.set("type", bug.type)
+                    xit_testcase.append(xit_bug)
+
+                for fix in test.getFixes():
+                    xit_fix = E.fix(fix.text)
+                    xit_fix.set("type", fix.type)
+                    xit_testcase.append(xit_fix)
+
+                for info in test.getInfo():
+                    xit_info = E.testinfo(info.text)
+                    xit_info.set("type", info.type)
+                    xit_testcase.append(xit_info)
+
+                xit_suite.append(xit_testcase)
+            xit_registry.append(xit_suite)
+
+        lxml.etree.cleanup_namespaces(xit_registries)
+        return lxml.etree.tostring(xit_registries, pretty_print=True)
+
+    def _from_list(self, list_in):
+        """Convert a list of test cases into the internally used dict[suite name][test case name] = XITestCase"""
+        l = {}
+        for elem in list_in:
+            if not l.has_key(elem.suite):
+                l[elem.suite] = {}
+            l[elem.suite][elem.name] = elem
+        return l
+
+    def listTestNames(self):
+        """Return a list of tuples (suite name, test name, test status) for all tests """
+        tests = []
+        for suite_name in self.tests.keys():
+            suite = self.tests[suite_name]
+            for test_name in suite.keys():
+                tests.append((suite_name, test_name, suite[test_name].status))
+        return tests
+
+    def getTest(self, testsuite, testcase):
+        """Return the test named by suite name and test case name, or None if none exists"""
+        try:
+            return self.tests[testsuite][testcase]
+        except KeyError:
+            return None
+
+    def addTest(self, test):
+        """Add a test to this registry"""
+        if not self.tests.has_key(test.suite):
+            self.tests[test.suite] = {}
+        self.tests[test.suite][test.name] = test
+
+class XITTestCase:
+    """Represents one single test case, comprised of test suite name and test case name.
+       A test has a status (true on success, false on failure).
+       This class is merely a common parent class for XIT and JUnit test results"""
+
+    def __init__(self, suite, name, status = True):
+        self.suite = suite
+        self.name = name
+        self.status = status
+
+    @property
+    def status(self):
+        return self.status
+
+    @status.setter
+    def status(self, val):
+        if type(val) == str:
+            self.status = str2bool(val)
+        elif type(val) == bool:
+            self.status = val
+        else:
+            raise ValueError
+
+class XITTest(XITTestCase):
+    """Represents one single XIT test case, comprised of test suite name and test case name.
+       A test has a status (true on success, false on failure) and may have zero or more
+       bugs, fix or general info tags attached"""
+    def __init__(self, suite, name, success):
+        XITTestCase.__init__(self, suite, name, success)
+        self._bugs = [] # XITBug
+        self._info = [] # XITInfo
+        self._fixes = [] # XITFix
+
+    def addBug(self, bug):
+        """Add a reference to a known bug to this test case"""
+        self._bugs.append(bug)
+
+    def removeBug(self, bug):
+        """Remove a reference to a known bug to this test case"""
+        try:
+            self._bugs.remove(bug)
+        except ValueError:
+            pass
+
+    def addInfo(self, info):
+        """Add some general information about this test case"""
+        self._info.append(info)
+
+    def addFix(self, fix):
+        """Add fix information about this test case"""
+        self._fixes.append(fix)
+
+    def removeFix(self, fix):
+        """Add fix information about this test case"""
+        try:
+            self._fixes.remove(fix)
+        except ValueError:
+            pass
+
+    def getBugs(self):
+        """Return a list of all bug registered with this test case"""
+        return self._bugs
+
+    def getInfo(self):
+        """Return a list of all general info pieces registered with this test case"""
+        return self._info
+
+    def getFixes(self):
+        """Return a list of all fixes registered with this test case"""
+        return self._fixes
+
+    def __str__(self):
+        s = self.suite + " " + self.name + ":\tExpected result: " + ("Success" if self.status else "Failure") + "\n"
+        if len(self._info):
+            s += "Extra info:\n"
+            i = 0
+            for info in self._info:
+                s += str(i) + ": " + str(info) + "\n"
+                i += 1
+        if len(self._bugs):
+            s += "Known bugs: \n"
+            i = 0
+            for bug in self._bugs:
+                s += str(i) + ": " + str(bug) + "\n"
+                i += 1
+        if len(self._fixes):
+            s += "Known fixes: \n"
+            i = 0
+            for fix in self._fixes:
+                s += str(i) + ": " + str(fix) + "\n"
+                i += 1
+        return s
+
+
+class XITBug:
+    """Represents a known bug related to a specific test case. Usually, this
+       will be a link to a bugzilla database"""
+
+    def __init__(self, bug_type="bugzilla", url=""):
+        self.type = bug_type
+        self.url = url
+
+    def __str__(self):
+        return self.url
+
+    def __eq__(self, other):
+        return self.type == other.type and self.url == other.url
+
+class XITFix:
+    """Represents a fix known to alter the outcome of a testcase"""
+    def __init__(self):
+        self.type = None
+        self.text = None
+
+    def __str__(self):
+        return self.text
+
+    def __eq__(self, other):
+        return self.type == other.type and self.text == other.text
+
+    @classmethod
+    def createFromType(self, type, text):
+        if type == "git":
+            return XITFixGit(text)
+        elif type == "rpm":
+            return XITFixRPM(text)
+        raise ValueError
+
+class XITFixGit(XITFix):
+    """Represents a git commit known to affect the outcome of a testcase"""
+    def __init__(self, sha1):
+        self.type = "git"
+        self.text = sha1
+
+    @property
+    def sha1(self):
+        return self.text
+
+    def __str__(self):
+        return self.sha1
+
+class XITFixRPM(XITFix):
+    """Represents a rpm package known to affect the outcome of a testcase"""
+    def __init__(self, rpm):
+        self.type = "rpm"
+        self.text = rpm
+
+    @property
+    def rpm(self):
+        return self.text
+
+    def __str__(self):
+        return self.sha1
+
+class XITInfo:
+    """Represents a piece of generic information about a bug."""
+    def __init__(self):
+        self.type = None
+        self.text = None
+
+    @classmethod
+    def createFromType(self, type, text, params={}):
+        """Create a XITInfo of the right type and return it"""
+        if type == "text":
+            return XITInfoText(text)
+        elif type == "url":
+            return XITInfoURL(text)
+        raise ValueError
+
+class XITInfoText(XITInfo):
+    """Represents a piece of generic textual information about a bug."""
+    def __init__(self, text):
+        self.text = text
+        self.type = "text"
+
+    def __str__(self):
+        return self.text
+
+class XITInfoURL(XITInfo):
+    """Represents a piece of generic information about a bug in the form of a URL."""
+    def __init__(self, url):
+        self.text = url
+        self.type = "url"
+
+    @property
+    def url(self):
+        return self.text
+
+    def __str__(self):
+        return self.url
+
+class JUnitTestResult(XITTestCase):
+    """Represents a JUnit test result in XML format, generated by --gtest_output="xml:filename.xml" """
+    def __init__(self, suite, name):
+        XITTestCase.__init__(self, suite, name, True)
+        self.failures = []
+
+    def addFailure(self, failure):
+        self.failures.append(failure)
+        self.status = False
+
+    def __str__(self):
+        s = self.suite + "." + self.name + ":\t"
+        if len(self.failures) == 0:
+            s += "success";
+        else:
+            s += "failure"
+            s += "\nFailures:\n"
+            for failure in self.failures:
+                s += str(failure) + "\n"
+        return s
+
+    @classmethod
+    def fromXML(self, filename):
+        """Return a list of JUnitTestResults based on the xml file given"""
+        testsuites = objectify.parse(filename).getroot()
+        results = []
+        for testsuite in testsuites.iterchildren(tag="testsuite"):
+            for testcase in testsuite.iterchildren(tag="testcase"):
+                result = JUnitTestResult(testsuite.attrib["name"], testcase.attrib["name"])
+                results.append(result)
+
+                for failure in testcase.iterchildren(tag="failure"):
+                    result.addFailure(JUnitTestFailure(failure.attrib["message"]))
+        return results
+
+class JUnitTestFailure:
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
+def list_tests(args):
+    """List all tests, showing test name and expected status"""
+    registry = load_registry(args.registry)
+    all_tests = registry.listTestNames()
+    all_tests.insert(0, ("TestSuite", "TestCase", "Success"))
+    all_tests.insert(1, ("---------", "--------", "-------"))
+    for suite, test, status in all_tests:
+        print ("{:<50}{:<50}{:>10}".format(suite, test, str(status)))
+
+def show_test_info(args):
+    """Show all information about a given XIT registry test case"""
+    registry = load_registry(args.registry)
+    test = registry.getTest(args.testsuite[0], args.testcase[0])
+    if test != None:
+        print str(test)
+
+def verify_one_result(registry, result):
+    """Verify the test result given against the registry. Prints a status
+       message comprising full test name, expected outcome, actual outcome
+       and a grep-able bit to indicate which way the outcome differs"""
+    test = registry.getTest(result.suite, result.name)
+
+    if test != None:
+        expected_status = str(test.status).lower()
+        if str(test.status).lower() != str(result.status).lower():
+            status_match = "!!"
+        else:
+            status_match = "++" if test.status else "--"
+    else:
+        expected_status = ""
+        status_match = "??"
+    print ("{:<50}{:<50}{:>10}{:>10}{:>4}".format(result.suite, result.name, str(result.status).lower(), expected_status, status_match))
+
+def verify_results(args):
+    """Verify a JUnit test result against the XIT test registry"""
+    registry = load_registry(args.registry)
+    results = JUnitTestResult.fromXML(args.results)
+
+    print ("{:<50}{:<50}{:>10}{:>10}{:>4}".format("TestSuite", "TestCase", "Result", "Expected", "Code"))
+    print ("{:<50}{:<50}{:>10}{:>10}{:>4}".format("---------", "--------", "------", "--------", "----"))
+    for result in results:
+        verify_one_result(registry, result)
+
+
+def create_registry(args):
+    """Create a new registry XML file based on the test cases in the JUnit file"""
+    results_list = JUnitTestResult.fromXML(args.results)
+
+    results_dict = {}
+    for r in results_list:
+        if not results_dict.has_key(r.suite):
+            results_dict[r.suite] = []
+        results_dict[r.suite].append(r)
+
+    if args.name:
+        reg_name = args.name[0]
+    else:
+        reg_name = os.path.basename(args.results).split(".xml")[0]
+
+    NSMAP = { "xit" : XMLNS }
+    E = objectify.ElementMaker(annotate = False,
+                               namespace = NSMAP['xit'],
+                               nsmap = NSMAP)
+    xit_registries = E.registries()
+    xit_registry = E.registry()
+    xit_registry.set("name", reg_name)
+    xit_registries.append(xit_registry)
+
+    for suite in results_dict.keys():
+        xit_suite = E.testsuite()
+        xit_suite.set("name", suite)
+        for r in results_dict[suite]:
+            xit_testcase = E.testcase()
+            xit_testcase.set("name", r.name)
+            xit_testcase.set("success", str(r.status).lower())
+            xit_suite.append(xit_testcase)
+        xit_registry.append(xit_suite)
+
+    lxml.etree.cleanup_namespaces(xit_registries)
+    print lxml.etree.tostring(xit_registries, pretty_print=True)
+
+def merge_registries(args):
+    """Merge two registries together"""
+    if args.add:
+        merge_add_registries(args)
+
+def merge_add_registries(args):
+    """Merge registry args.reg2 into regs.arg1, leaving all existing information in reg1 untouched"""
+    reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
+    reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
+
+    # merge 2 into 1
+    tests2 = reg2.listTestNames()
+    for suite, name, status in tests2:
+        if reg1.getTest(suite, name) == None:
+            reg1.addTest(reg2.getTest(suite, name))
+
+    print reg1.toXML()
+
+def add_bug(args):
+    registry = load_registry(args.registry)
+    testcase = registry.getTest(args.testsuite, args.testcase)
+
+    if testcase == None:
+        print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+        sys.exit(1)
+
+    testcase.addBug(XITBug("bugzilla", args.url))
+    print registry.toXML()
+
+def rm_bug(args):
+    registry = load_registry(args.registry)
+    testcase = registry.getTest(args.testsuite, args.testcase)
+
+    if testcase == None:
+        print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+        sys.exit(1)
+
+    testcase.removeBug(XITBug("bugzilla", args.url))
+    print registry.toXML()
+
+def add_fix(args, type, text):
+    registry = load_registry(args.registry)
+    testcase = registry.getTest(args.testsuite, args.testcase)
+
+    if testcase == None:
+        print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+        sys.exit(1)
+
+    testcase.addFix(XITFix.createFromType(type, text))
+    print registry.toXML()
+
+def add_commit(args):
+    add_fix(args, "git", args.sha1)
+
+def add_rpm(args):
+    add_fix(args, "rpm", args.rpm)
+
+def rm_fix(args, type, text):
+    registry = load_registry(args.registry)
+    testcase = registry.getTest(args.testsuite, args.testcase)
+
+    if testcase == None:
+        print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+        sys.exit(1)
+
+    testcase.removeFix(XITFix.createFromType(type, text))
+    print registry.toXML()
+
+def rm_commit(args):
+    rm_fix(args, "git", args.sha1)
+
+def rm_rpm(args):
+    rm_fix(args, "rpm", args.rpm)
+
+def set_status(args):
+    registry = load_registry(args.registry)
+    testcase = registry.getTest(args.testsuite, args.testcase)
+
+    if testcase == None:
+        print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+        sys.exit(1)
+
+    status = { "true" : True,
+               "false" : False,
+               "success" : True,
+               "failure" : False }
+
+    try:
+        testcase.status = status[args.status]
+    except KeyError:
+        print >> sys.stderr, "Invalid status code, allowed are %s" % ",".join(status.keys())
+        sys.exit(1)
+
+    print registry.toXML()
+
+def parse_cmdline():
+    parser = argparse.ArgumentParser(description = "Parse XIT test results for "
+            "known failures.\nRun XIT tests with the --gtest_output:xml and "
+            "compare the test result with the registry of known test "
+            "successes/failures.\n")
+    parser.add_argument("--registry", help="file containing XIT test registry (default: stdin) ", action="store", required=False)
+    subparsers = parser.add_subparsers(title="Actions", help=None)
+
+    list_subparser = subparsers.add_parser("list", help="List all test cases")
+    list_subparser.set_defaults(func = list_tests)
+
+    info_subparser = subparsers.add_parser("info", help="Print info about a specific test case")
+    info_subparser.add_argument("testsuite", nargs=1, default=None, help="Test Suite name")
+    info_subparser.add_argument("testcase", nargs=1, default=None, help="Test Case name")
+    info_subparser.set_defaults(func = show_test_info)
+
+    verify_subparser = subparsers.add_parser("verify", help="Compare JUnit test results against the registry")
+    verify_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
+    verify_subparser.set_defaults(func = verify_results)
+
+    import_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
+    import_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
+    import_subparser.add_argument("--name", nargs=1, help="Human-readable name for registry (default: the filename)")
+    import_subparser.set_defaults(func = create_registry)
+
+    merge_subparser = subparsers.add_parser("merge", help="Merge two registries together")
+    merge_subparser.add_argument("reg1", metavar="registry1.xml", nargs=1, help="Registry file no 1")
+    merge_subparser.add_argument("reg2", metavar="registry2.xml", nargs=1, help="Registry file no 2")
+    merge_subparser.add_argument("--add", default=True, action="store_true", help="Merge new test cases from registry 2 into registry 1, leaving existing test cases unmodified")
+    merge_subparser.set_defaults(func = merge_registries)
+
+    edit_subparser = subparsers.add_parser("edit", help="Modify an entry in the registry")
+    edit_subparser.add_argument("testsuite", default=None, help="Test Suite name")
+    edit_subparser.add_argument("testcase", default=None, help="Test Case name")
+    edit_subparsers = edit_subparser.add_subparsers(title="Actions", help=None)
+
+    add_bug_subparser = edit_subparsers.add_parser("add-bug", help="Add link to bugzilla entry")
+    add_bug_subparser.add_argument("url", help="URL to bugzilla entry")
+    add_bug_subparser.set_defaults(func = add_bug)
+
+    rm_bug_subparser = edit_subparsers.add_parser("rm-bug", help="Remove link to bugzilla entry")
+    rm_bug_subparser.add_argument("url", help="URL to bugzilla entry")
+    rm_bug_subparser.set_defaults(func = rm_bug)
+
+    add_commit_subparser = edit_subparsers.add_parser("add-commit", help="Add git SHA1 of a commit that alters this test outcome")
+    add_commit_subparser.add_argument("sha1", help="git commit SHA1")
+    add_commit_subparser.set_defaults(func = add_commit)
+
+    rm_commit_subparser = edit_subparsers.add_parser("rm-commit", help="Remove git SHA1 of a commit listed in this test")
+    rm_commit_subparser.add_argument("sha1", help="git commit SHA1")
+    rm_commit_subparser.set_defaults(func = rm_commit)
+
+    add_rpm_subparser = edit_subparsers.add_parser("add-rpm", help="Add rpm package NVR that alters this test outcome")
+    add_rpm_subparser.add_argument("rpm", help="rpm package NVR")
+    add_rpm_subparser.set_defaults(func = add_rpm)
+
+    rm_rpm_subparser = edit_subparsers.add_parser("rm-rpm", help="Remove rpm package NVR listed in this test")
+    rm_rpm_subparser.add_argument("rpm", help="rpm package NVR")
+    rm_rpm_subparser.set_defaults(func = rm_rpm)
+
+    set_status_subparser = edit_subparsers.add_parser("set-status", help="Change the status of a bug")
+    set_status_subparser.add_argument("status", help="expected test status (true/false)")
+    set_status_subparser.set_defaults(func = set_status)
+
+    return parser
+
+def load_registry(filename=None):
+    if filename == None:
+        print >> sys.stderr, "Reading from stdin"
+        filename = sys.stdin
+    registries = XITTestRegistry.fromXML(filename)
+    if len(registries) > 1:
+        print >> sys.stderr, "More than one registry found in input file, this is not supported yet. Using first one only."
+    elif len(registries) == 0:
+        print >> sys.stderr, "Failed to parse input file."
+        sys.exit(1)
+
+    return registries[0]
+
+parser = parse_cmdline()
+args = parser.parse_args()
+
+args.func(args)
