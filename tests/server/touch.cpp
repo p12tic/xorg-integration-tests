@@ -601,6 +601,201 @@ TEST_F(TouchTest, TouchEventsButtonState)
     XFreeEventData(Display(), &ev.xcookie);
 }
 
+
+static const int WINDOW_HIERARCHY_DEPTH = 5;
+struct event_history_test {
+    int window_depth;         /* window hierarchy depth to be created */
+    int grab_window_idx;      /* grab window idx in that hierarchy */
+    int event_window_idx;     /* event window idx in that hierarchy */
+};
+
+void PrintTo(const struct event_history_test &eht, ::std::ostream *os) {
+    *os << "depth: " << eht.window_depth << " grab window idx: " <<
+        eht.grab_window_idx << " event window idx: " <<
+        eht.event_window_idx;
+}
+
+/**
+ * @tparam depth of window hierarchy
+ */
+class TouchEventHistoryTest : public TouchTest,
+                              public ::testing::WithParamInterface<struct event_history_test> {};
+
+std::vector<Window> create_window_hierarchy(Display *dpy, int depth) {
+    Window root = DefaultRootWindow(dpy);
+
+    std::vector<Window> windows;
+
+    windows.push_back(root);
+
+    Window parent = root;
+    Window top_parent = None;
+    while(depth--) {
+        Window win;
+        win = XCreateSimpleWindow(dpy, parent, 0, 0,
+                                  DisplayWidth(dpy, DefaultScreen(dpy)),
+                                  DisplayHeight(dpy, DefaultScreen(dpy)),
+                                  0, 0, 0);
+        if (top_parent == None)
+            XSelectInput(dpy, win, StructureNotifyMask);
+        XMapWindow(dpy, win);
+
+        windows.push_back(win);
+        parent = win;
+    }
+
+    if (windows.size() > 1) {
+        XSync(dpy, False);
+
+        if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+            XEvent ev;
+            XNextEvent(dpy, &ev);
+        } else {
+            ADD_FAILURE() << "Failed waiting for Exposure";
+        }
+
+        XSelectInput(dpy, windows[1], 0);
+
+    }
+    XSync(dpy, True);
+
+    return windows;
+}
+
+TEST_P(TouchEventHistoryTest, EventHistoryReplay) {
+    struct event_history_test test_params = GetParam();
+    std::stringstream ss;
+    ss << "Window hierarchy depth: " << test_params.window_depth << "\n";
+    ss << "Grab window is window #" << test_params.grab_window_idx << "\n";
+    ss << "Event window is window #" << test_params.event_window_idx << "\n";
+
+    XORG_TESTCASE("Create a window hierarchy\n"
+                  "Create a passive touch grab on one of the windows\n"
+                  "Select for touch events on the same or a child window\n"
+                  "Trigger touch grab\n"
+                  "Receive all touch events\n"
+                  "Reject touch grab\n"
+                  "Receive replayed touch events\n"
+                  "Compare original and replayed touch events for equality\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=55477");
+    SCOPED_TRACE(ss.str());
+
+    std::vector<Window> windows;
+    windows = create_window_hierarchy(Display(), test_params.window_depth);
+    Window grab_window = windows[test_params.grab_window_idx];
+    Window event_window = windows[test_params.event_window_idx];
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+    XISelectEvents(Display(), event_window, &mask, 1);
+    XSync(Display(), False);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(Display(), VIRTUAL_CORE_POINTER_ID,
+                                        grab_window, False, &mask, 1, &mods));
+
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_TouchBegin));
+
+    std::vector<XIDeviceEvent> events; /* static copy, don't use pointers */
+    int touchid = -1;
+
+    while(XPending(Display())) {
+        XEvent ev;
+        XNextEvent(Display(), &ev);
+        ASSERT_EQ(ev.type, GenericEvent);
+        ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
+
+        ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
+        XIDeviceEvent *de = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+
+        if (touchid < 0)
+            touchid = de->detail;
+        else
+            ASSERT_EQ(de->detail, touchid);
+
+        ASSERT_EQ(de->deviceid, VIRTUAL_CORE_POINTER_ID);
+        ASSERT_EQ(de->event, grab_window);
+
+        events.push_back(*de);
+
+        if (ev.type == XI_TouchEnd)
+            break;
+    }
+
+    ASSERT_GT(events.size(), 0UL);
+    ASSERT_EQ(events.front().evtype, XI_TouchBegin);
+    ASSERT_EQ(events.back().evtype, XI_TouchEnd);
+
+    XIAllowTouchEvents(Display(), VIRTUAL_CORE_POINTER_ID, touchid,
+                       grab_window, XIRejectTouch);
+    XSync(Display(), False);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_TouchBegin));
+    for (std::vector<XIDeviceEvent>::const_iterator it = events.begin();
+            it != events.end();
+            it++)
+    {
+        XEvent ev;
+        XNextEvent(Display(), &ev);
+
+        ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
+
+        XIDeviceEvent *current;
+        const XIDeviceEvent *old;
+        old = &(*it);
+        current = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
+
+        EXPECT_EQ(old->evtype, current->evtype);
+        EXPECT_EQ(old->deviceid, current->deviceid);
+        EXPECT_EQ(old->detail, current->detail);
+        EXPECT_EQ(old->root_x, current->root_x);
+        EXPECT_EQ(old->root_y, current->root_y);
+        EXPECT_EQ(old->event_x, current->event_x);
+        EXPECT_EQ(old->event_y, current->event_y);
+
+        EXPECT_EQ(current->event, event_window);
+    }
+}
+
+static std::vector<struct event_history_test> generate_event_history_test_cases(int max_depth) {
+    std::vector<struct event_history_test> v;
+
+    for (int wd = 0; wd < max_depth; wd++) {
+        for (int gwidx = 0; gwidx < wd; gwidx++) {
+            for (int ewidx = gwidx; ewidx < wd; ewidx++) {
+                struct event_history_test eht = {
+                    .window_depth = wd,
+                    .grab_window_idx = gwidx,
+                    .event_window_idx = ewidx,
+                };
+                v.push_back(eht);
+            }
+        }
+    }
+    return v;
+}
+
+INSTANTIATE_TEST_CASE_P(, TouchEventHistoryTest,
+                        ::testing::ValuesIn(generate_event_history_test_cases(WINDOW_HIERARCHY_DEPTH)));
+
+
 #endif /* HAVE_XI22 */
 
 INSTANTIATE_TEST_CASE_P(, TouchTestXI2Version, ::testing::Range(0, XI_2_Minor + 1));
