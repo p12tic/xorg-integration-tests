@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- typically, a registry file will contain one registry but for the
+     purpose of merging multiple registries we allow for more than one -->
+<xit:registries xmlns:xit="http://www.x.org/xorg-integration-testing">
+  <!-- registry name is for humans -->
+  <xit:registry name="x.org">
+    <xit:testsuite name="TestSuite">
+      <!-- mark a given test as known to fail in this registry -->
+      <xit:testcase name="TestCase" success="false">
+        <!-- URL pointing to the bugreport. optional type, default is
+             bugzilla. This URL may be used to retrieve more information about
+             a bug -->
+        <xit:bug type="bugzilla">http://bugs.freedesktop.org/123456</xit:bug>
+        <!-- Something pointing to any archive containing additional
+             information about this bug. Default type is "text" -->
+        <xit:testinfo type="text">This test case is currently supposed to fail because blah</xit:bug-info>
+        <xit:testinfo type="url">http://lists.x.org/archive/message00001.html</xit:bug-info>
+        <!-- commit or package known to fix this test case -->
+        <xit:fix type="git">abcde1234deadbeef</xit:fix>
+        <xit:fix type="rpm">xorg-x11-server-1.13.0-1.fc18</xit:fix>
+      </xit:testcase>
+
+      <!-- mark a given test as known to succeed in this registry. This
+           element may contain all the elements for failed bugs  -->
+      <xit:test name="TestName2" success="true" />
+    </xit:testsuite>
+  </xit:registry>
+</xit:registries>
