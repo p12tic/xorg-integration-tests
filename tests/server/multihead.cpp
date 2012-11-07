@@ -85,8 +85,8 @@ protected:
     bool xinerama;
     bool left_of;
 
-private:
     std::string config_path;
+private:
     std::string log_path;
     bool failed;
 };
@@ -275,6 +275,102 @@ TEST_P(XineramaTest, ScreenCrossing)
 }
 
 INSTANTIATE_TEST_CASE_P(, XineramaTest, ::testing::Values(true, false));
+
+class ZaphodTouchDeviceChangeTest : public MultiheadTest,
+                                    public DeviceInterface {
+protected:
+    virtual void WriteConfig(bool left_of, bool xinerama) {
+        config_path = server.GetConfigPath();
+        std::ofstream config(config_path.c_str());
+        config << ""
+            "Section \"ServerLayout\"\n"
+            "	Identifier     \"X.org Configured\"\n"
+            "	Screen         0 \"Screen0\"\n"
+            "	Screen         1 \"Screen1\" " << ((left_of) ? "LeftOf" : "RightOf") << " \"Screen0\"\n"
+            "	Option         \"Xinerama\" \"" << (xinerama ? "on" : "off") << "\"\n"
+            "	InputDevice    \"mouse\" \"CorePointer\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Device\"\n"
+            "	Identifier  \"Card0\"\n"
+            "	Driver      \"dummy\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Device\"\n"
+            "	Identifier  \"Card1\"\n"
+            "	Driver      \"dummy\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Screen\"\n"
+            "	Identifier \"Screen0\"\n"
+            "	Device     \"Card0\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Screen\"\n"
+            "	Identifier \"Screen1\"\n"
+            "	Device     \"Card1\"\n"
+            "EndSection"
+            "\n"
+            "Section \"InputDevice\"\n"
+            "	Identifier  \"mouse\"\n"
+            "	Driver      \"evdev\"\n"
+            "	Option      \"AccelerationProfile\" \"-1\"\n"
+            "	Option      \"CorePointer\" \"on\"\n"
+            "	Option \"Device\" \"" + mouse->GetDeviceNode() + "\"\n"
+            "EndSection\n";
+        config.close();
+        config.close();
+    }
+
+    virtual void SetUp() {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+                new xorg::testing::evemu::Device(
+                    RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
+                );
+
+        MultiheadTest::SetUp();
+    }
+
+    std::auto_ptr<xorg::testing::evemu::Device> mouse;
+};
+
+TEST_F(ZaphodTouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
+{
+    XORG_TESTCASE("Create a touch device and a mouse device.\n"
+                  "Move pointer to bottom right corner through the mouse\n"
+                  "Touch and release from the touch device\n"
+                  "Move pointer\n"
+                  "Expect pointer motion close to touch end coordinates\n");
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+
+    double x, y;
+    do {
+        mouse->PlayOne(EV_REL, REL_X, 10, false);
+        mouse->PlayOne(EV_REL, REL_Y, 10, true);
+        QueryPointerPosition(dpy, &x, &y);
+    } while(x < DisplayWidth(dpy, DefaultScreen(dpy)) - 1 &&
+            y < DisplayHeight(dpy, DefaultScreen(dpy))- 1);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    double touch_x, touch_y;
+
+    QueryPointerPosition(dpy, &touch_x, &touch_y);
+
+    /* check if we did move the pointer with the touch */
+    ASSERT_NE(x, touch_x);
+    ASSERT_NE(y, touch_y);
+
+    mouse->PlayOne(EV_REL, REL_X, 1, true);
+    QueryPointerPosition(dpy, &x, &y);
+
+    ASSERT_EQ(touch_x + 1, x);
+    ASSERT_EQ(touch_y, y);
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
