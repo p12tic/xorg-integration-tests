@@ -23,12 +23,7 @@ class ZaphodTest : public Test,
                    public ::testing::WithParamInterface<bool>,
                    private ::testing::EmptyTestEventListener {
 public:
-    virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
-        config_path = server.GetConfigPath();
-
-        bool left_of = GetParam();
-
+    virtual void WriteConfig(bool left_of, bool xinerama) {
         std::ofstream config(config_path.c_str());
         config << ""
             "Section \"ServerLayout\"\n"
@@ -58,6 +53,15 @@ public:
             "	Device     \"Card1\"\n"
             "EndSection";
         config.close();
+    }
+
+    virtual void SetUp() {
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
+        config_path = server.GetConfigPath();
+
+        bool left_of = GetParam();
+
+        WriteConfig(left_of, xinerama);
 
         server.SetDisplayNumber(133);
         server.Start();
