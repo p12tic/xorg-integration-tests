@@ -854,6 +854,100 @@ TEST_F(TouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
     ASSERT_EQ(touch_y, y);
 }
 
+TEST_F(TouchDeviceChangeTest, DeviceChangedEventTouchToPointerSwitch)
+{
+    XORG_TESTCASE("Create a touch device and a mouse device.\n"
+                  "Touch and release from the touch device\n"
+                  "Move the mouse device\n"
+                  "Expect a DeviceChangedEvent for the mouse on the VCP\n");
+
+    ::Display *dpy = Display();
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XSync(dpy, False);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_DeviceChanged);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_DeviceChanged);
+
+    ASSERT_EQ(Success,
+              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1));
+    XSync(Display(), False);
+    delete[] mask.mask;
+    mouse->PlayOne(EV_REL, REL_X, 1, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_DeviceChanged));
+    XEvent ev;
+    XNextEvent(dpy, &ev);
+    ASSERT_EQ(ev.type, GenericEvent);
+    ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
+    ASSERT_EQ(ev.xcookie.evtype, XI_DeviceChanged);
+    ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "mouse", &deviceid), 1);
+
+    XIDeviceChangedEvent *cev = reinterpret_cast<XIDeviceChangedEvent*>(ev.xcookie.data);
+    ASSERT_EQ(cev->deviceid, VIRTUAL_CORE_POINTER_ID);
+    ASSERT_EQ(cev->sourceid, deviceid);
+    ASSERT_EQ(cev->reason, XISlaveSwitch);
+}
+
+TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
+{
+    XORG_TESTCASE("Create a touch device and a mouse device.\n"
+                  "Move the mouse device\n"
+                  "Touch and release from the touch device\n"
+                  "Expect a DeviceChangedEvent for the touch device on the VCP\n");
+
+    ::Display *dpy = Display();
+
+    mouse->PlayOne(EV_REL, REL_X, 1, true);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_DeviceChanged);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_DeviceChanged);
+
+    ASSERT_EQ(Success,
+              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1));
+    XSync(Display(), False);
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XSync(dpy, False);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_DeviceChanged));
+    XEvent ev;
+    XNextEvent(dpy, &ev);
+    ASSERT_EQ(ev.type, GenericEvent);
+    ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
+    ASSERT_EQ(ev.xcookie.evtype, XI_DeviceChanged);
+    ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
+
+    XIDeviceChangedEvent *cev = reinterpret_cast<XIDeviceChangedEvent*>(ev.xcookie.data);
+    ASSERT_EQ(cev->deviceid, VIRTUAL_CORE_POINTER_ID);
+    ASSERT_EQ(cev->sourceid, deviceid);
+    ASSERT_EQ(cev->reason, XISlaveSwitch);
+
+}
+
 #endif /* HAVE_XI22 */
 
 INSTANTIATE_TEST_CASE_P(, TouchTestXI2Version, ::testing::Range(0, XI_2_Minor + 1));
