@@ -18,12 +18,11 @@
 
 using namespace xorg::testing;
 
-class ZaphodTest : public Test,
-                   public DeviceInterface,
-                   public ::testing::WithParamInterface<bool>,
-                   private ::testing::EmptyTestEventListener {
+class MultiheadTest : public Test,
+                      private ::testing::EmptyTestEventListener {
 public:
     virtual void WriteConfig(bool left_of, bool xinerama) {
+        config_path = server.GetConfigPath();
         std::ofstream config(config_path.c_str());
         config << ""
             "Section \"ServerLayout\"\n"
@@ -56,11 +55,6 @@ public:
     }
 
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
-        config_path = server.GetConfigPath();
-
-        bool left_of = GetParam();
-
         WriteConfig(left_of, xinerama);
 
         server.SetDisplayNumber(133);
@@ -84,6 +78,29 @@ public:
 
     void OnTestPartResult(const ::testing::TestPartResult &test_part_result) {
         failed = test_part_result.failed();
+    }
+
+protected:
+    XITServer server;
+    bool xinerama;
+    bool left_of;
+
+private:
+    std::string config_path;
+    std::string log_path;
+    bool failed;
+};
+
+class ZaphodTest : public MultiheadTest,
+                   public DeviceInterface,
+                   public ::testing::WithParamInterface<bool> {
+public:
+    virtual void SetUp() {
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
+
+        left_of = GetParam();
+
+        MultiheadTest::SetUp();
     }
 
     void VerifyLeaveEvent(::Display *dpy) {
@@ -174,15 +191,6 @@ public:
 
         return on_screen;
     }
-
-protected:
-    XITServer server;
-    bool xinerama;
-
-private:
-    std::string config_path;
-    std::string log_path;
-    bool failed;
 };
 
 TEST_P(ZaphodTest, ScreenCrossing)
