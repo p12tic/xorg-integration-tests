@@ -182,3 +182,19 @@ std::string DeviceIDToString(int deviceid) {
             return static_cast<std::ostringstream*>(&(std::ostringstream() << deviceid) )->str();
     }
 }
+
+Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y)
+{
+    Window root, child;
+    double win_x, win_y;
+    XIButtonState buttons;
+    XIModifierState mods;
+    XIGroupState group;
+
+    return XIQueryPointer (dpy, VIRTUAL_CORE_POINTER_ID,
+                           DefaultRootWindow (dpy),
+                           &root, &child,
+                           root_x, root_y,
+                           &win_x, &win_y,
+                           &buttons, &mods, &group);
+}

@@ -113,5 +113,13 @@ const XErrorEvent* ReleaseErrorTrap(Display *dpy);
  */
 std::string DeviceIDToString(int deviceid);
 
+/**
+ * Returns current root coordinates for the VCP.
+ *
+ * @return true if the pointer is on the same screen as the default root
+ * window, false otherwise
+ */
+Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y);
+
 #endif
 
