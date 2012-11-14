@@ -15,7 +15,7 @@ tests/server ... tests for server features or bugs
 tests/lib ...... tests for library features or bugs
 
 Each directory has a number of binaries that group the tests further. e.g.
-server/grab is a set of grab-related tests. Tests should go into existing
+input/evdev is a set of evdev-related tests. Tests should go into existing
 binaries where sensible, but tests for new logical features should add new
 binaries. A test binary may have multiple source files.
 

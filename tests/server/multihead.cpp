@@ -371,8 +371,3 @@ TEST_F(ZaphodTouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
     ASSERT_EQ(touch_x + 1, x);
     ASSERT_EQ(touch_y, y);
 }
-
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

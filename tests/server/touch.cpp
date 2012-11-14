@@ -952,7 +952,3 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
 
 INSTANTIATE_TEST_CASE_P(, TouchTestXI2Version, ::testing::Range(0, XI_2_Minor + 1));
 
-int main(int argc, char** argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

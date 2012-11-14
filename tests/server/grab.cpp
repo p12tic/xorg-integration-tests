@@ -410,7 +410,3 @@ INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleTaps, ::testing::Range(1, 11)); /
 
 #endif /* HAVE_XI22 */
 
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

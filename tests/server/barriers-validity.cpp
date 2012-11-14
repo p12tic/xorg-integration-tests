@@ -157,7 +157,3 @@ TEST_P(BarrierConflictingDirections, InvalidConflictingDirectionsBarrier)
 }
 INSTANTIATE_TEST_CASE_P(, BarrierConflictingDirections, INVALID_DIRECTIONS);
 
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
