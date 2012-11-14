@@ -157,6 +157,169 @@ TEST_F(PointerGrabTest, GrabDisabledDevices)
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
 
+TEST_F(PointerGrabTest, DestroyWindowDuringImplicitGrab)
+{
+    XORG_TESTCASE("Create a window with the button masks set.\n"
+                  "Create a pointer device\n"
+                  "Activate implicit pointer grab by clicking into the window.\n"
+                  "While the implicit grab is active, destroy the window\n");
+
+    ::Display *dpy = Display();
+    Window win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0,
+                                     DisplayWidth(dpy, DefaultScreen(dpy)),
+                                     DisplayHeight(dpy, DefaultScreen(dpy)),
+                                     0, 0, 0);
+    ASSERT_NE(win, (Window)None);
+    XSelectInput(dpy, win, StructureNotifyMask|ButtonPressMask|ButtonReleaseMask);
+    XMapWindow(dpy, win);
+    XSync(dpy, False);
+
+    if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+        XEvent ev;
+        XNextEvent(dpy, &ev);
+    } else {
+        ADD_FAILURE() << "Failed waiting for Exposure";
+    }
+
+    XSync(dpy, True);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
+
+    XDestroyWindow(dpy, win);
+    XSync(dpy, False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    XSync(dpy, False);
+    ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
+}
+
+TEST_F(PointerGrabTest, DestroyClientDuringImplicitGrab)
+{
+    XORG_TESTCASE("Create a window with the button masks set.\n"
+                  "Create a pointer device\n"
+                  "Activate implicit pointer grab by clicking into the window.\n"
+                  "While the implicit grab is active, destroy the client\n");
+
+    ::Display *dpy = Display();
+    Window win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0,
+                                     DisplayWidth(dpy, DefaultScreen(dpy)),
+                                     DisplayHeight(dpy, DefaultScreen(dpy)),
+                                     0, 0, 0);
+    ASSERT_NE(win, (Window)None);
+    XSelectInput(dpy, win, StructureNotifyMask|ButtonPressMask|ButtonReleaseMask);
+    XMapWindow(dpy, win);
+    XSync(dpy, False);
+
+    if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+        XEvent ev;
+        XNextEvent(dpy, &ev);
+    } else {
+        ADD_FAILURE() << "Failed waiting for Exposure";
+    }
+
+    XSync(dpy, True);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
+
+    XCloseDisplay(dpy);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
+}
+
+TEST_F(PointerGrabTest, ImplicitGrabToActiveGrab)
+{
+    XORG_TESTCASE("Create a window with the button masks set.\n"
+                  "Create a pointer device\n"
+                  "Activate implicit pointer grab by clicking into the window.\n"
+                  "While the implicit grab is active, grab the pointer\n"
+                  "Release the button, check event is received\n");
+
+    ::Display *dpy = Display();
+    Window win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0,
+                                     DisplayWidth(dpy, DefaultScreen(dpy)),
+                                     DisplayHeight(dpy, DefaultScreen(dpy)),
+                                     0, 0, 0);
+    ASSERT_NE(win, (Window)None);
+    XSelectInput(dpy, win, StructureNotifyMask|ButtonPressMask|ButtonReleaseMask);
+    XMapWindow(dpy, win);
+    XSync(dpy, False);
+
+    if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+        XEvent ev;
+        XNextEvent(dpy, &ev);
+    } else {
+        ADD_FAILURE() << "Failed waiting for Exposure";
+    }
+
+    XSync(dpy, True);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
+
+    ASSERT_EQ(Success, XGrabPointer(dpy, win, True, ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None, CurrentTime));
+    XSync(dpy, False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonRelease, -1, -1));
+    ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
+}
+
+TEST_F(PointerGrabTest, ImplicitGrabToActiveGrabDeactivated)
+{
+    XORG_TESTCASE("Create a window with the button masks set.\n"
+                  "Create a pointer device\n"
+                  "Activate implicit pointer grab by clicking into the window.\n"
+                  "While the implicit grab is active, grab the pointer\n"
+                  "Ungrab the pointer.\n"
+                  "Release the button\n");
+
+    ::Display *dpy = Display();
+    Window win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0,
+                                     DisplayWidth(dpy, DefaultScreen(dpy)),
+                                     DisplayHeight(dpy, DefaultScreen(dpy)),
+                                     0, 0, 0);
+    ASSERT_NE(win, (Window)None);
+    XSelectInput(dpy, win, StructureNotifyMask|ButtonPressMask|ButtonReleaseMask);
+    XMapWindow(dpy, win);
+    XSync(dpy, False);
+
+    if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+        XEvent ev;
+        XNextEvent(dpy, &ev);
+    } else {
+        ADD_FAILURE() << "Failed waiting for Exposure";
+    }
+
+    XSync(dpy, True);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
+
+    ASSERT_EQ(Success, XGrabPointer(dpy, win, True, 0,
+                                    GrabModeAsync, GrabModeAsync, None,
+                                    None, CurrentTime));
+    XSync(dpy, False);
+    XUngrabPointer(dpy, CurrentTime);
+    XSync(dpy, False);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonRelease, -1, -1));
+    ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
+}
+
+
 enum GrabType {
     GRABTYPE_CORE,
     GRABTYPE_XI1,

@@ -167,8 +167,12 @@
       <xit:testcase name="DoubleSegfault" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="PointerGrabTest">
+      <xit:testcase name="DestroyClientDuringImplicitGrab" success="true"/>
+      <xit:testcase name="DestroyWindowDuringImplicitGrab" success="true"/>
       <xit:testcase name="GrabDisabledDevices" success="true"/>
       <xit:testcase name="ImplicitGrabRawEvents" success="false"/>
+      <xit:testcase name="ImplicitGrabToActiveGrab" success="true"/>
+      <xit:testcase name="ImplicitGrabToActiveGrabDeactivated" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="PointerGrabTypeTest">
       <xit:testcase name="DifferentGrabTypesProhibited/0" success="true">
