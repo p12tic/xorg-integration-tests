@@ -16,7 +16,7 @@ multihead_SOURCES = multihead.cpp $(common_sources)
 multihead_LDADD = $(GTEST_LDADDS)
 
 misc_SOURCES = misc.cpp $(common_sources)
-misc_LDADD = $(GTEST_LDADDS)
+misc_LDADD = $(GTEST_LDADDS) $(XSCREENSAVER_LIBS)
 
 barriers_SOURCES = barrires-common.h barriers-validity.cpp barriers-directions.cpp $(common_sources)
 barriers_LDADD = $(GTEST_LDADDS) $(XFIXES_LIBS)
