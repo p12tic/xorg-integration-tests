@@ -26,6 +26,10 @@ import os
 import argparse
 from lxml import objectify
 import lxml.etree
+import shutil
+
+def debug(msg):
+    print >> sys.stderr, msg
 
 XMLNS = "http://www.x.org/xorg-integration-testing"
 def xmlns_tag(tag, ns=XMLNS):
@@ -390,16 +394,16 @@ class JUnitTestFailure:
 
 def list_tests(args):
     """List all tests, showing test name and expected status"""
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     all_tests = registry.listTestNames()
     all_tests.insert(0, ("TestSuite", "TestCase", "Success"))
     all_tests.insert(1, ("---------", "--------", "-------"))
     for suite, test, status in all_tests:
-        print ("{:<50}{:<50}{:>10}".format(suite, test, str(status)))
+        print "{:<50}{:<50}{:>10}".format(suite, test, str(status))
 
 def show_test_info(args):
     """Show all information about a given XIT registry test case"""
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     test = registry.getTest(args.testsuite[0], args.testcase[0])
     if test != None:
         print str(test)
@@ -419,15 +423,15 @@ def verify_one_result(registry, result):
     else:
         expected_status = ""
         status_match = "??"
-    print ("{:<50}{:<50}{:>10}{:>10}{:>4}".format(result.suite, result.name, str(result.status).lower(), expected_status, status_match))
+    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format(result.suite, result.name, str(result.status).lower(), expected_status, status_match)
 
 def verify_results(args):
     """Verify a JUnit test result against the XIT test registry"""
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     results = JUnitTestResult.fromXML(args.results)
 
-    print ("{:<50}{:<50}{:>10}{:>10}{:>4}".format("TestSuite", "TestCase", "Result", "Expected", "Code"))
-    print ("{:<50}{:<50}{:>10}{:>10}{:>4}".format("---------", "--------", "------", "--------", "----"))
+    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("TestSuite", "TestCase", "Result", "Expected", "Code")
+    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("---------", "--------", "------", "--------", "----")
     for result in results:
         verify_one_result(registry, result)
 
@@ -467,7 +471,9 @@ def create_registry(args):
         xit_registry.append(xit_suite)
 
     lxml.etree.cleanup_namespaces(xit_registries)
-    print lxml.etree.tostring(xit_registries, pretty_print=True)
+    r = open_new_registry(args)
+    write_to_registry(r, lxml.etree.tostring(xit_registries, pretty_print=True))
+    sync_registry(args, r)
 
 def merge_registries(args):
     """Merge two registries together"""
@@ -485,10 +491,10 @@ def merge_add_registries(args):
         if reg1.getTest(suite, name) == None:
             reg1.addTest(reg2.getTest(suite, name))
 
-    print reg1.toXML()
+    registry_from_string(args, reg1.toXML());
 
 def add_bug(args):
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     testcase = registry.getTest(args.testsuite, args.testcase)
 
     if testcase == None:
@@ -496,10 +502,10 @@ def add_bug(args):
         sys.exit(1)
 
     testcase.addBug(XITBug("bugzilla", args.url))
-    print registry.toXML()
+    registry_from_string(args, registry.toXML())
 
 def rm_bug(args):
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     testcase = registry.getTest(args.testsuite, args.testcase)
 
     if testcase == None:
@@ -507,10 +513,10 @@ def rm_bug(args):
         sys.exit(1)
 
     testcase.removeBug(XITBug("bugzilla", args.url))
-    print registry.toXML()
+    registry_from_string(args, registry.toXML())
 
 def add_fix(args, type, text):
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     testcase = registry.getTest(args.testsuite, args.testcase)
 
     if testcase == None:
@@ -518,7 +524,7 @@ def add_fix(args, type, text):
         sys.exit(1)
 
     testcase.addFix(XITFix.createFromType(type, text))
-    print registry.toXML()
+    registry_from_string(args, registry.toXML())
 
 def add_commit(args):
     add_fix(args, "git", args.sha1)
@@ -527,7 +533,7 @@ def add_rpm(args):
     add_fix(args, "rpm", args.rpm)
 
 def rm_fix(args, type, text):
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     testcase = registry.getTest(args.testsuite, args.testcase)
 
     if testcase == None:
@@ -535,7 +541,7 @@ def rm_fix(args, type, text):
         sys.exit(1)
 
     testcase.removeFix(XITFix.createFromType(type, text))
-    print registry.toXML()
+    registry_from_string(args, registry.toXML())
 
 def rm_commit(args):
     rm_fix(args, "git", args.sha1)
@@ -544,7 +550,7 @@ def rm_rpm(args):
     rm_fix(args, "rpm", args.rpm)
 
 def set_status(args):
-    registry = load_registry(args.registry)
+    registry = load_registry(args)
     testcase = registry.getTest(args.testsuite, args.testcase)
 
     if testcase == None:
@@ -562,14 +568,14 @@ def set_status(args):
         print >> sys.stderr, "Invalid status code, allowed are %s" % ",".join(status.keys())
         sys.exit(1)
 
-    print registry.toXML()
+    registry_from_string(args, registry.toXML())
 
 def parse_cmdline():
     parser = argparse.ArgumentParser(description = "Parse XIT test results for "
             "known failures.\nRun XIT tests with the --gtest_output:xml and "
             "compare the test result with the registry of known test "
             "successes/failures.\n")
-    parser.add_argument("--registry", help="file containing XIT test registry (default: stdin) ", action="store", required=False)
+    parser.add_argument("-f", "--file", help="file containing XIT test registry, modified in-place (default: stdin/stdout) ", action="store", required=False)
     subparsers = parser.add_subparsers(title="Actions", help=None)
 
     list_subparser = subparsers.add_parser("list", help="List all test cases")
@@ -630,11 +636,11 @@ def parse_cmdline():
 
     return parser
 
-def load_registry(filename=None):
-    if filename == None:
+def load_registry(args):
+    if args.file == None:
         print >> sys.stderr, "Reading from stdin"
-        filename = sys.stdin
-    registries = XITTestRegistry.fromXML(filename)
+        args.file = sys.stdin
+    registries = XITTestRegistry.fromXML(args.file)
     if len(registries) > 1:
         print >> sys.stderr, "More than one registry found in input file, this is not supported yet. Using first one only."
     elif len(registries) == 0:
@@ -642,6 +648,28 @@ def load_registry(filename=None):
         sys.exit(1)
 
     return registries[0]
+
+def write_to_registry(f, msg):
+    print >> f, msg
+
+def open_new_registry(args):
+    if args.file == None or args.file == sys.stdin:
+        return sys.stdout
+    else:
+        return os.tmpfile()
+
+def sync_registry(args, outfile):
+    if outfile == sys.stdout:
+        return
+
+    outfile.seek(0)
+    f = open(args.file, "w")
+    shutil.copyfileobj(outfile, f)
+
+def registry_from_string(args, s):
+    r = open_new_registry(args)
+    write_to_registry(r, s)
+    sync_registry(args, r)
 
 parser = parse_cmdline()
 args = parser.parse_args()
