@@ -23,6 +23,7 @@
 
 import sys
 import os
+import time
 import argparse
 from lxml import objectify
 import lxml.etree
@@ -52,6 +53,8 @@ class XITTestRegistry:
         """Initialise with a registry name and a list of """
         self.tests = self._from_list(test_cases)
         self.name = name
+        self.date = time.localtime()
+        self.moduleversions = {}
 
     @classmethod
     def fromXML(self, filename):
@@ -60,6 +63,15 @@ class XITTestRegistry:
         regs = []
         for registry in registries.iterchildren(tag=xmlns_tag("registry")):
             reg = XITTestRegistry(name=registry.attrib["name"])
+
+            for meta in registry.iterchildren(tag=xmlns_tag("meta")):
+                date = meta.find(xmlns_tag("date"))
+                if date != None:
+                    reg.date = time.strptime(date.text, "%Y-%m-%d")
+
+                for modversion in meta.iterchildren(tag=xmlns_tag("moduleversion")):
+                    reg.moduleversions[modversion.attrib["name"]] = modversion.text
+
             for suite in registry.iterchildren(tag=xmlns_tag("testsuite")):
                 for testcase in suite.iterchildren(tag=xmlns_tag("testcase")):
                     tcase = XITTest(suite.attrib["name"],
@@ -97,6 +109,18 @@ class XITTestRegistry:
         xit_registry = E.registry()
         xit_registry.set("name", self.name)
         xit_registries.append(xit_registry)
+
+        xit_meta = E.meta()
+        xit_registry.append(xit_meta)
+
+        xit_date = E.date(time.strftime("%Y-%m-%d", self.date))
+        xit_meta.append(xit_date)
+
+        for module, version in self.moduleversions.iteritems():
+            xit_modversion = E.moduleversion(version)
+            xit_modversion.set("name", module)
+            xit_modversion.set("type", "git") # FIXME
+            xit_meta.append(xit_modversion)
 
         for suite_name, suite in self.tests.iteritems():
             xit_suite = E.testsuite()
