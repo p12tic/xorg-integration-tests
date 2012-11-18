@@ -4,6 +4,13 @@
 <xit:registries xmlns:xit="http://www.x.org/xorg-integration-testing">
   <!-- registry name is for humans -->
   <xit:registry name="x.org">
+    <xit:meta>
+      <!-- date this registry was compiled -->
+      <xit:date>2012-11-19</xit:date>
+      <!-- Registers module versions used when compiling this registry  -->
+      <xit:moduleversion name="xserver" type="git">123550deadbeef</xit:moduleversion>
+      <xit:moduleversion name="evdev" type="git">1281211babab</xit:moduleversion>
+    </xit:meta>
     <xit:testsuite name="TestSuite">
       <!-- mark a given test as known to fail in this registry -->
       <xit:testcase name="TestCase" success="false">

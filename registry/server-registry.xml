@@ -3,7 +3,7 @@
     <xit:meta>
       <xit:date>2012-11-16</xit:date>
       <xit:moduleversion name="xserver" type="git">011f8458805e443ac9130865d2840a929a00cabf</xit:moduleversion>
-    <xit:/meta>
+    </xit:meta>
     <xit:testsuite name="BarrierNonZeroArea">
       <xit:testcase name="InvalidNonZeroAreaBarrier/0" success="true"/>
       <xit:testcase name="InvalidNonZeroAreaBarrier/1" success="true"/>
