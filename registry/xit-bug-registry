@@ -132,16 +132,16 @@ class XITTestRegistry:
         xit_date = E.date(time.strftime("%Y-%m-%d", self.date))
         xit_meta.append(xit_date)
 
-        for module, version in self.moduleversions.iteritems():
+        for module, version in sorted(self.moduleversions.iteritems()):
             xit_modversion = E.moduleversion(version)
             xit_modversion.set("name", module)
             xit_modversion.set("type", "git") # FIXME
             xit_meta.append(xit_modversion)
 
-        for suite_name, suite in self.tests.iteritems():
+        for suite_name, suite in sorted(self.tests.iteritems()):
             xit_suite = E.testsuite()
             xit_suite.set("name", suite_name)
-            for name, test in suite.iteritems():
+            for name, test in sorted(suite.iteritems()):
                 xit_testcase = E.testcase()
                 xit_testcase.set("name", test.name)
                 xit_testcase.set("success", str(test.status).lower())
@@ -179,10 +179,9 @@ class XITTestRegistry:
     def listTestNames(self):
         """Return a list of tuples (suite name, test name, test status) for all tests """
         tests = []
-        for suite_name in self.tests.keys():
-            suite = self.tests[suite_name]
-            for test_name in suite.keys():
-                tests.append((suite_name, test_name, suite[test_name].status))
+        for suite_name, suite in sorted(self.tests.iteritems()):
+            for test_name, test in sorted(suite.iteritems()):
+                tests.append((suite_name, test_name, test.status))
         return tests
 
     def getTest(self, testsuite, testcase):
@@ -259,15 +258,15 @@ class XITTest(XITTestCase):
 
     def getBugs(self):
         """Return a list of all bug registered with this test case"""
-        return self._bugs
+        return sorted(self._bugs)
 
     def getInfo(self):
         """Return a list of all general info pieces registered with this test case"""
-        return self._info
+        return sorted(self._info)
 
     def getFixes(self):
         """Return a list of all fixes registered with this test case"""
-        return self._fixes
+        return sorted(self._fixes)
 
     def __str__(self):
         s = self.suite + " " + self.name + ":\tExpected result: " + ("Success" if self.status else "Failure") + "\n"
@@ -306,6 +305,12 @@ class XITBug:
     def __eq__(self, other):
         return self.type == other.type and self.url == other.url
 
+    def __cmp__(self, other):
+        rc = cmp(self.type, other.type)
+        if rc == 0:
+            rc = cmp(self.url, other.url)
+        return rc
+
 class XITFix:
     """Represents a fix known to alter the outcome of a testcase"""
     def __init__(self):
@@ -317,6 +322,12 @@ class XITFix:
 
     def __eq__(self, other):
         return self.type == other.type and self.text == other.text
+
+    def __cmp__(self, other):
+        rc = cmp(self.type, other.type)
+        if rc == 0:
+            rc = cmp(self.text, other.text)
+        return rc
 
     @classmethod
     def createFromType(self, type, text):
@@ -366,6 +377,12 @@ class XITInfo:
         elif type == "url":
             return XITInfoURL(text)
         raise ValueError
+
+    def __cmp__(self, other):
+        rc = cmp(self.type, other.type)
+        if rc == 0:
+            rc = cmp(self.text, other.text)
+        return rc
 
 class XITInfoText(XITInfo):
     """Represents a piece of generic textual information about a bug."""
