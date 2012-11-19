@@ -4,76 +4,6 @@
       <xit:date>2012-11-16</xit:date>
       <xit:moduleversion name="xserver" type="git">011f8458805e443ac9130865d2840a929a00cabf</xit:moduleversion>
     </xit:meta>
-    <xit:testsuite name="BarrierNonZeroArea">
-      <xit:testcase name="InvalidNonZeroAreaBarrier/0" success="true"/>
-      <xit:testcase name="InvalidNonZeroAreaBarrier/1" success="true"/>
-      <xit:testcase name="InvalidNonZeroAreaBarrier/2" success="true"/>
-      <xit:testcase name="InvalidNonZeroAreaBarrier/3" success="true"/>
-      <xit:testcase name="InvalidNonZeroAreaBarrier/4" success="true"/>
-      <xit:testcase name="InvalidNonZeroAreaBarrier/5" success="true"/>
-      <xit:testcase name="InvalidNonZeroAreaBarrier/6" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="ZaphodTouchDeviceChangeTest">
-      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false"/>
-    </xit:testsuite>
-    <xit:testsuite name="TouchGrabTestMultipleModes">
-      <xit:testcase name="ActiveAndPassiveGrab/0" success="true"/>
-      <xit:testcase name="ActiveAndPassiveGrab/1" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="TouchDeviceTest">
-      <xit:testcase name="DisableDeviceEndTouches" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="XineramaTest">
-      <xit:testcase name="ScreenCrossing/0" success="true"/>
-      <xit:testcase name="ScreenCrossing/1" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="TouchTestXI2Version">
-      <xit:testcase name="XITouchscreenPointerEmulation/0" success="true"/>
-      <xit:testcase name="XITouchscreenPointerEmulation/1" success="true"/>
-      <xit:testcase name="XITouchscreenPointerEmulation/2" success="true"/>
-      <xit:testcase name="XITouchscreenPointerEmulation/3" success="true"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/0" success="false"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/1" success="false"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/2" success="false"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/3" success="false"/>
-      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/0" success="true"/>
-      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/1" success="true"/>
-      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/2" success="true"/>
-      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/3" success="true"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/0" success="true"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/1" success="true"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/2" success="true"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/3" success="true"/>
-      <xit:testcase name="XIQueryPointerTouchscreen/0" success="true"/>
-      <xit:testcase name="XIQueryPointerTouchscreen/1" success="true"/>
-      <xit:testcase name="XIQueryPointerTouchscreen/2" success="true"/>
-      <xit:testcase name="XIQueryPointerTouchscreen/3" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="BarrierSimpleTest">
-      <xit:testcase name="CreateAndDestroyBarrier" success="true"/>
-      <xit:testcase name="DestroyInvalidBarrier" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="ZaphodTest">
-      <xit:testcase name="ScreenCrossing/0" success="false"/>
-      <xit:testcase name="ScreenCrossing/1" success="false"/>
-    </xit:testsuite>
-    <xit:testsuite name="TouchTest">
-      <xit:testcase name="TouchEventsButtonState" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="EventQueueTest">
-      <xit:testcase name="mieqOverflow" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="XISelectEventsTouchTest">
-      <xit:testcase name="TouchSelectionConflicts/0" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/1" success="false"/>
-      <xit:testcase name="TouchSelectionConflicts/2" success="false"/>
-      <xit:testcase name="TouchSelectionConflicts/3" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/4" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/5" success="false"/>
-      <xit:testcase name="TouchSelectionConflicts/6" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/7" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/8" success="true"/>
-    </xit:testsuite>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
       <xit:testcase name="InvalidConflictingDirectionsBarrier/1" success="true"/>
@@ -85,19 +15,84 @@
       <xit:testcase name="InvalidConflictingDirectionsBarrier/7" success="true"/>
       <xit:testcase name="InvalidConflictingDirectionsBarrier/8" success="true"/>
     </xit:testsuite>
-    <xit:testsuite name="XTest">
-      <xit:testcase name="DisabledDevicesProperty" success="true"/>
-      <xit:testcase name="DisabledDevicesCtl" success="true"/>
-    </xit:testsuite>
     <xit:testsuite name="BarrierConstrained">
+      <xit:testcase name="HoritzontalBarrierNegativeYBlocksMotion" success="true"/>
+      <xit:testcase name="HoritzontalBarrierPositiveYBlocksMotion" success="true"/>
+      <xit:testcase name="HorizontalBarrierBothDirectionsYBlocksNoMotion" success="true"/>
+      <xit:testcase name="HorizontalBarrierNoDirectionBlocksMotion" success="true"/>
+      <xit:testcase name="VerticalBarrierBothDirectionsXBlocksNoMotion" success="true"/>
+      <xit:testcase name="VerticalBarrierNegativeXBlocksMotion" success="true"/>
       <xit:testcase name="VerticalBarrierNoDirectionBlocksMotion" success="true"/>
       <xit:testcase name="VerticalBarrierPositiveXBlocksMotion" success="true"/>
-      <xit:testcase name="VerticalBarrierNegativeXBlocksMotion" success="true"/>
-      <xit:testcase name="VerticalBarrierBothDirectionsXBlocksNoMotion" success="true"/>
-      <xit:testcase name="HorizontalBarrierNoDirectionBlocksMotion" success="true"/>
-      <xit:testcase name="HoritzontalBarrierPositiveYBlocksMotion" success="true"/>
-      <xit:testcase name="HoritzontalBarrierNegativeYBlocksMotion" success="true"/>
-      <xit:testcase name="HorizontalBarrierBothDirectionsYBlocksNoMotion" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="BarrierNonZeroArea">
+      <xit:testcase name="InvalidNonZeroAreaBarrier/0" success="true"/>
+      <xit:testcase name="InvalidNonZeroAreaBarrier/1" success="true"/>
+      <xit:testcase name="InvalidNonZeroAreaBarrier/2" success="true"/>
+      <xit:testcase name="InvalidNonZeroAreaBarrier/3" success="true"/>
+      <xit:testcase name="InvalidNonZeroAreaBarrier/4" success="true"/>
+      <xit:testcase name="InvalidNonZeroAreaBarrier/5" success="true"/>
+      <xit:testcase name="InvalidNonZeroAreaBarrier/6" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="BarrierSimpleTest">
+      <xit:testcase name="CreateAndDestroyBarrier" success="true"/>
+      <xit:testcase name="DestroyInvalidBarrier" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="BarrierZeroLength">
+      <xit:testcase name="InvalidZeroLengthBarrier/0" success="true"/>
+      <xit:testcase name="InvalidZeroLengthBarrier/1" success="true"/>
+      <xit:testcase name="InvalidZeroLengthBarrier/2" success="true"/>
+      <xit:testcase name="InvalidZeroLengthBarrier/3" success="true"/>
+      <xit:testcase name="InvalidZeroLengthBarrier/4" success="true"/>
+      <xit:testcase name="InvalidZeroLengthBarrier/5" success="true"/>
+      <xit:testcase name="InvalidZeroLengthBarrier/6" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EventQueueTest">
+      <xit:testcase name="mieqOverflow" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="MiscServerTest">
+      <xit:testcase name="DoubleSegfault" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="PointerGrabTest">
+      <xit:testcase name="GrabDisabledDevices" success="true"/>
+      <xit:testcase name="ImplicitGrabRawEvents" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="ScreenSaverTest">
+      <xit:testcase name="ScreenSaverActivateDeactivate" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="TouchDeviceChangeTest">
+      <xit:testcase name="DeviceChangedEventPointerToTouchSwitch" success="true"/>
+      <xit:testcase name="DeviceChangedEventTouchToPointerSwitch" success="true"/>
+      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="TouchDeviceTest">
+      <xit:testcase name="DisableDeviceEndTouches" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="TouchEventHistoryTest">
+      <xit:testcase name="EventHistoryReplay/0" success="false"/>
+      <xit:testcase name="EventHistoryReplay/1" success="false"/>
+      <xit:testcase name="EventHistoryReplay/10" success="false"/>
+      <xit:testcase name="EventHistoryReplay/11" success="false"/>
+      <xit:testcase name="EventHistoryReplay/12" success="false"/>
+      <xit:testcase name="EventHistoryReplay/13" success="false"/>
+      <xit:testcase name="EventHistoryReplay/14" success="false"/>
+      <xit:testcase name="EventHistoryReplay/15" success="false"/>
+      <xit:testcase name="EventHistoryReplay/16" success="false"/>
+      <xit:testcase name="EventHistoryReplay/17" success="false"/>
+      <xit:testcase name="EventHistoryReplay/18" success="false"/>
+      <xit:testcase name="EventHistoryReplay/19" success="false"/>
+      <xit:testcase name="EventHistoryReplay/2" success="false"/>
+      <xit:testcase name="EventHistoryReplay/3" success="false"/>
+      <xit:testcase name="EventHistoryReplay/4" success="false"/>
+      <xit:testcase name="EventHistoryReplay/5" success="false"/>
+      <xit:testcase name="EventHistoryReplay/6" success="false"/>
+      <xit:testcase name="EventHistoryReplay/7" success="false"/>
+      <xit:testcase name="EventHistoryReplay/8" success="false"/>
+      <xit:testcase name="EventHistoryReplay/9" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="TouchGrabTestMultipleModes">
+      <xit:testcase name="ActiveAndPassiveGrab/0" success="true"/>
+      <xit:testcase name="ActiveAndPassiveGrab/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="TouchGrabTestMultipleTaps">
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/0" success="true"/>
@@ -121,54 +116,59 @@
       <xit:testcase name="PassiveGrabPointerRelease/8" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/9" success="false"/>
     </xit:testsuite>
-    <xit:testsuite name="TouchEventHistoryTest">
-      <xit:testcase name="EventHistoryReplay/0" success="false"/>
-      <xit:testcase name="EventHistoryReplay/1" success="false"/>
-      <xit:testcase name="EventHistoryReplay/2" success="false"/>
-      <xit:testcase name="EventHistoryReplay/3" success="false"/>
-      <xit:testcase name="EventHistoryReplay/4" success="false"/>
-      <xit:testcase name="EventHistoryReplay/5" success="false"/>
-      <xit:testcase name="EventHistoryReplay/6" success="false"/>
-      <xit:testcase name="EventHistoryReplay/7" success="false"/>
-      <xit:testcase name="EventHistoryReplay/8" success="false"/>
-      <xit:testcase name="EventHistoryReplay/9" success="false"/>
-      <xit:testcase name="EventHistoryReplay/10" success="false"/>
-      <xit:testcase name="EventHistoryReplay/11" success="false"/>
-      <xit:testcase name="EventHistoryReplay/12" success="false"/>
-      <xit:testcase name="EventHistoryReplay/13" success="false"/>
-      <xit:testcase name="EventHistoryReplay/14" success="false"/>
-      <xit:testcase name="EventHistoryReplay/15" success="false"/>
-      <xit:testcase name="EventHistoryReplay/16" success="false"/>
-      <xit:testcase name="EventHistoryReplay/17" success="false"/>
-      <xit:testcase name="EventHistoryReplay/18" success="false"/>
-      <xit:testcase name="EventHistoryReplay/19" success="false"/>
+    <xit:testsuite name="TouchTest">
+      <xit:testcase name="TouchEventsButtonState" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="TouchTestXI2Version">
+      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/0" success="true"/>
+      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/1" success="true"/>
+      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/2" success="true"/>
+      <xit:testcase name="EmulatedButton1MotionMaskOnTouch/3" success="true"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/0" success="false"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/1" success="false"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/2" success="false"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/3" success="false"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/0" success="true"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/1" success="true"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/2" success="true"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/3" success="true"/>
+      <xit:testcase name="XIQueryPointerTouchscreen/0" success="true"/>
+      <xit:testcase name="XIQueryPointerTouchscreen/1" success="true"/>
+      <xit:testcase name="XIQueryPointerTouchscreen/2" success="true"/>
+      <xit:testcase name="XIQueryPointerTouchscreen/3" success="true"/>
+      <xit:testcase name="XITouchscreenPointerEmulation/0" success="true"/>
+      <xit:testcase name="XITouchscreenPointerEmulation/1" success="true"/>
+      <xit:testcase name="XITouchscreenPointerEmulation/2" success="true"/>
+      <xit:testcase name="XITouchscreenPointerEmulation/3" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="XIGrabButtonTest">
       <xit:testcase name="GrabWindowTest" success="true"/>
     </xit:testsuite>
-    <xit:testsuite name="TouchDeviceChangeTest">
+    <xit:testsuite name="XISelectEventsTouchTest">
+      <xit:testcase name="TouchSelectionConflicts/0" success="true"/>
+      <xit:testcase name="TouchSelectionConflicts/1" success="false"/>
+      <xit:testcase name="TouchSelectionConflicts/2" success="false"/>
+      <xit:testcase name="TouchSelectionConflicts/3" success="true"/>
+      <xit:testcase name="TouchSelectionConflicts/4" success="true"/>
+      <xit:testcase name="TouchSelectionConflicts/5" success="false"/>
+      <xit:testcase name="TouchSelectionConflicts/6" success="true"/>
+      <xit:testcase name="TouchSelectionConflicts/7" success="true"/>
+      <xit:testcase name="TouchSelectionConflicts/8" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="XTest">
+      <xit:testcase name="DisabledDevicesCtl" success="true"/>
+      <xit:testcase name="DisabledDevicesProperty" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="XineramaTest">
+      <xit:testcase name="ScreenCrossing/0" success="true"/>
+      <xit:testcase name="ScreenCrossing/1" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="ZaphodTest">
+      <xit:testcase name="ScreenCrossing/0" success="false"/>
+      <xit:testcase name="ScreenCrossing/1" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="ZaphodTouchDeviceChangeTest">
       <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false"/>
-      <xit:testcase name="DeviceChangedEventTouchToPointerSwitch" success="true"/>
-      <xit:testcase name="DeviceChangedEventPointerToTouchSwitch" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="ScreenSaverTest">
-      <xit:testcase name="ScreenSaverActivateDeactivate" success="false"/>
-    </xit:testsuite>
-    <xit:testsuite name="BarrierZeroLength">
-      <xit:testcase name="InvalidZeroLengthBarrier/0" success="true"/>
-      <xit:testcase name="InvalidZeroLengthBarrier/1" success="true"/>
-      <xit:testcase name="InvalidZeroLengthBarrier/2" success="true"/>
-      <xit:testcase name="InvalidZeroLengthBarrier/3" success="true"/>
-      <xit:testcase name="InvalidZeroLengthBarrier/4" success="true"/>
-      <xit:testcase name="InvalidZeroLengthBarrier/5" success="true"/>
-      <xit:testcase name="InvalidZeroLengthBarrier/6" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="PointerGrabTest">
-      <xit:testcase name="ImplicitGrabRawEvents" success="false"/>
-      <xit:testcase name="GrabDisabledDevices" success="true"/>
-    </xit:testsuite>
-    <xit:testsuite name="MiscServerTest">
-      <xit:testcase name="DoubleSegfault" success="true"/>
     </xit:testsuite>
   </xit:registry>
 </xit:registries>
