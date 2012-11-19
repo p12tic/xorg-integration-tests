@@ -465,11 +465,10 @@ def show_test_info(args):
     if test != None:
         print str(test)
 
-def verify_one_result(registry, result):
+def verify_one_result(test, result):
     """Verify the test result given against the registry. Prints a status
        message comprising full test name, expected outcome, actual outcome
        and a grep-able bit to indicate which way the outcome differs"""
-    test = registry.getTest(result.suite, result.name)
 
     if test != None:
         expected_status = str(test.status).lower()
@@ -490,7 +489,18 @@ def verify_results(args):
     print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("TestSuite", "TestCase", "Result", "Expected", "Code")
     print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("---------", "--------", "------", "--------", "----")
     for result in results:
-        verify_one_result(registry, result)
+        verify_one_result(registry.getTest(result.suite, result.name), result)
+
+def compare_registries(args):
+    reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
+    reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
+
+    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("TestSuite", "TestCase", "Result", "Expected", "Code")
+    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("---------", "--------", "------", "--------", "----")
+
+
+    for suite, test, status in reg1.listTestNames():
+        verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test))
 
 
 def create_registry(args):
@@ -675,6 +685,11 @@ def parse_cmdline():
     verify_subparser = subparsers.add_parser("verify", help="Compare JUnit test results against the registry")
     verify_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
     verify_subparser.set_defaults(func = verify_results)
+
+    compare_subparser = subparsers.add_parser("compare", help="Compare two test registries")
+    compare_subparser.add_argument("reg1", metavar="registry1.xml", nargs=1, help="Registry file no 1")
+    compare_subparser.add_argument("reg2", metavar="registry2.xml", nargs=1, help="Registry file no 2")
+    compare_subparser.set_defaults(func = compare_registries)
 
     import_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
     import_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
