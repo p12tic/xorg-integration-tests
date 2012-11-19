@@ -58,7 +58,9 @@
       <xit:testcase name="ImplicitGrabRawEvents" success="false"/>
     </xit:testsuite>
     <xit:testsuite name="ScreenSaverTest">
-      <xit:testcase name="ScreenSaverActivateDeactivate" success="false"/>
+      <xit:testcase name="ScreenSaverActivateDeactivate" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=56649</xit:bug>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="TouchDeviceChangeTest">
       <xit:testcase name="DeviceChangedEventPointerToTouchSwitch" success="true"/>
