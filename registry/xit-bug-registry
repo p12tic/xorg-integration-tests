@@ -8,17 +8,33 @@
 # files obtained from the test suite if --gtest_output="xml:filename.xml" is
 # set.
 #
+# Default input/output for registry files is stdin/stdout unless -f is
+# given. If -f is given, that file is both input and output file and is
+# modified in-place.
+#
 # Usage examples:
+#       Create test registry from test results:
 #       xit-bug-registry create some-results.xml > registry.xml
-#       xit-bug-registry verify some-results.xml < registry.xml
-#       xit-bug-registry merge first-registry.xml second-registry.xml
+#       or
+#       xit-bug-registry -f registry.xml create some-results.xml
+#
+#       Verify test results against existing registry:
+#       xit-bug-registry -f registry.xml verify some-results.xml
+#
+#       Merge a new test registry into an existing one, adding new test
+#       cases from second-registry but leaving the existing ones untouched:
+#       xit-bug-registry -f registry.xml merge first-registry.xml second-registry.xml
+#
+#       Print info about a test:
 #       xit-bug-registry info MyTestSuite TestName < registry.xml
-#       xit-bug-registry edit MyTestSuite TestName add-bug http://bugs.freedesktop.org/1234556 < registry.xml
-#       xit-bug-registry edit MyTestSuite TestName rm-bug http://bugs.freedesktop.org/1234556 < registry.xml
-#       xit-bug-registry edit MyTestSuite TestName add-rpm xorg-x11-server-1.23-4.fc18.rpm < registry.xml
-#       xit-bug-registry edit MyTestSuite TestName rm-rpm xorg-x11-server-1.23-4.fc18.rpm < registry.xml
-#       xit-bug-registry edit MyTestSuite TestName add-commit 12354534deadbeef < registry.xml
-#       xit-bug-registry edit MyTestSuite TestName rm-commit 12354534deadbeef < registry.xml
+#
+#       Add information about a specific test case:
+#       xit-bug-registry -f registry.xml edit MyTestSuite TestName add-bug http://bugs.freedesktop.org/1234556
+#       xit-bug-registry -f registry.xml edit MyTestSuite TestName rm-bug http://bugs.freedesktop.org/1234556
+#       xit-bug-registry -f registry.xml edit MyTestSuite TestName add-rpm xorg-x11-server-1.23-4.fc18.rpm
+#       xit-bug-registry -f registry.xml edit MyTestSuite TestName rm-rpm xorg-x11-server-1.23-4.fc18.rpm
+#       xit-bug-registry -f registry.xml edit MyTestSuite TestName add-commit 12354534deadbeef
+#       xit-bug-registry -f registry.xml edit MyTestSuite TestName rm-commit 12354534deadbeef
 #
 
 import sys
