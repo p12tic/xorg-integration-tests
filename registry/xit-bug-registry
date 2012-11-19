@@ -621,6 +621,24 @@ def set_date(args):
     registry.date = date
     registry_from_string(args, registry.toXML())
 
+def set_modversion(args):
+    registry = load_registry(args)
+    name = args.name
+    version = args.version
+    type = args.type if args.type else "git"
+
+    if type != "git":
+        print >> sys.stderr, "Type %s not supported" % type
+        sys.exit(1)
+
+    if version != "none":
+        registry.moduleversions[name] = version
+    else:
+        del registry.moduleversions[name]
+
+
+    registry_from_string(args, registry.toXML())
+
 def parse_cmdline():
     parser = argparse.ArgumentParser(description = "Parse XIT test results for "
             "known failures.\nRun XIT tests with the --gtest_output:xml and "
@@ -691,6 +709,12 @@ def parse_cmdline():
     set_date_subparser = meta_subparsers.add_parser("set-date", help="Update the date")
     set_date_subparser.add_argument("date", nargs="?", help="Updated date in the form of 2012-12-31 (default to today if missing)")
     set_date_subparser.set_defaults(func = set_date)
+
+    modversion_subparser = meta_subparsers.add_parser("set-module-version", help="Change a module version")
+    modversion_subparser.add_argument("name", help="Name of the module")
+    modversion_subparser.add_argument("version", help="Version string, use 'none' to remove an entry")
+    modversion_subparser.add_argument("--type", help="Version type, e.g. git, rpm");
+    modversion_subparser.set_defaults(func = set_modversion)
 
     return parser
 
