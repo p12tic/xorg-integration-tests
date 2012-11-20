@@ -7,6 +7,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
 #include "barriers-common.h"
@@ -45,6 +46,23 @@ TEST_F(BarrierSimpleTest, DestroyInvalidBarrier)
     XFixesDestroyPointerBarrier(Display(), -1);
     const XErrorEvent *error = ReleaseErrorTrap(Display());
     ASSERT_ERROR(error, xfixes_error_base + BadBarrier);
+}
+
+TEST_F(BarrierSimpleTest, InvalidDeviceCausesBadDevice)
+{
+    XORG_TESTCASE("Ensure that passing a garbage device ID\n"
+                  "to XFixesCreatePointerBarrier returns with\n"
+                  "a BadDevice error\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    int garbage_id = 0x00FACADE;
+    const XErrorEvent *error;
+
+    SetErrorTrap(dpy);
+    XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, 1, &garbage_id);
+    error = ReleaseErrorTrap(dpy);
+    ASSERT_ERROR(error, xi_error_base + XI_BadDevice);
 }
 
 #define VALID_DIRECTIONS                                        \

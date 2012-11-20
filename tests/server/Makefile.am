@@ -13,5 +13,6 @@ server_SOURCES = \
                  barriers-common.h \
                  barriers-validity.cpp \
                  barriers-directions.cpp \
+                 barriers-devices.cpp	\
                  $(common_sources)
 server_LDADD = $(GTEST_LDADDS) $(XTEST_LIBS) $(XFIXES_LIBS) $(XSCREENSAVER_LIBS)
