@@ -150,15 +150,33 @@
       <xit:testcase name="GrabWindowTest" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="XISelectEventsTouchTest">
-      <xit:testcase name="TouchSelectionConflicts/0" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/1" success="false"/>
-      <xit:testcase name="TouchSelectionConflicts/2" success="false"/>
-      <xit:testcase name="TouchSelectionConflicts/3" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/4" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/5" success="false"/>
-      <xit:testcase name="TouchSelectionConflicts/6" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/7" success="true"/>
-      <xit:testcase name="TouchSelectionConflicts/8" success="true"/>
+      <xit:testcase name="TouchSelectionConflicts/0" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/1" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/2" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/3" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/4" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/5" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/6" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/7" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="TouchSelectionConflicts/8" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="XTest">
       <xit:testcase name="DisabledDevicesCtl" success="true"/>
