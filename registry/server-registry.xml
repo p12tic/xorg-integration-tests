@@ -93,8 +93,14 @@
       <xit:testcase name="EventHistoryReplay/9" success="false"/>
     </xit:testsuite>
     <xit:testsuite name="TouchGrabTestMultipleModes">
-      <xit:testcase name="ActiveAndPassiveGrab/0" success="true"/>
-      <xit:testcase name="ActiveAndPassiveGrab/1" success="true"/>
+      <xit:testcase name="ActiveAndPassiveGrab/0" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55738</xit:bug>
+        <xit:fix type="git">676447190190d8546165e21be242cf16dd69f5ae</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="ActiveAndPassiveGrab/1" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55738</xit:bug>
+        <xit:fix type="git">676447190190d8546165e21be242cf16dd69f5ae</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="TouchGrabTestMultipleTaps">
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/0" success="true"/>
@@ -177,15 +183,24 @@
     </xit:testsuite>
     <xit:testsuite name="XTest">
       <xit:testcase name="DisabledDevicesCtl" success="true"/>
-      <xit:testcase name="DisabledDevicesProperty" success="true"/>
+      <xit:testcase name="DisabledDevicesProperty" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=56380</xit:bug>
+        <xit:fix type="git">aad65415bff12c6860c19beac42e4165e598a40f</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="XineramaTest">
       <xit:testcase name="ScreenCrossing/0" success="true"/>
       <xit:testcase name="ScreenCrossing/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTest">
-      <xit:testcase name="ScreenCrossing/0" success="false"/>
-      <xit:testcase name="ScreenCrossing/1" success="false"/>
+      <xit:testcase name="ScreenCrossing/0" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=54654</xit:bug>
+        <xit:fix type="git">e7cd5cce740e653000fb1192b600268dcf77dde2</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="ScreenCrossing/1" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=54654</xit:bug>
+        <xit:fix type="git">e7cd5cce740e653000fb1192b600268dcf77dde2</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTouchDeviceChangeTest">
       <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false"/>
