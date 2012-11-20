@@ -465,7 +465,7 @@ def show_test_info(args):
     if test != None:
         print str(test)
 
-def verify_one_result(test, result):
+def verify_one_result(test, result, format_str):
     """Verify the test result given against the registry. Prints a status
        message comprising full test name, expected outcome, actual outcome
        and a grep-able bit to indicate which way the outcome differs"""
@@ -479,27 +479,43 @@ def verify_one_result(test, result):
     else:
         expected_status = ""
         status_match = "??"
-    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format(status_match, result.suite, result.name, str(result.status).lower(), expected_status)
+    print format_str.format(status_match, result.suite, result.name, str(result.status).lower(), expected_status)
 
 def verify_results(args):
     """Verify a JUnit test result against the XIT test registry"""
     registry = load_registry(args)
     results = JUnitTestResult.fromXML(args.results)
 
-    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("Code", "TestSuite", "TestCase", "Result", "Expected")
-    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("----", "---------", "--------", "------", "--------")
+    sname_len = 0
+    tname_len = 0
+
+    sname_len = max([ len(x.suite) for x in results ]) + 1
+    tname_len = max([ len(x.name) for x in results ]) + 1
+
+    format_str = "{:<4}{:<%d}{:<%d}{:>10}{:>10}" % (sname_len, tname_len)
+    print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
+    print format_str.format("----", "---------", "--------", "------", "--------")
+
     for result in results:
-        verify_one_result(registry.getTest(result.suite, result.name), result)
+        verify_one_result(registry.getTest(result.suite, result.name), result, format_str)
 
 def compare_registries(args):
     reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
     reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
 
-    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("Code", "TestSuite", "TestCase", "Result", "Expected")
-    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("----", "---------", "--------", "------", "--------")
+    sname_len = 0
+    tname_len = 0
+
+    sname_len = max([ len(x[0]) for x in reg1.listTestNames() ]) + 1
+    tname_len = max([ len(x[1]) for x in reg1.listTestNames() ]) + 1
+
+    format_str = "{:<4}{:<%d}{:<%d}{:>10}{:>10}" % (sname_len, tname_len)
+
+    print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
+    print format_str.format("----", "---------", "--------", "------", "--------")
 
     for suite, test, status in reg1.listTestNames():
-        verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test))
+        verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test), format_str)
 
 
 def create_registry(args):
