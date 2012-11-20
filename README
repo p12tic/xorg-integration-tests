@@ -57,5 +57,40 @@ allows to investigate logs or attach gdb to the server process.
 For further environment variables please refer to the xorg-gtest README
 http://cgit.freedesktop.org/xorg/test/xorg-gtest/tree/README
 
+=== Avoiding interference with your running server ===
+Many of the tests will create uinput devices that, usually, will also be picked
+up as devices in your current X session. This will result in pointer movement,
+random clicks, etc. in your current session. This is not a fault of the tests.
+
+To avoid this interference the current X server must be configured to either
+ignore input device hotplugging altogether (Option AutoAddDevices off, see
+xorg.conf(5)) or, a smaller sledgehammer, be configured to ignore virtual
+devices. The udev rule below applies a tag to every virtual device. An
+xorg.conf snippet (below) matches against this tag and tells the server to
+ignore those. Restart the X server to let the changes take effect.
+
+BEWARE: adding this xorg.conf snippet will disable _all_ virtual input
+devices in your current X session.
+
+$> cat /etc/udev/rules.d/99-tag-virtual-devices.rules
+# tag all virtual devices as virtual devices, so an xorg.conf snippet can be
+# set up to ignore those.
+
+ACTION!="add|change", GOTO="tag_virtual_devices_end"
+KERNEL!="event[0-9]*", GOTO="tag_virtual_devices_end"
+
+ENV{DEVPATH}=="/devices/virtual/*", ENV{ID_INPUT.tags}+="virtualdevice"
+
+LABEL="tag_virtual_devices_end"
+
+$> cat /etc/X11/xorg.conf.d/99-ignore-virtual-devices.conf
+# Ignore all devices with ID_INPUT.tags set to "virtualdevice"
+Section "InputClass"
+  Identifier "ignore virtual devices"
+  MatchTag "virtualdevice"
+  Option "Ignore" "on"
+EndSection
+
+
 == Writing tests ==
 Please refer to the HACKING document

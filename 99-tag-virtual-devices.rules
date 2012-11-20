@@ -1,0 +1,12 @@
+# tag all virtual devices as virtual devices, so an xorg.conf snippet can be
+# set up to ignore those.
+#
+# Note that this tags _any_ virtual input device. The tag itself has no
+# effect unless matched by a xorg.conf.d snippet
+
+ACTION!="add|change", GOTO="tag_virtual_devices_end"
+KERNEL!="event[0-9]*", GOTO="tag_virtual_devices_end"
+
+ENV{DEVPATH}=="/devices/virtual/*", ENV{ID_INPUT.tags}+="virtualdevice"
+
+LABEL="tag_virtual_devices_end"
