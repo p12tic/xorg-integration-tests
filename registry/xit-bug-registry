@@ -220,6 +220,14 @@ class XITTestCase:
         else:
             raise ValueError
 
+    def __cmp__(self, other):
+        if other == None:
+            return 1
+        rc = cmp(self.suite, other.suite)
+        if rc == 0:
+            rc = cmp(self.name, other.name)
+        return rc
+
 class XITTest(XITTestCase):
     """Represents one single XIT test case, comprised of test suite name and test case name.
        A test has a status (true on success, false on failure) and may have zero or more
@@ -496,7 +504,7 @@ def verify_results(args):
     print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
     print format_str.format("----", "---------", "--------", "------", "--------")
 
-    for result in results:
+    for result in sorted(results):
         verify_one_result(registry.getTest(result.suite, result.name), result, format_str)
 
 def compare_registries(args):
@@ -514,7 +522,7 @@ def compare_registries(args):
     print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
     print format_str.format("----", "---------", "--------", "------", "--------")
 
-    for suite, test, status in reg1.listTestNames():
+    for suite, test, status in sorted(reg1.listTestNames()):
         verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test), format_str)
 
 
