@@ -473,7 +473,7 @@ def verify_one_result(test, result):
     if test != None:
         expected_status = str(test.status).lower()
         if str(test.status).lower() != str(result.status).lower():
-            status_match = "!!"
+            status_match = "XX"
         else:
             status_match = "++" if test.status else "--"
     else:
