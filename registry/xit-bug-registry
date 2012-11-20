@@ -479,15 +479,15 @@ def verify_one_result(test, result):
     else:
         expected_status = ""
         status_match = "??"
-    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format(result.suite, result.name, str(result.status).lower(), expected_status, status_match)
+    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format(status_match, result.suite, result.name, str(result.status).lower(), expected_status)
 
 def verify_results(args):
     """Verify a JUnit test result against the XIT test registry"""
     registry = load_registry(args)
     results = JUnitTestResult.fromXML(args.results)
 
-    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("TestSuite", "TestCase", "Result", "Expected", "Code")
-    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("---------", "--------", "------", "--------", "----")
+    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("Code", "TestSuite", "TestCase", "Result", "Expected")
+    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("----", "---------", "--------", "------", "--------")
     for result in results:
         verify_one_result(registry.getTest(result.suite, result.name), result)
 
@@ -495,9 +495,8 @@ def compare_registries(args):
     reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
     reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
 
-    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("TestSuite", "TestCase", "Result", "Expected", "Code")
-    print "{:<50}{:<50}{:>10}{:>10}{:>4}".format("---------", "--------", "------", "--------", "----")
-
+    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("Code", "TestSuite", "TestCase", "Result", "Expected")
+    print "{:<4}{:<50}{:<50}{:>10}{:>10}".format("----", "---------", "--------", "------", "--------")
 
     for suite, test, status in reg1.listTestNames():
         verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test))
