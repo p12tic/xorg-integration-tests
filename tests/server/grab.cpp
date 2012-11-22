@@ -9,6 +9,7 @@
 #include <X11/extensions/XInput2.h>
 #include <X11/extensions/XInput.h>
 
+#include "xit-event.h"
 #include "xit-server-input-test.h"
 #include "device-interface.h"
 #include "helpers.h"
@@ -407,6 +408,539 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 }
 
 INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleTaps, ::testing::Range(1, 11)); /* device num_touches is 5 */
+
+class TouchOwnershipTest : public TouchGrabTest {
+public:
+    Window CreateWindow(::Display *dpy, Window parent)
+    {
+        Window win;
+        win = XCreateSimpleWindow(dpy, parent, 0, 0,
+                                  DisplayWidth(dpy, DefaultScreen(dpy)),
+                                  DisplayHeight(dpy, DefaultScreen(dpy)),
+                                  0, 0, 0);
+        XSelectInput(dpy, win, StructureNotifyMask);
+        XMapWindow(dpy, win);
+        if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+            XEvent ev;
+            XNextEvent(dpy, &ev);
+        } else {
+            ADD_FAILURE() << "Failed waiting for Exposure";
+        }
+        XSelectInput(dpy, win, 0);
+        XSync(dpy, False);
+        return win;
+    }
+
+
+    void GrabTouchOnWindow(::Display *dpy, Window win, bool ownership = false)
+    {
+        XIEventMask mask;
+        mask.deviceid = XIAllMasterDevices;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_TouchBegin);
+        XISetMask(mask.mask, XI_TouchEnd);
+        XISetMask(mask.mask, XI_TouchUpdate);
+
+        if (ownership)
+            XISetMask(mask.mask, XI_TouchOwnership);
+        XIGrabModifiers mods = {};
+        mods.modifiers = XIAnyModifier;
+        ASSERT_EQ(Success, XIGrabTouchBegin(dpy, XIAllMasterDevices,
+                           win, False, &mask, 1, &mods));
+
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+
+    void GrabDevice(::Display *dpy, int deviceid, Window win, bool ownership = false)
+    {
+        XIEventMask mask;
+        mask.deviceid = deviceid;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_TouchBegin);
+        XISetMask(mask.mask, XI_TouchEnd);
+        XISetMask(mask.mask, XI_TouchUpdate);
+
+        if (ownership)
+            XISetMask(mask.mask, XI_TouchOwnership);
+
+        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
+                                        win, CurrentTime, None,
+                                        GrabModeAsync, GrabModeAsync,
+                                        False, &mask));
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+
+    void GrabPointer(::Display *dpy, int deviceid, Window win)
+    {
+        XIEventMask mask;
+        mask.deviceid = deviceid;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_ButtonPress);
+        XISetMask(mask.mask, XI_ButtonRelease);
+        XISetMask(mask.mask, XI_Motion);
+
+        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
+                                        win, CurrentTime, None,
+                                        GrabModeAsync, GrabModeAsync,
+                                        False, &mask));
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+
+    void SelectTouchOnWindow(::Display *dpy, Window win, bool ownership = false)
+    {
+        XIEventMask mask;
+        mask.deviceid = XIAllMasterDevices;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_TouchBegin);
+        XISetMask(mask.mask, XI_TouchEnd);
+        XISetMask(mask.mask, XI_TouchUpdate);
+
+        if (ownership)
+            XISetMask(mask.mask, XI_TouchOwnership);
+        XISelectEvents(dpy, win, &mask, 1);
+
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+
+    void AssertNoEventsPending(::Display *dpy)
+    {
+        XSync(dpy, False);
+        /* A has rejected, expect no more TouchEnd */
+        if (XPending(dpy)) {
+            XEvent ev;
+            XPeekEvent(dpy, &ev);
+            std::stringstream ss;
+            ASSERT_EQ(XPending(dpy), 0) << "Event type " << ev.type << " (extension " <<
+                ev.xcookie.extension << " evtype " << ev.xcookie.evtype << ")";
+        }
+    }
+
+    /**
+     * Return a new synchronized client given our default server connection.
+     * Client is initialised for XI 2.2
+     */
+    ::Display* NewClient(void) {
+        ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
+        if (!d)
+            ADD_FAILURE() << "Failed to open display for new client.\n";
+        XSynchronize(d, True);
+        int major = 2, minor = 2;
+        if (XIQueryVersion(d, &major, &minor) != Success)
+            ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
+        return d;
+    }
+};
+
+TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
+{
+    XORG_TESTCASE("Client 1 registers a touch grab on the root window.\n"
+                  "Clients 2-4 register a touch grab with TouchOwnership on respective subwindows.\n"
+                  "Client 5 selects for TouchOwnership events on last window.\n"
+                  "TouchBegin/End in the window.\n"
+                  "Expect a TouchBegin to all clients.\n"
+                  "Reject touch one-by-one in all clients\n"
+                  "Expect TouchOwnership to traverse down\n");
+
+    const int NCLIENTS = 5;
+    ::Display *dpys[NCLIENTS];
+    dpys[0] = Display();
+    XSynchronize(dpys[0], True);
+    for (int i = 1; i < NCLIENTS; i++)
+        dpys[i] = NewClient();
+
+    Window win[NCLIENTS];
+    win[0] = DefaultRootWindow(dpys[0]);
+
+    /* Client A has a touch grab on the root window */
+    GrabTouchOnWindow(dpys[0], DefaultRootWindow(dpys[0]));
+    for (int i = 1; i < NCLIENTS - 1; i++) {
+        /* other clients selects with ownership*/
+        Window w = CreateWindow(dpys[i], win[i-1]);
+        GrabTouchOnWindow(dpys[i], w, true);
+        win[i] = w;
+    }
+
+    /* last client has selection only */
+    Window w = CreateWindow(dpys[NCLIENTS - 1], win[NCLIENTS-2]);
+    win[NCLIENTS-1] = w;
+    SelectTouchOnWindow(dpys[NCLIENTS-1], w, true);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    int touchid = -1;
+
+    for (int i = 0; i < NCLIENTS; i++) {
+        /* Expect touch begin on all clients */
+        XITEvent<XIDeviceEvent> tbegin(dpys[i], GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_TRUE(tbegin.ev);
+        if (touchid == -1)
+            touchid = tbegin.ev->detail;
+        else
+            ASSERT_EQ(touchid, tbegin.ev->detail);
+
+        /* A has no ownership mask, everyone else doesn't have ownership
+         * yet, so everyone only has the TouchBegin so far*/
+        AssertNoEventsPending(dpys[i]);
+    }
+
+    /* Now reject one-by-one */
+    for (int i = 1; i < NCLIENTS; i++) {
+        int current_owner = i-1;
+        int next_owner = i;
+        XIAllowTouchEvents(dpys[current_owner], VIRTUAL_CORE_POINTER_ID, touchid, win[current_owner], XIRejectTouch);
+
+        XITEvent<XIDeviceEvent> tend(dpys[current_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
+        ASSERT_TRUE(tend.ev);
+        AssertNoEventsPending(dpys[current_owner]);
+
+        /* Now we expect ownership */
+        ASSERT_EQ(XPending(dpys[next_owner]), 1);
+        XITEvent<XITouchOwnershipEvent> oe(dpys[next_owner], GenericEvent, xi2_opcode, XI_TouchOwnership);
+        ASSERT_TRUE(oe.ev);
+        ASSERT_EQ(oe.ev->touchid, (unsigned int)touchid);
+    }
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    int last_owner = NCLIENTS-1;
+    XITEvent<XIDeviceEvent> tend(dpys[last_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(tend.ev);
+    ASSERT_EQ(tend.ev->detail, touchid);
+
+    for (int i = 0; i < NCLIENTS; i++)
+        AssertNoEventsPending(dpys[i]);
+}
+
+TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
+{
+    XORG_TESTCASE("Create a window W.\n"
+                  "Client A registers a touch grab on the root window.\n"
+                  "Client B register for TouchOwnership events on W.\n"
+                  "TouchBegin/End in the window.\n"
+                  "Expect a TouchBegin to B\n"
+                  "Accept touch in A\n"
+                  "Expect TouchEnd in B, no ownership\n");
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* Client A has a touch grab on the root window */
+    GrabTouchOnWindow(dpy, DefaultRootWindow(dpy));
+
+    /* CLient B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy));
+    SelectTouchOnWindow(dpy2, win, true);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    /* Expect touch begin to A */
+    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(A_begin.ev);
+    int touchid = A_begin.ev->detail;
+    int deviceid = A_begin.ev->deviceid;
+    Window root = A_begin.ev->root;
+
+
+    /* Now expect the touch begin to B */
+    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(B_begin.ev);
+    ASSERT_EQ(B_begin.ev->detail, touchid);
+
+    /* A has not rejected yet, no ownership */
+    ASSERT_EQ(XPending(dpy2), 0);
+
+    XIAllowTouchEvents(dpy, deviceid, touchid, root, XIAcceptTouch);
+
+    /* Now we expect TouchEnd on B */
+    ASSERT_EQ(XPending(dpy2), 1);
+    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(B_end.ev);
+    ASSERT_EQ(B_end.ev->detail, touchid);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(A_end.ev);
+    ASSERT_EQ(A_end.ev->detail, touchid);
+
+    AssertNoEventsPending(dpy2);
+}
+
+TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
+{
+    XORG_TESTCASE("Client A actively grabs the device.\n"
+                  "Client B register for TouchOwnership events on the root window.\n"
+                  "TouchBegin/End in the window.\n"
+                  "Expect a TouchBegin to A and B\n"
+                  "Accept touch in A\n"
+                  "Expect TouchEnd in B, no ownership\n");
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* CLient B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy));
+    SelectTouchOnWindow(dpy2, win, true);
+
+    /* Client A grabs the device */
+    GrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    /* Expect touch begin to A */
+    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(A_begin.ev);
+    int touchid = A_begin.ev->detail;
+    int deviceid = A_begin.ev->deviceid;
+    Window root = A_begin.ev->root;
+
+    /* Now expect the touch begin to B */
+    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(B_begin.ev);
+    ASSERT_EQ(B_begin.ev->detail, touchid);
+
+    /* A has not rejected yet, no ownership */
+    ASSERT_EQ(XPending(dpy2), 0);
+
+    XIAllowTouchEvents(dpy, deviceid, touchid, root, XIAcceptTouch);
+
+    /* Now we expect TouchEnd */
+    ASSERT_EQ(XPending(dpy2), 1);
+    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(B_end.ev);
+    ASSERT_EQ(B_end.ev->detail, touchid);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(A_end.ev);
+    ASSERT_EQ(A_end.ev->detail, touchid);
+
+    AssertNoEventsPending(dpy2);
+}
+
+TEST_F(TouchOwnershipTest, ActiveGrabOwnershipRejectTouch)
+{
+    XORG_TESTCASE("Client A actively grabs the device.\n"
+                  "Client B register for TouchOwnership events on the root window.\n"
+                  "TouchBegin/End in the window.\n"
+                  "Expect a TouchBegin to A and B\n"
+                  "Accept touch in A\n"
+                  "Expect TouchEnd in B, no ownership\n");
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* CLient B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy));
+    SelectTouchOnWindow(dpy2, win, true);
+
+    /* Client A grabs the device */
+    GrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    /* Expect touch begin to A */
+    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(A_begin.ev);
+    int touchid = A_begin.ev->detail;
+    int deviceid = A_begin.ev->deviceid;
+    Window root = A_begin.ev->root;
+
+    /* Now expect the touch begin to B */
+    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(B_begin.ev);
+    ASSERT_EQ(B_begin.ev->detail, touchid);
+
+    /* A has not rejected yet, no ownership */
+    ASSERT_EQ(XPending(dpy2), 0);
+
+    XIAllowTouchEvents(dpy, deviceid, touchid, root, XIRejectTouch);
+
+    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(A_end.ev);
+    ASSERT_EQ(A_end.ev->detail, touchid);
+
+    /* Now we expect TouchOwnership */
+    ASSERT_EQ(XPending(dpy2), 1);
+
+    XITEvent<XITouchOwnershipEvent> oe(dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
+    ASSERT_TRUE(oe.ev);
+    ASSERT_EQ(oe.ev->touchid, (unsigned int)touchid);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(B_end.ev);
+
+    AssertNoEventsPending(dpy2);
+}
+
+TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
+{
+    XORG_TESTCASE("Client A actively grabs the device.\n"
+                  "Client B register for TouchOwnership events on the root window.\n"
+                  "TouchBegin/End in the window.\n"
+                  "Expect a TouchBegin to A and B\n"
+                  "Accept touch in A\n"
+                  "Expect TouchEnd in B, no ownership\n");
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* CLient B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy));
+    SelectTouchOnWindow(dpy2, win, true);
+
+    /* Client A grabs the device */
+    GrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    /* Expect touch begin to A */
+    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(A_begin.ev);
+    int touchid = A_begin.ev->detail;
+    int deviceid = A_begin.ev->deviceid;
+
+    /* Now expect the touch begin to B */
+    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(B_begin.ev);
+    ASSERT_EQ(B_begin.ev->detail, touchid);
+
+    /* A has not rejected yet, no ownership */
+    ASSERT_EQ(XPending(dpy2), 0);
+
+    XIUngrabDevice(dpy, deviceid, CurrentTime);
+
+    /* A needs TouchEnd */
+    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(A_end.ev);
+    ASSERT_EQ(A_end.ev->detail, touchid);
+
+    /* Now we expect TouchOwnership on B */
+    ASSERT_EQ(XPending(dpy2), 1);
+    XITEvent<XITouchOwnershipEvent> oe(dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
+    ASSERT_TRUE(oe.ev);
+    ASSERT_EQ(oe.ev->touchid, (unsigned int)touchid);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(B_end.ev);
+    ASSERT_EQ(B_end.ev->detail, touchid);
+
+    AssertNoEventsPending(dpy);
+}
+
+TEST_F(TouchOwnershipTest, ActivePointerGrabForWholeTouch)
+{
+    XORG_TESTCASE("Client A pointer-grabs the device.\n"
+                  "Client B registers for TouchOwnership events on a window.\n"
+                  "TouchBegin/End in the window.\n"
+                  "Expect ButtonPress/Release to A.\n"
+                  "Expect TouchBegin/End to B without ownership.");
+
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* CLient B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy));
+    SelectTouchOnWindow(dpy2, win, true);
+
+    /* Client A grabs the device */
+    GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    XITEvent<XIDeviceEvent> A_btnpress(dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_TRUE(A_btnpress.ev);
+
+    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(B_begin.ev);
+
+    /* No ownership event on the wire */
+    AssertNoEventsPending(dpy2);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XITEvent<XIDeviceEvent> A_btnrelease(dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+    ASSERT_TRUE(A_btnrelease.ev);
+
+    /* One event on the wire and it's TouchEnd, not ownership */
+    ASSERT_EQ(XPending(dpy2), 1);
+
+    XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
+
+    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(B_end.ev);
+
+    AssertNoEventsPending(dpy);
+}
+
+TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
+{
+    XORG_TESTCASE("Client A pointer-grabs the device.\n"
+                  "Client B registers for TouchOwnership events on a window.\n"
+                  "TouchBegin in the window.\n"
+                  "Expect ButtonPress to A.\n"
+                  "Ungrab pointer.\n"
+                  "Expect TouchBegin and TouchOwnership to B.\n"
+                  "TouchEnd in the window, expect TouchEnd on B.\n");
+
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* CLient B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy));
+    SelectTouchOnWindow(dpy2, win, true);
+
+    /* Client A grabs the device */
+    GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    XITEvent<XIDeviceEvent> A_btnpress(dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_TRUE(A_btnpress.ev);
+
+    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(B_begin.ev);
+
+    /* No ownership event on the wire */
+    AssertNoEventsPending(dpy2);
+
+    XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
+
+    XITEvent<XITouchOwnershipEvent> B_ownership(dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
+    ASSERT_TRUE(B_ownership.ev);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(B_end.ev);
+
+    AssertNoEventsPending(dpy);
+}
 
 #endif /* HAVE_XI22 */
 
