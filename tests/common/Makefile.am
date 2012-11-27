@@ -24,6 +24,7 @@ GTEST_LDADDS = \
 	       $(XORG_GTEST_MAIN_LIBS)
 
 common_sources =  \
+		 $(top_srcdir)/tests/common/xit-event.h \
 		 $(top_srcdir)/tests/common/xit-server-test.cpp \
 		 $(top_srcdir)/tests/common/xit-server-test.h \
 		 $(top_srcdir)/tests/common/xit-server.cpp \
