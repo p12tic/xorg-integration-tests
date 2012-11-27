@@ -213,3 +213,30 @@ If you need to gdb the server to set breakpoints before a test starts, set
 
 The server will be sent a SIGSTOP signal after starting, waiting for you to
 attach gdb. It can then be foregrounded and the test continues.
+
+== Using the bug registry ==
+Most server versions will fail at least some tests, tests may have been
+committed before a fix for a given failure was upstream. It's hard to keep
+track of which tests fail, which is what the bug registry addresses.
+
+Often, what really matters is if there are any tests that changed after a
+fix in the server. To use the bug registry for this task run the following
+commands. On the __original__ server, run
+   # Run the grab tests, printing to a JUnit test xml file
+   ./test/server/grab --gtest_output="xml:grab.xml"
+   # Create a registry based on the test results
+   xit-bug-registry create grab.xml > grab-results.xml
+   # fix server bug
+   # Re-run grab tests on new server
+   ./test/server/grab --gtest_output="xml:grab.xml"
+   # Compare previous results with new results
+   xit-bug-registry verify grab.xml < grab-results.xml
+
+
+The output will print the test names and the expected vs real outcome plus a
+status code to grep for the unexpected.
+
+Note that especially test failures need to be treated with caution. An
+unrelated fix may alter the outcome of a already failing tests (e.g. the
+server now crashes as opposed to returning incorrect values). It is not
+enough to simply check that all tests have the same outcome.
