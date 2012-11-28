@@ -126,5 +126,12 @@ Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y);
  */
 void WarpPointer(Display *dpy, int x, int y);
 
+/**
+ * Create and map a window below the given parent. Default is a full-screen window.
+ */
+Window CreateWindow(Display *dpy, Window parent = None,
+                    int x = 0, int y = 0,
+                    int width = -1, int height = -1);
+
 #endif
 

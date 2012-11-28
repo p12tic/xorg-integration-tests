@@ -205,3 +205,30 @@ void WarpPointer(Display *dpy, int x, int y)
                   0, 0, 0, 0, x, y);
     XSync(dpy, False);
 }
+
+Window CreateWindow(Display *dpy, Window parent,
+                    int x, int y,
+                    int width, int height)
+{
+    Window win;
+
+    if (width == -1)
+        width = DisplayWidth(dpy, DefaultScreen(dpy));
+    if (height == -1)
+        DisplayHeight(dpy, DefaultScreen(dpy));
+    if (parent == None)
+        parent = DefaultRootWindow(dpy);
+
+    win = XCreateSimpleWindow(dpy, parent, x, y, width, height, 0, 0, 0);
+    XSelectInput(dpy, win, StructureNotifyMask);
+    XMapWindow(dpy, win);
+    if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+        XEvent ev;
+        XNextEvent(dpy, &ev);
+    } else {
+        ADD_FAILURE() << "Failed waiting for Exposure";
+    }
+    XSelectInput(dpy, win, 0);
+    XSync(dpy, False);
+    return win;
+}
