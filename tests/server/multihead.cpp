@@ -142,7 +142,6 @@ public:
     void FlushMotionEvents(::Display *dpy, int direction)
     {
         dev->PlayOne(EV_REL, REL_X, direction * 3, true);
-        dev->PlayOne(EV_REL, REL_X, direction * 3, true);
         XSync(dpy, False);
         while (XPending(dpy)) {
             XEvent ev;
@@ -165,25 +164,30 @@ public:
         int old_x = (direction > 0) ? INT_MIN : INT_MAX;
         do {
             MoveUntilMotionEvent(dpy, direction);
-            XNextEvent(dpy, &ev);
+            bool done = false;
+            while (XPending(dpy) && !done) {
+                XNextEvent(dpy, &ev);
 
-            switch(ev.type) {
-                case LeaveNotify:
-                    on_screen = false;
-                    XPutBackEvent(dpy, &ev);
-                    break;
-                case MotionNotify:
-                    if (direction < 0)
-                        EXPECT_LT(ev.xmotion.x_root, old_x) <<
-                            "Pointer must move in negative X direction only";
-                    else
-                        EXPECT_GT(ev.xmotion.x_root, old_x) <<
-                            "Pointer must move in positive X direction only";
-                    old_x = ev.xmotion.x_root;
-                    break;
-                default:
-                    ADD_FAILURE() << "Unknown event type " << ev.type;
-                    break;
+                switch(ev.type) {
+                    case LeaveNotify:
+                        on_screen = false;
+                        XPutBackEvent(dpy, &ev);
+                        done = true;
+                        break;
+                    case MotionNotify:
+                        if (direction < 0)
+                            EXPECT_LT(ev.xmotion.x_root, old_x) <<
+                                "Pointer must move in negative X direction only";
+                        else
+                            EXPECT_GT(ev.xmotion.x_root, old_x) <<
+                                "Pointer must move in positive X direction only";
+                        old_x = ev.xmotion.x_root;
+                        break;
+                    default:
+                        ADD_FAILURE() << "Unknown event type " << ev.type;
+                        done = true;
+                        break;
+                }
             }
         } while(on_screen &&
                 old_x < (DisplayWidth(dpy, 0) - 1) &&
@@ -217,6 +221,14 @@ TEST_P(ZaphodTest, ScreenCrossing)
     int direction = left_of ? -1 : 1;
     bool on_screen;
 
+    int start_x;
+    if (left_of)
+        start_x = 1;
+    else
+        start_x = DisplayWidth(dpy, DefaultScreen(dpy)) - 2;
+
+    WarpPointer(dpy, start_x, DisplayHeight(dpy, DefaultScreen(dpy))/2);
+
     on_screen = Move(dpy, direction);
 
     /* We've left the screen, make sure we get an enter on the other one */
@@ -230,6 +242,13 @@ TEST_P(ZaphodTest, ScreenCrossing)
 
     ASSERT_FALSE(XPending(dpy)) << "No events should appear on first screen";
     ASSERT_FALSE(XPending(dpy2));
+
+    if (left_of)
+        start_x = DisplayWidth(dpy2, DefaultScreen(dpy2)) - 2;
+    else
+        start_x = 1;
+
+    WarpPointer(dpy2, start_x, DisplayHeight(dpy2, DefaultScreen(dpy2))/2);
 
     /* We're on the second screen now, move back */
     direction *= -1;
