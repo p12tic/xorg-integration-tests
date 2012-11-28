@@ -283,14 +283,26 @@ TEST_P(XineramaTest, ScreenCrossing)
     XSelectInput(dpy, RootWindow(dpy, 0), PointerMotionMask | LeaveWindowMask | EnterWindowMask);
     XFlush(dpy);
 
+    int width = DisplayWidth(dpy, DefaultScreen(dpy));
+    double x, y;
     bool left_of = GetParam();
     int direction = left_of ? -1 : 1;
     bool on_screen = Move(dpy, direction);
     ASSERT_TRUE(on_screen);
-    on_screen = Move(dpy, -direction);
-    ASSERT_TRUE(on_screen);
+    QueryPointerPosition(dpy, &x, &y);
+    ASSERT_EQ(x, (direction == -1) ? 0 : width - 1);
+
+    direction *= -1;
     on_screen = Move(dpy, direction);
     ASSERT_TRUE(on_screen);
+    QueryPointerPosition(dpy, &x, &y);
+    ASSERT_EQ(x, (direction == -1) ? 0 : width - 1);
+
+    direction *= -1;
+    on_screen = Move(dpy, direction);
+    ASSERT_TRUE(on_screen);
+    QueryPointerPosition(dpy, &x, &y);
+    ASSERT_EQ(x, (direction == -1) ? 0 : width - 1);
 }
 
 INSTANTIATE_TEST_CASE_P(, XineramaTest, ::testing::Values(true, false));
