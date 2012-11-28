@@ -13,6 +13,7 @@
 
 #include "xorg-conf.h"
 #include "xit-server.h"
+#include "xit-event.h"
 #include "helpers.h"
 #include "device-interface.h"
 
@@ -303,6 +304,66 @@ TEST_P(XineramaTest, ScreenCrossing)
     ASSERT_TRUE(on_screen);
     QueryPointerPosition(dpy, &x, &y);
     ASSERT_EQ(x, (direction == -1) ? 0 : width - 1);
+}
+
+TEST_P(XineramaTest, ScreenCrossingButtons)
+{
+    XORG_TESTCASE("Start a Xinerama server with two screens."
+                  "Create a window on the left and one on the right edge.\n"
+                  "Move pointer to the left window, click.\n"
+                  "Expect enter notify, button events on left window.\n"
+                  "Move pointer to the right window, click.\n"
+                  "Expect leave notify on left window, enter notify, button events on left window.\n");
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy, True);
+    ASSERT_TRUE(dpy);
+    ASSERT_EQ(ScreenCount(dpy), 1);
+
+    int width = DisplayWidth(dpy, DefaultScreen(dpy));
+    int height = DisplayHeight(dpy, DefaultScreen(dpy));
+
+    Window lwin = CreateWindow(dpy, None, 0, 0, 200, height);
+    Window rwin = CreateWindow(dpy, None, width - 200, 0, 200, height);
+
+    XSelectInput(dpy, lwin, EnterWindowMask|LeaveWindowMask|ButtonPressMask|ButtonReleaseMask);
+    XSelectInput(dpy, rwin, EnterWindowMask|LeaveWindowMask|ButtonPressMask|ButtonReleaseMask);
+
+    WarpPointer(dpy, 201, height/2);
+    dev->PlayOne(EV_REL, REL_X, -10, true);
+
+    XITEvent<XEnterWindowEvent> lwin_enter(dpy, EnterNotify);
+    ASSERT_TRUE(lwin_enter.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    XITEvent<XButtonPressedEvent> lwin_press(dpy, ButtonPress);
+    ASSERT_TRUE(lwin_press.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    XITEvent<XButtonPressedEvent> lwin_release(dpy, ButtonRelease);
+    ASSERT_TRUE(lwin_release.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+
+    dev->PlayOne(EV_REL, REL_X, width, true);
+
+    XITEvent<XLeaveWindowEvent> lwin_leave(dpy, LeaveNotify);
+    ASSERT_TRUE(lwin_enter.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+
+    XITEvent<XEnterWindowEvent> rwin_enter(dpy, EnterNotify);
+    ASSERT_TRUE(rwin_enter.ev);
+    ASSERT_EQ(rwin_enter.ev->window, rwin);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    XITEvent<XButtonPressedEvent> rwin_press(dpy, ButtonPress);
+    ASSERT_TRUE(rwin_press.ev);
+    ASSERT_EQ(rwin_enter.ev->window, rwin);
+    XITEvent<XButtonPressedEvent> rwin_release(dpy, ButtonRelease);
+    ASSERT_TRUE(rwin_release.ev);
+    ASSERT_EQ(rwin_enter.ev->window, rwin);
 }
 
 INSTANTIATE_TEST_CASE_P(, XineramaTest, ::testing::Values(true, false));
