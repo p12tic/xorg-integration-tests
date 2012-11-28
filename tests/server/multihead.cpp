@@ -263,6 +263,84 @@ TEST_P(ZaphodTest, ScreenCrossing)
     FlushMotionEvents(dpy, direction);
 }
 
+TEST_P(ZaphodTest, ScreenCrossingButtons)
+{
+    XORG_TESTCASE("Start a zaphod server with two screens."
+                  "Create a window on the left and one on the right edge.\n"
+                  "Move pointer to the left window, click.\n"
+                  "Expect enter notify, button events on left window.\n"
+                  "Move pointer to the right window, click.\n"
+                  "Expect leave notify on left window, enter notify, button events on left window.\n");
+
+    std::string ldisplay;
+    std::string rdisplay;
+
+    bool left_of = GetParam();
+    if (left_of) {
+        rdisplay = server.GetDisplayString();
+        ldisplay = server.GetDisplayString() + ".1";
+    } else {
+        ldisplay = server.GetDisplayString();
+        rdisplay = server.GetDisplayString() + ".1";
+    }
+
+    ::Display *ldpy = XOpenDisplay(ldisplay.c_str());
+    XSynchronize(ldpy, True);
+    ASSERT_TRUE(ldpy);
+    ASSERT_EQ(ScreenCount(ldpy), 2);
+
+    /* we keep two separate connections to make the code a bit simpler */
+    ::Display *rdpy = XOpenDisplay(rdisplay.c_str());
+    XSynchronize(rdpy, True);
+    ASSERT_TRUE(rdpy);
+    ASSERT_EQ(ScreenCount(rdpy), 2);
+
+    int width = DisplayWidth(ldpy, DefaultScreen(ldpy));
+    int height = DisplayHeight(ldpy, DefaultScreen(ldpy));
+
+    Window lwin = CreateWindow(ldpy, None, 0, 0, 200, height);
+    Window rwin = CreateWindow(rdpy, None, width - 200, 0, 200, height);
+
+    XSelectInput(ldpy, lwin, EnterWindowMask|LeaveWindowMask|ButtonPressMask|ButtonReleaseMask);
+    XSelectInput(rdpy, rwin, EnterWindowMask|LeaveWindowMask|ButtonPressMask|ButtonReleaseMask);
+
+    dev->PlayOne(EV_REL, REL_X, -width * 2, true);
+
+    XITEvent<XEnterWindowEvent> lwin_enter(ldpy, EnterNotify);
+    ASSERT_TRUE(lwin_enter.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    XITEvent<XButtonPressedEvent> lwin_press(ldpy, ButtonPress);
+    ASSERT_TRUE(lwin_press.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    XITEvent<XButtonPressedEvent> lwin_release(ldpy, ButtonRelease);
+    ASSERT_TRUE(lwin_release.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+
+    dev->PlayOne(EV_REL, REL_X, width * 2, true);
+
+    XITEvent<XLeaveWindowEvent> lwin_leave(ldpy, LeaveNotify);
+    ASSERT_TRUE(lwin_enter.ev);
+    ASSERT_EQ(lwin_enter.ev->window, lwin);
+
+    XITEvent<XEnterWindowEvent> rwin_enter(rdpy, EnterNotify);
+    ASSERT_TRUE(rwin_enter.ev);
+    ASSERT_EQ(rwin_enter.ev->window, rwin);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    XITEvent<XButtonPressedEvent> rwin_press(rdpy, ButtonPress);
+    ASSERT_TRUE(rwin_press.ev);
+    ASSERT_EQ(rwin_enter.ev->window, rwin);
+    XITEvent<XButtonPressedEvent> rwin_release(rdpy, ButtonRelease);
+    ASSERT_TRUE(rwin_release.ev);
+    ASSERT_EQ(rwin_enter.ev->window, rwin);
+}
+
 INSTANTIATE_TEST_CASE_P(, ZaphodTest, ::testing::Values(true, false));
 
 class XineramaTest : public ZaphodTest {
