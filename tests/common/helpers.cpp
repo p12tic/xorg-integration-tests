@@ -198,3 +198,10 @@ Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y)
                            &win_x, &win_y,
                            &buttons, &mods, &group);
 }
+
+void WarpPointer(Display *dpy, int x, int y)
+{
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, DefaultRootWindow(dpy),
+                  0, 0, 0, 0, x, y);
+    XSync(dpy, False);
+}

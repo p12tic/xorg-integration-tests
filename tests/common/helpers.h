@@ -121,5 +121,10 @@ std::string DeviceIDToString(int deviceid);
  */
 Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y);
 
+/**
+ * Warps the VCP to the position of the default root window.
+ */
+void WarpPointer(Display *dpy, int x, int y);
+
 #endif
 
