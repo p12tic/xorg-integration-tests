@@ -1,8 +1,8 @@
 <xit:registries xmlns:xit="http://www.x.org/xorg-integration-testing">
   <xit:registry name="xorg-upstream">
     <xit:meta>
-      <xit:date>2012-11-16</xit:date>
-      <xit:moduleversion name="xserver" type="git">011f8458805e443ac9130865d2840a929a00cabf</xit:moduleversion>
+      <xit:date>2012-11-29</xit:date>
+      <xit:moduleversion name="xserver" type="git">1712a45422a63f11b2146541279616fcfda09ec6</xit:moduleversion>
     </xit:meta>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
@@ -25,6 +25,9 @@
       <xit:testcase name="VerticalBarrierNoDirectionBlocksMotion" success="true"/>
       <xit:testcase name="VerticalBarrierPositiveXBlocksMotion" success="true"/>
     </xit:testsuite>
+    <xit:testsuite name="BarrierDevices">
+      <xit:testcase name="BarrierBlocksCorrectDevices" success="true"/>
+    </xit:testsuite>
     <xit:testsuite name="BarrierNonZeroArea">
       <xit:testcase name="InvalidNonZeroAreaBarrier/0" success="true"/>
       <xit:testcase name="InvalidNonZeroAreaBarrier/1" success="true"/>
@@ -37,6 +40,7 @@
     <xit:testsuite name="BarrierSimpleTest">
       <xit:testcase name="CreateAndDestroyBarrier" success="true"/>
       <xit:testcase name="DestroyInvalidBarrier" success="true"/>
+      <xit:testcase name="InvalidDeviceCausesBadDevice" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="BarrierZeroLength">
       <xit:testcase name="InvalidZeroLengthBarrier/0" success="true"/>
@@ -124,6 +128,15 @@
       <xit:testcase name="PassiveGrabPointerRelease/8" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/9" success="false"/>
     </xit:testsuite>
+    <xit:testsuite name="TouchOwnershipTest">
+      <xit:testcase name="ActiveGrabOwnershipAcceptTouch" success="true"/>
+      <xit:testcase name="ActiveGrabOwnershipRejectTouch" success="true"/>
+      <xit:testcase name="ActiveGrabOwnershipUngrabDevice" success="false"/>
+      <xit:testcase name="ActivePointerGrabForWholeTouch" success="false"/>
+      <xit:testcase name="ActivePointerUngrabDuringTouch" success="true"/>
+      <xit:testcase name="NoOwnershipAfterAcceptTouch" success="true"/>
+      <xit:testcase name="OwnershipAfterRejectTouch" success="true"/>
+    </xit:testsuite>
     <xit:testsuite name="TouchTest">
       <xit:testcase name="JumpingCursorOnTransformationMatrix" success="false">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
@@ -194,16 +207,20 @@
     <xit:testsuite name="XineramaTest">
       <xit:testcase name="ScreenCrossing/0" success="true"/>
       <xit:testcase name="ScreenCrossing/1" success="true"/>
+      <xit:testcase name="ScreenCrossingButtons/0" success="true"/>
+      <xit:testcase name="ScreenCrossingButtons/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTest">
-      <xit:testcase name="ScreenCrossing/0" success="false">
+      <xit:testcase name="ScreenCrossing/0" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=54654</xit:bug>
         <xit:fix type="git">e7cd5cce740e653000fb1192b600268dcf77dde2</xit:fix>
       </xit:testcase>
-      <xit:testcase name="ScreenCrossing/1" success="false">
+      <xit:testcase name="ScreenCrossing/1" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=54654</xit:bug>
         <xit:fix type="git">e7cd5cce740e653000fb1192b600268dcf77dde2</xit:fix>
       </xit:testcase>
+      <xit:testcase name="ScreenCrossingButtons/0" success="true"/>
+      <xit:testcase name="ScreenCrossingButtons/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTouchDeviceChangeTest">
       <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false"/>
