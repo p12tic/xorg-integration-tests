@@ -500,7 +500,7 @@ def verify_results(args):
     sname_len = max([ len(x.suite) for x in results ]) + 1
     tname_len = max([ len(x.name) for x in results ]) + 1
 
-    format_str = "{:<4}{:<%d}{:<%d}{:>10}{:>10}" % (sname_len, tname_len)
+    format_str = "{:<5}{:<%d}{:<%d}{:>10}{:>10}" % (sname_len, tname_len)
     print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
     print format_str.format("----", "---------", "--------", "------", "--------")
 
