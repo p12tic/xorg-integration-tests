@@ -285,15 +285,15 @@ TEST_P(ZaphodTest, ScreenCrossingButtons)
     }
 
     ::Display *ldpy = XOpenDisplay(ldisplay.c_str());
-    XSynchronize(ldpy, True);
     ASSERT_TRUE(ldpy);
     ASSERT_EQ(ScreenCount(ldpy), 2);
+    XSynchronize(ldpy, True);
 
     /* we keep two separate connections to make the code a bit simpler */
     ::Display *rdpy = XOpenDisplay(rdisplay.c_str());
-    XSynchronize(rdpy, True);
     ASSERT_TRUE(rdpy);
     ASSERT_EQ(ScreenCount(rdpy), 2);
+    XSynchronize(rdpy, True);
 
     int width = DisplayWidth(ldpy, DefaultScreen(ldpy));
     int height = DisplayHeight(ldpy, DefaultScreen(ldpy));
