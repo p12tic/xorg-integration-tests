@@ -209,8 +209,8 @@ TEST_P(ZaphodTest, ScreenCrossing)
 
     /* we keep two separate connections to make the code a bit simpler */
     ::Display *dpy2 = XOpenDisplay(std::string(server.GetDisplayString() + ".1").c_str());
-    ASSERT_TRUE(dpy);
-    ASSERT_EQ(ScreenCount(dpy), 2);
+    ASSERT_TRUE(dpy2);
+    ASSERT_EQ(ScreenCount(dpy2), 2);
 
     XSelectInput(dpy, RootWindow(dpy, 0), PointerMotionMask | LeaveWindowMask | EnterWindowMask);
     XSelectInput(dpy2, RootWindow(dpy2, 1), PointerMotionMask | EnterWindowMask | LeaveWindowMask);
