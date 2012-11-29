@@ -62,6 +62,15 @@ def str2bool(val):
     else:
         raise ValueError
 
+class termcolors:
+    DEFAULT = '\033[0m'
+    RED = '\033[31m'
+
+    @classmethod
+    def disable(self):
+        self.DEFAULT = ''
+        self.RED = ''
+
 class XITTestRegistry:
     """Central class keeping a set of test cases and their results"""
 
@@ -478,16 +487,20 @@ def verify_one_result(test, result, format_str):
        message comprising full test name, expected outcome, actual outcome
        and a grep-able bit to indicate which way the outcome differs"""
 
+    color = termcolors.DEFAULT
+
     if test != None:
         expected_status = str(test.status).lower()
         if str(test.status).lower() != str(result.status).lower():
             status_match = "XX"
+            color = termcolors.RED
         else:
             status_match = "++" if test.status else "--"
     else:
         expected_status = ""
         status_match = "??"
-    print format_str.format(status_match, result.suite, result.name, str(result.status).lower(), expected_status)
+
+    print color + format_str.format(status_match, result.suite, result.name, str(result.status).lower(), expected_status) + termcolors.DEFAULT
 
 def verify_results(args):
     """Verify a JUnit test result against the XIT test registry"""
@@ -808,6 +821,8 @@ def registry_from_string(args, s):
     write_to_registry(r, s)
     sync_registry(args, r)
 
+if not sys.stdout.isatty():
+    termcolors.disable()
 parser = parse_cmdline()
 args = parser.parse_args()
 
