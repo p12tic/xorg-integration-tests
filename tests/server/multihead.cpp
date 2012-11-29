@@ -98,9 +98,8 @@ class ZaphodTest : public MultiheadTest,
 public:
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
-
+        xinerama = false;
         left_of = GetParam();
-
         MultiheadTest::SetUp();
     }
 
@@ -346,8 +345,10 @@ INSTANTIATE_TEST_CASE_P(, ZaphodTest, ::testing::Values(true, false));
 class XineramaTest : public ZaphodTest {
 public:
     virtual void SetUp() {
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
         xinerama = true;
-        ZaphodTest::SetUp();
+        left_of = GetParam();
+        MultiheadTest::SetUp();
     }
 };
 
