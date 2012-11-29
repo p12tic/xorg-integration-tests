@@ -125,6 +125,9 @@
       <xit:testcase name="PassiveGrabPointerRelease/9" success="false"/>
     </xit:testsuite>
     <xit:testsuite name="TouchTest">
+      <xit:testcase name="JumpingCursorOnTransformationMatrix" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
+      </xit:testcase>
       <xit:testcase name="TouchEventsButtonState" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="TouchTestXI2Version">
