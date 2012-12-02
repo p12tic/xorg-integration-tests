@@ -1,8 +1,8 @@
 <xit:registries xmlns:xit="http://www.x.org/xorg-integration-testing">
   <xit:registry name="xorg-upstream">
     <xit:meta>
-      <xit:date>2012-11-29</xit:date>
-      <xit:moduleversion name="xserver" type="git">1712a45422a63f11b2146541279616fcfda09ec6</xit:moduleversion>
+      <xit:date>2012-12-03</xit:date>
+      <xit:moduleversion name="xserver" type="git">b51a1bd2766e7dc975ca8f1cacc3f8bd0e1a68a3</xit:moduleversion>
     </xit:meta>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
@@ -62,7 +62,7 @@
       <xit:testcase name="ImplicitGrabRawEvents" success="false"/>
     </xit:testsuite>
     <xit:testsuite name="ScreenSaverTest">
-      <xit:testcase name="ScreenSaverActivateDeactivate" success="false">
+      <xit:testcase name="ScreenSaverActivateDeactivate" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=56649</xit:bug>
         <xit:fix type="git">2dc6d9228456cbc274a1fcea478258e5ae4dc629</xit:fix>
       </xit:testcase>
@@ -70,7 +70,7 @@
     <xit:testsuite name="TouchDeviceChangeTest">
       <xit:testcase name="DeviceChangedEventPointerToTouchSwitch" success="true"/>
       <xit:testcase name="DeviceChangedEventTouchToPointerSwitch" success="true"/>
-      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false">
+      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
         <xit:fix type="git">3b9f1c701787965246638c1a6fd99fb2b6078114</xit:fix>
       </xit:testcase>
@@ -79,26 +79,26 @@
       <xit:testcase name="DisableDeviceEndTouches" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="TouchEventHistoryTest">
-      <xit:testcase name="EventHistoryReplay/0" success="false"/>
-      <xit:testcase name="EventHistoryReplay/1" success="false"/>
-      <xit:testcase name="EventHistoryReplay/10" success="false"/>
-      <xit:testcase name="EventHistoryReplay/11" success="false"/>
-      <xit:testcase name="EventHistoryReplay/12" success="false"/>
-      <xit:testcase name="EventHistoryReplay/13" success="false"/>
-      <xit:testcase name="EventHistoryReplay/14" success="false"/>
-      <xit:testcase name="EventHistoryReplay/15" success="false"/>
-      <xit:testcase name="EventHistoryReplay/16" success="false"/>
-      <xit:testcase name="EventHistoryReplay/17" success="false"/>
-      <xit:testcase name="EventHistoryReplay/18" success="false"/>
-      <xit:testcase name="EventHistoryReplay/19" success="false"/>
-      <xit:testcase name="EventHistoryReplay/2" success="false"/>
-      <xit:testcase name="EventHistoryReplay/3" success="false"/>
-      <xit:testcase name="EventHistoryReplay/4" success="false"/>
-      <xit:testcase name="EventHistoryReplay/5" success="false"/>
-      <xit:testcase name="EventHistoryReplay/6" success="false"/>
-      <xit:testcase name="EventHistoryReplay/7" success="false"/>
-      <xit:testcase name="EventHistoryReplay/8" success="false"/>
-      <xit:testcase name="EventHistoryReplay/9" success="false"/>
+      <xit:testcase name="EventHistoryReplay/0" success="true"/>
+      <xit:testcase name="EventHistoryReplay/1" success="true"/>
+      <xit:testcase name="EventHistoryReplay/10" success="true"/>
+      <xit:testcase name="EventHistoryReplay/11" success="true"/>
+      <xit:testcase name="EventHistoryReplay/12" success="true"/>
+      <xit:testcase name="EventHistoryReplay/13" success="true"/>
+      <xit:testcase name="EventHistoryReplay/14" success="true"/>
+      <xit:testcase name="EventHistoryReplay/15" success="true"/>
+      <xit:testcase name="EventHistoryReplay/16" success="true"/>
+      <xit:testcase name="EventHistoryReplay/17" success="true"/>
+      <xit:testcase name="EventHistoryReplay/18" success="true"/>
+      <xit:testcase name="EventHistoryReplay/19" success="true"/>
+      <xit:testcase name="EventHistoryReplay/2" success="true"/>
+      <xit:testcase name="EventHistoryReplay/3" success="true"/>
+      <xit:testcase name="EventHistoryReplay/4" success="true"/>
+      <xit:testcase name="EventHistoryReplay/5" success="true"/>
+      <xit:testcase name="EventHistoryReplay/6" success="true"/>
+      <xit:testcase name="EventHistoryReplay/7" success="true"/>
+      <xit:testcase name="EventHistoryReplay/8" success="true"/>
+      <xit:testcase name="EventHistoryReplay/9" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="TouchGrabTestMultipleModes">
       <xit:testcase name="ActiveAndPassiveGrab/0" success="true">
@@ -142,7 +142,7 @@
       <xit:testcase name="OwnershipAfterRejectTouch" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="TouchTest">
-      <xit:testcase name="JumpingCursorOnTransformationMatrix" success="false">
+      <xit:testcase name="JumpingCursorOnTransformationMatrix" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
         <xit:fix type="git">3b9f1c701787965246638c1a6fd99fb2b6078114</xit:fix>
       </xit:testcase>
@@ -228,7 +228,7 @@
       <xit:testcase name="ScreenCrossingButtons/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTouchDeviceChangeTest">
-      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false">
+      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
         <xit:fix type="git">3b9f1c701787965246638c1a6fd99fb2b6078114</xit:fix>
       </xit:testcase>
