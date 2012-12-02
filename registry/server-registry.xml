@@ -70,7 +70,10 @@
     <xit:testsuite name="TouchDeviceChangeTest">
       <xit:testcase name="DeviceChangedEventPointerToTouchSwitch" success="true"/>
       <xit:testcase name="DeviceChangedEventTouchToPointerSwitch" success="true"/>
-      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false"/>
+      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
+        <xit:fix type="git">3b9f1c701787965246638c1a6fd99fb2b6078114</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="TouchDeviceTest">
       <xit:testcase name="DisableDeviceEndTouches" success="true"/>
@@ -141,6 +144,7 @@
     <xit:testsuite name="TouchTest">
       <xit:testcase name="JumpingCursorOnTransformationMatrix" success="false">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
+        <xit:fix type="git">3b9f1c701787965246638c1a6fd99fb2b6078114</xit:fix>
       </xit:testcase>
       <xit:testcase name="TouchEventsButtonState" success="true"/>
     </xit:testsuite>
@@ -224,7 +228,10 @@
       <xit:testcase name="ScreenCrossingButtons/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTouchDeviceChangeTest">
-      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false"/>
+      <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
+        <xit:fix type="git">3b9f1c701787965246638c1a6fd99fb2b6078114</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
   </xit:registry>
 </xit:registries>
