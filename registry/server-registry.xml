@@ -64,6 +64,7 @@
     <xit:testsuite name="ScreenSaverTest">
       <xit:testcase name="ScreenSaverActivateDeactivate" success="false">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=56649</xit:bug>
+        <xit:fix type="git">2dc6d9228456cbc274a1fcea478258e5ae4dc629</xit:fix>
       </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="TouchDeviceChangeTest">
