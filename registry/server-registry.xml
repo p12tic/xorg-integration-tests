@@ -203,7 +203,10 @@
       </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="XTest">
-      <xit:testcase name="DisabledDevicesCtl" success="true"/>
+      <xit:testcase name="DisabledDevicesCtl" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=56380</xit:bug>
+        <xit:fix type="git">aad65415bff12c6860c19beac42e4165e598a40f</xit:fix>
+      </xit:testcase>
       <xit:testcase name="DisabledDevicesProperty" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=56380</xit:bug>
         <xit:fix type="git">aad65415bff12c6860c19beac42e4165e598a40f</xit:fix>
