@@ -48,6 +48,23 @@ TEST_F(BarrierSimpleTest, DestroyInvalidBarrier)
     ASSERT_ERROR(error, xfixes_error_base + BadBarrier);
 }
 
+TEST_F(BarrierSimpleTest, PixmapsNotAllowed)
+{
+    XORG_TESTCASE("Pixmaps are not allowed as drawable.\n"
+                  "Ensure error is generated\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    Pixmap p = XCreatePixmap(dpy, root, 10, 10, DefaultDepth(dpy, DefaultScreen(dpy)));
+    XSync(dpy, False);
+
+    SetErrorTrap(Display());
+    XFixesCreatePointerBarrier(dpy, p, 20, 20, 20, 40, BarrierPositiveX, 0, NULL);
+    const XErrorEvent *error = ReleaseErrorTrap(Display());
+    ASSERT_ERROR(error, BadWindow);
+    ASSERT_EQ(error->resourceid, p);
+}
+
 TEST_F(BarrierSimpleTest, InvalidDeviceCausesBadDevice)
 {
     XORG_TESTCASE("Ensure that passing a garbage device ID\n"
