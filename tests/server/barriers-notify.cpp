@@ -227,7 +227,64 @@ TEST_F(BarrierNotify, DestroyWindow)
     EXPECT_EQ(y, 30);
 
     ASSERT_FALSE(xorg::testing::XServer::WaitForEventOfType(Display(),
-                GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+                                                            GenericEvent,
+                                                            xi2_opcode,
+                                                            XI_BarrierHit,
+                                                            500));
 
+    XFixesDestroyPointerBarrier(dpy, barrier);
+}
+
+TEST_F(BarrierNotify, UnmapWindow)
+{
+    XORG_TESTCASE("Create a window.\n"
+                  "Set up a barrier using this window as drawable.\n"
+                  "Select for barrier events.\n"
+                  "Ensure events are received\n"
+                  "Unmap the window.\n"
+                  "Ensure events are still received.\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    Window win = CreateWindow(dpy, root);
+
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy, False);
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISelectEvents(dpy, win, &mask, 1);
+    free(mask.mask);
+    XSync(dpy, False);
+
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+
+    /* Ensure we have a BarrierHit on our hands. */
+    XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+    ASSERT_EQ(barrier, event.ev->barrier);
+    ASSERT_EQ(20, event.ev->root_x);
+    ASSERT_EQ(-40, event.ev->dx);
+
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XUnmapWindow(dpy, win);
+    XSync(dpy, True);
+
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+
+    double x, y;
+    QueryPointerPosition(dpy, &x, &y);
+    EXPECT_EQ(x, 20);
+    EXPECT_EQ(y, 30);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+                                                           GenericEvent,
+                                                           xi2_opcode,
+                                                           XI_BarrierHit,
+                                                           500));
     XFixesDestroyPointerBarrier(dpy, barrier);
 }
