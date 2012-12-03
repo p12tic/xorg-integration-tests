@@ -159,7 +159,7 @@ TEST_F(BarrierNotify, BarrierReleases)
         ASSERT_EQ(1, event.ev->event_id);
     }
 
-    XIBarrierReleasePointer(dpy, barrier, 1, VIRTUAL_CORE_POINTER_ID);
+    XIBarrierReleasePointer(dpy, VIRTUAL_CORE_POINTER_ID, barrier, 1);
     XSync(dpy, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
