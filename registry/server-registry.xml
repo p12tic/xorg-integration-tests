@@ -79,26 +79,86 @@
       <xit:testcase name="DisableDeviceEndTouches" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="TouchEventHistoryTest">
-      <xit:testcase name="EventHistoryReplay/0" success="true"/>
-      <xit:testcase name="EventHistoryReplay/1" success="true"/>
-      <xit:testcase name="EventHistoryReplay/10" success="true"/>
-      <xit:testcase name="EventHistoryReplay/11" success="true"/>
-      <xit:testcase name="EventHistoryReplay/12" success="true"/>
-      <xit:testcase name="EventHistoryReplay/13" success="true"/>
-      <xit:testcase name="EventHistoryReplay/14" success="true"/>
-      <xit:testcase name="EventHistoryReplay/15" success="true"/>
-      <xit:testcase name="EventHistoryReplay/16" success="true"/>
-      <xit:testcase name="EventHistoryReplay/17" success="true"/>
-      <xit:testcase name="EventHistoryReplay/18" success="true"/>
-      <xit:testcase name="EventHistoryReplay/19" success="true"/>
-      <xit:testcase name="EventHistoryReplay/2" success="true"/>
-      <xit:testcase name="EventHistoryReplay/3" success="true"/>
-      <xit:testcase name="EventHistoryReplay/4" success="true"/>
-      <xit:testcase name="EventHistoryReplay/5" success="true"/>
-      <xit:testcase name="EventHistoryReplay/6" success="true"/>
-      <xit:testcase name="EventHistoryReplay/7" success="true"/>
-      <xit:testcase name="EventHistoryReplay/8" success="true"/>
-      <xit:testcase name="EventHistoryReplay/9" success="true"/>
+      <xit:testcase name="EventHistoryReplay/0" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/1" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/10" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/11" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/12" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/13" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/14" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/15" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/16" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/17" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/18" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/19" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/2" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/3" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/4" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/5" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/6" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/7" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/8" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EventHistoryReplay/9" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=55477</xit:bug>
+        <xit:fix type="git">ce6b6529290f7d42717aad3fd8a83aaaaf8962de</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="TouchGrabTestMultipleModes">
       <xit:testcase name="ActiveAndPassiveGrab/0" success="true">
