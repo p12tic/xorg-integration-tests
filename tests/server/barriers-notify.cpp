@@ -40,17 +40,17 @@ TEST_F(BarrierNotify, ReceivesNotifyEvents)
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
     mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
-    XISetMask(mask.mask, XI_BarrierHitNotify);
+    XISetMask(mask.mask, XI_BarrierHit);
     XISelectEvents(dpy, root, &mask, 1);
     free(mask.mask);
     XSync(dpy, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
 
-    /* Ensure we have a BarrierHitNotify on our hands. */
-    XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHitNotify);
+    /* Ensure we have a BarrierHit on our hands. */
+    XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
     ASSERT_EQ(barrier, event.ev->barrier);
-    ASSERT_EQ(20, event.ev->x);
+    ASSERT_EQ(20, event.ev->root_x);
     ASSERT_EQ(-40, event.ev->dx);
 
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -75,37 +75,37 @@ TEST_F(BarrierNotify, CorrectEventIDs)
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
     mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
-    XISetMask(mask.mask, XI_BarrierHitNotify);
-    XISetMask(mask.mask, XI_BarrierLeaveNotify);
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, root, &mask, 1);
     free(mask.mask);
     XSync(dpy, False);
 
-    /* Ensure we have a bunch of BarrierHitNotifys on our hands. */
+    /* Ensure we have a bunch of BarrierHits on our hands. */
     for (int i = 0; i < 10; i++) {
         dev->PlayOne(EV_REL, REL_X, -40, True);
 
-        /* Ensure we have a BarrierHitNotify on our hands. */
-        XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHitNotify);
+        /* Ensure we have a BarrierHit on our hands. */
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
-        ASSERT_EQ(20, event.ev->x);
-        ASSERT_EQ(30, event.ev->y);
+        ASSERT_EQ(20, event.ev->root_x);
+        ASSERT_EQ(30, event.ev->root_y);
         ASSERT_EQ(-40, event.ev->dx);
         ASSERT_EQ(0, event.ev->dy);
         ASSERT_EQ(1, event.ev->event_id);
     }
 
     /* Move outside the hitbox, and ensure that we
-     * get a BarrierNewEventNotify */
+     * get a BarrierNewEvent */
     dev->PlayOne(EV_REL, REL_X, 20, True);
-    XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeaveNotify);
+    XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
     ASSERT_EQ(barrier, event.ev->barrier);
     ASSERT_EQ(2, event.ev->event_id);
 
     for (int i = 0; i < 10; i++) {
         dev->PlayOne(EV_REL, REL_X, -40, True);
 
-        XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHitNotify);
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(2, event.ev->event_id);
     }
@@ -117,7 +117,7 @@ TEST_F(BarrierNotify, CorrectEventIDs)
     for (int i = 0; i < 10; i++) {
         dev->PlayOne(EV_REL, REL_X, -40, True);
 
-        XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHitNotify);
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(2, event.ev->event_id);
     }
@@ -130,7 +130,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     XORG_TESTCASE("Ensure that releasing barriers works without "
                   "erroring out and allows pointer movement over "
                   "the barrier, and that we properly get a "
-                  "XI_BarrierPointerReleasedNotify.\n");
+                  "XI_BarrierPointerReleased.\n");
 
     ::Display *dpy = Display();
     Window root = DefaultRootWindow(dpy);
@@ -140,9 +140,9 @@ TEST_F(BarrierNotify, BarrierReleases)
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
     mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
-    XISetMask(mask.mask, XI_BarrierHitNotify);
-    XISetMask(mask.mask, XI_BarrierPointerReleasedNotify);
-    XISetMask(mask.mask, XI_BarrierLeaveNotify);
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISetMask(mask.mask, XI_BarrierPointerReleased);
+    XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, root, &mask, 1);
     free(mask.mask);
     XSync(dpy, False);
@@ -154,7 +154,7 @@ TEST_F(BarrierNotify, BarrierReleases)
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
     {
-        XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHitNotify);
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1, event.ev->event_id);
     }
@@ -164,15 +164,15 @@ TEST_F(BarrierNotify, BarrierReleases)
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
     {
-        XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierPointerReleasedNotify);
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierPointerReleased);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1, event.ev->event_id);
     }
 
-    /* Immediately afterwards, we should have a new event notify
+    /* Immediately afterwards, we should have a new event
      * because we exited the hit box */
     {
-        XITEvent<XIBarrierNotifyEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeaveNotify);
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(2, event.ev->event_id);
     }
