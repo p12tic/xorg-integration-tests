@@ -288,3 +288,97 @@ TEST_F(BarrierNotify, UnmapWindow)
                                                            500));
     XFixesDestroyPointerBarrier(dpy, barrier);
 }
+
+TEST_F(BarrierNotify, EventsDuringActiveGrab)
+{
+    XORG_TESTCASE("Set up a pointer barrier.\n"
+                  "Actively grab the pointer.\n"
+                  "Move pointer against barrier.\n"
+                  "Expect events\n");
+    /* FIXME:
+       variations
+       - core, xi2  (xi1 not needed) 
+       - barrier event masks set in grab mask
+       - owner_events true/false
+       - grab window == barrier window or other window
+
+       if OE is true and mask is set → event
+       if OE is false and mask is set → event
+       if OE is true and mask is not set, but set on window → event
+       if OE is false and mask is not set, but set on window → no event
+     */
+}
+
+TEST_F(BarrierNotify, EventsDuringPassiveGrab)
+{
+    XORG_TESTCASE("Set up a pointer barrier.\n"
+                  "Trigger a passive pointer grab\n"
+                  "Move pointer against barrier.\n"
+                  "Expect events\n");
+    /* FIXME:
+       variations
+       - core, xi2  (xi1 not needed) 
+       - barrier event masks set in grab mask
+       - owner_events true/false
+       - grab window == barrier window or other window
+
+       if OE is true and mask is set → event
+       if OE is false and mask is set → event
+       if OE is true and mask is not set, but set on window → event
+       if OE is false and mask is not set, but set on window → no event
+     */
+}
+
+TEST_F(BarrierNotify, BarrierRandREventsVertical)
+{
+    XORG_TESTCASE("Set up pointer barrier close to a screen.\n"
+                  "Move the pointer against the barrier that the barrier blocks movement\n"
+                  "Same movement must be restriced by the RandR dimensions"
+                  "Ensure Barrier event root x/y are fully constrained");
+#if 0
+             +-------------+
+             |             |
+             |             |
+             |             |
+             |         a | |
+             |          y| |
+             +-----------+-+
+                        x|
+                         |b
+
+     Move a→b will clamp the barrier at X, but we want Y (i.e. including
+     RandR clamping)
+
+#endif
+
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+    Window root = DefaultRootWindow(dpy);
+    PointerBarrier barrier;
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISetMask(mask.mask, XI_BarrierPointerReleased);
+    XISetMask(mask.mask, XI_BarrierLeave);
+    XISelectEvents(dpy, root, &mask, 1);
+    delete[] mask.mask;
+
+    int w = DisplayWidth(dpy, DefaultScreen(dpy));
+    int h = DisplayHeight(dpy, DefaultScreen(dpy));
+
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, w - 40 , h - 30);
+
+    barrier = XFixesCreatePointerBarrier(dpy, root, w - 20, 0, w - 20, 4000, 0, 0, NULL);
+
+    dev->PlayOne(EV_REL, REL_X, 40, false);
+    dev->PlayOne(EV_REL, REL_Y, 100, true);
+
+    XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+    ASSERT_EQ(barrier, event.ev->barrier);
+    ASSERT_EQ(1, event.ev->event_id);
+    ASSERT_EQ(event.ev->root_x, w - 20 - 1);
+    ASSERT_LT(event.ev->root_y, h);
+}
