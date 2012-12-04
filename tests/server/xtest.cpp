@@ -11,7 +11,10 @@
 #include <X11/extensions/XTest.h>
 
 #include "xorg-conf.h"
+#include "xit-server-input-test.h"
+#include "device-interface.h"
 #include "xit-server.h"
+#include "xit-event.h"
 #include "helpers.h"
 
 using namespace xorg::testing;
@@ -117,4 +120,63 @@ TEST(XTest, DisabledDevicesCtl)
     XSync(dpy, False);
 
     config.RemoveConfig();
+}
+
+class XTestPhysicalDeviceTest : public XITServerInputTest,
+                                public DeviceInterface {
+public:
+    /**
+     * Initializes a standard mouse device.
+     */
+    virtual void SetUp() {
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(XTestPhysicalDeviceTest, ReleaseXTestOnPhysicalRelease)
+{
+    XORG_TESTCASE("Create a pointer device.\n"
+                  "Post button press through pointer device.\n"
+                  "Post button press through XTest device.\n"
+                  "Post button release through pointer device.\n"
+                  "Expect ButtonRelease, expect button state up\n");
+
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask|ButtonReleaseMask);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
+
+    XITEvent<XButtonEvent> press(dpy, ButtonPress);
+    ASSERT_TRUE(press.ev);
+    ASSERT_EQ(press.ev->button, 1U);
+
+    XTestFakeButtonEvent(dpy, 1, 1, 0);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
+
+    XITEvent<XButtonEvent> release(dpy, ButtonRelease);
+    ASSERT_TRUE(release.ev);
+    ASSERT_EQ(release.ev->button, 1U);
+
+    Window root, child;
+    int root_x, root_y, win_x, win_y;
+    unsigned int mask;
+    XQueryPointer(dpy, DefaultRootWindow(dpy), &root, &child,
+                  &root_x, &root_y, &win_x, &win_y, &mask);
+    ASSERT_EQ(mask & Button1Mask, 0U);
 }
