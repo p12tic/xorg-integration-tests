@@ -163,19 +163,13 @@ TEST_F(BarrierNotify, BarrierReleases)
     XSync(dpy, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
-    {
-        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
-        ASSERT_EQ(barrier, event.ev->barrier);
-        ASSERT_EQ(1, event.ev->event_id);
-        ASSERT_TRUE((event.ev->flags & XIBarrierPointerReleased));
-    }
 
-    /* Immediately afterwards, we should have a new event
-     * because we exited the hit box */
+    /* We should have a new event because we exited the hit box */
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(2, event.ev->event_id);
+        ASSERT_TRUE((event.ev->flags & XIBarrierPointerReleased));
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
