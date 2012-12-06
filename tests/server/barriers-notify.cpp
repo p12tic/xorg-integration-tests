@@ -352,6 +352,41 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
     XFixesDestroyPointerBarrier(dpy, barrier);
 }
 
+TEST_F(BarrierNotify, EventsDuringActiveGrabOtherClient)
+{
+    XORG_TESTCASE("Set up a pointer barrier.\n"
+                  "Have another client actively grab the pointer.\n"
+                  "Move pointer against barrier.\n"
+                  "Expect events\n");
+
+    ::Display *dpy = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy, True);
+    XSynchronize(dpy2, True);
+    Window root = DefaultRootWindow(dpy);
+
+    unsigned char event_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
+    XIEventMask event_mask = { XIAllMasterDevices, sizeof (event_mask_bits), event_mask_bits };
+    XISetMask(event_mask_bits, XI_BarrierHit);
+
+    unsigned char no_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
+    XIEventMask no_mask = { XIAllMasterDevices, sizeof (no_mask_bits), no_mask_bits };
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy, False);
+
+    /* second client grabs device */
+    XIGrabDevice(dpy2, VIRTUAL_CORE_POINTER_ID, root, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &no_mask);
+
+    /* We still expect events */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XISelectEvents(dpy, root, &event_mask, 1);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+
+    XFixesDestroyPointerBarrier(dpy, barrier);
+}
+
 TEST_F(BarrierNotify, EventsDuringPassiveGrab)
 {
     XORG_TESTCASE("Set up a pointer barrier.\n"
