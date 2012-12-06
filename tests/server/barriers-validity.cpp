@@ -72,10 +72,12 @@ TEST_F(BarrierSimpleTest, MultipleClientSecurity)
     mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISelectEvents(dpy1, root, &mask, 1);
+    XISelectEvents(dpy2, root, &mask, 1);
     delete[] mask.mask;
 
     XIWarpPointer(dpy1, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
     XSync(dpy1, False);
+    XSync(dpy2, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
 
