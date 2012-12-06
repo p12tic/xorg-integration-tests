@@ -352,6 +352,57 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
     XFixesDestroyPointerBarrier(dpy, barrier);
 }
 
+TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
+{
+    XORG_TESTCASE("Set up a pointer barrier on the root window.\n"
+                  "Create a window\n"
+                  "Actively grab the pointer on the window.\n"
+                  "Move pointer against barrier.\n"
+                  "Expect events\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    Window win = CreateWindow(dpy, root);
+
+    unsigned char event_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
+    XIEventMask event_mask = { XIAllMasterDevices, sizeof (event_mask_bits), event_mask_bits };
+    XISetMask(event_mask_bits, XI_BarrierHit);
+
+    unsigned char no_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
+    XIEventMask no_mask = { XIAllMasterDevices, sizeof (no_mask_bits), no_mask_bits };
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy, False);
+
+    /* expect event regardless on owner_events setting */
+    /* if OE is true and mask is not set, but set on window → event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XISelectEvents(dpy, root, &event_mask, 1);
+    XIGrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &no_mask);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+
+    /* if OE is false and mask is not set, but set on window → event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XIGrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &no_mask);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+
+    /* if OE is true and mask is set → event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XIGrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &event_mask);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+
+    /* if OE is false and mask is set → event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XIGrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &event_mask);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+
+    XFixesDestroyPointerBarrier(dpy, barrier);
+}
+
 TEST_F(BarrierNotify, EventsDuringActiveGrabOtherClient)
 {
     XORG_TESTCASE("Set up a pointer barrier.\n"
