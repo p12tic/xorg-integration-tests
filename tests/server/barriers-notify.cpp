@@ -510,18 +510,101 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
                   "Trigger a passive pointer grab\n"
                   "Move pointer against barrier.\n"
                   "Expect events\n");
-    /* FIXME:
-       variations
-       - core, xi2  (xi1 not needed) 
+    /* variations
+       TODO: - core, xi2  (xi1 not needed) 
        - barrier event masks set in grab mask
        - owner_events true/false
-       - grab window == barrier window or other window
+       TODO: - grab window == barrier window or other window
 
        if OE is true and mask is set → event
        if OE is false and mask is set → event
        if OE is true and mask is not set, but set on window → event
        if OE is false and mask is not set, but set on window → no event
      */
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+
+    XIGrabModifiers mods = { (int)XIAnyModifier, 0 };
+
+    unsigned char event_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
+    XIEventMask event_mask = { XIAllMasterDevices, sizeof (event_mask_bits), event_mask_bits };
+    XISetMask(event_mask_bits, XI_BarrierHit);
+
+    unsigned char no_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
+    XIEventMask no_mask = { XIAllMasterDevices, sizeof (no_mask_bits), no_mask_bits };
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy, False);
+
+    /* if OE is true and mask is not set, but set on window → event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XISelectEvents(dpy, root, &event_mask, 1);
+    XIGrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, None, GrabModeAsync, GrabModeAsync, True, &no_mask, 1, &mods);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+    {
+        XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+        ASSERT_TRUE(hit.ev);
+        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->root, root);
+        ASSERT_EQ(hit.ev->barrier, barrier);
+        ASSERT_EQ(hit.ev->root_x, 20);
+        ASSERT_EQ(hit.ev->root_y, 30);
+    }
+    XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
+
+    /* if OE is false and mask is not set, but set on window → no event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XISelectEvents(dpy, root, &event_mask, 1);
+    XIGrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, None, GrabModeAsync, GrabModeAsync, False, &no_mask, 1, &mods);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
+    ASSERT_FALSE(xorg::testing::XServer::WaitForEvent(dpy, 500));
+    XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
+
+    /* if OE is true and mask is set → event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XISelectEvents(dpy, root, &no_mask, 1);
+    XIGrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, None, GrabModeAsync, GrabModeAsync, True, &event_mask, 1, &mods);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+    {
+        XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+        ASSERT_TRUE(hit.ev);
+        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->root, root);
+        ASSERT_EQ(hit.ev->barrier, barrier);
+        ASSERT_EQ(hit.ev->root_x, 20);
+        ASSERT_EQ(hit.ev->root_y, 30);
+    }
+    XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
+
+    /* if OE is false and mask is set → event */
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XISelectEvents(dpy, root, &no_mask, 1);
+    XIGrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, None, GrabModeAsync, GrabModeAsync, False, &event_mask, 1, &mods);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
+    {
+        XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+        ASSERT_TRUE(hit.ev);
+        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->root, root);
+        ASSERT_EQ(hit.ev->barrier, barrier);
+        ASSERT_EQ(hit.ev->root_x, 20);
+        ASSERT_EQ(hit.ev->root_y, 30);
+    }
+    XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
+
+    XFixesDestroyPointerBarrier(dpy, barrier);
 }
 
 TEST_F(BarrierNotify, BarrierRandREventsVertical)
