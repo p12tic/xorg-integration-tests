@@ -48,6 +48,24 @@ TEST_F(BarrierSimpleTest, DestroyInvalidBarrier)
     ASSERT_ERROR(error, xfixes_error_base + BadBarrier);
 }
 
+TEST_F(BarrierSimpleTest, MultipleClientSecurity)
+{
+    XORG_TESTCASE("Ensure that two clients can't delete"
+                  " each other's barriers.\n");
+
+    ::Display *dpy1 = XOpenDisplay(server.GetDisplayString().c_str());
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    Window root = DefaultRootWindow(dpy1);
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy1, root, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy1, False);
+
+    SetErrorTrap(dpy2);
+    XFixesDestroyPointerBarrier(dpy2, barrier);
+    const XErrorEvent *error = ReleaseErrorTrap(dpy2);
+    ASSERT_ERROR(error, BadAccess);
+}
+
 TEST_F(BarrierSimpleTest, PixmapsNotAllowed)
 {
     XORG_TESTCASE("Pixmaps are not allowed as drawable.\n"
