@@ -96,11 +96,11 @@ TEST_F(BarrierNotify, CorrectEventIDs)
     }
 
     /* Move outside the hitbox, and ensure that we
-     * get a BarrierNewEvent */
+     * get a BarrierLeave */
     dev->PlayOne(EV_REL, REL_X, 20, True);
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
     ASSERT_EQ(barrier, event.ev->barrier);
-    ASSERT_EQ(2, event.ev->event_id);
+    ASSERT_EQ(1, event.ev->event_id);
 
     for (int i = 0; i < 10; i++) {
         dev->PlayOne(EV_REL, REL_X, -40, True);
@@ -168,7 +168,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
         ASSERT_EQ(barrier, event.ev->barrier);
-        ASSERT_EQ(2, event.ev->event_id);
+        ASSERT_EQ(1, event.ev->event_id);
         ASSERT_TRUE((event.ev->flags & XIBarrierPointerReleased));
     }
 
