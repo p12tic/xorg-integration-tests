@@ -130,7 +130,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     XORG_TESTCASE("Ensure that releasing barriers works without "
                   "erroring out and allows pointer movement over "
                   "the barrier, and that we properly get a "
-                  "XI_BarrierPointerReleased.\n");
+                  "XI_BarrierHit with the correct flags.\n");
 
     ::Display *dpy = Display();
     Window root = DefaultRootWindow(dpy);
@@ -141,7 +141,6 @@ TEST_F(BarrierNotify, BarrierReleases)
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
     mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
     XISetMask(mask.mask, XI_BarrierHit);
-    XISetMask(mask.mask, XI_BarrierPointerReleased);
     XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, root, &mask, 1);
     free(mask.mask);
@@ -157,6 +156,7 @@ TEST_F(BarrierNotify, BarrierReleases)
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1, event.ev->event_id);
+        ASSERT_FALSE((event.ev->flags & XIBarrierPointerReleased));
     }
 
     XIBarrierReleasePointer(dpy, VIRTUAL_CORE_POINTER_ID, barrier, 1);
@@ -164,9 +164,10 @@ TEST_F(BarrierNotify, BarrierReleases)
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
     {
-        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierPointerReleased);
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1, event.ev->event_id);
+        ASSERT_TRUE((event.ev->flags & XIBarrierPointerReleased));
     }
 
     /* Immediately afterwards, we should have a new event
@@ -403,7 +404,6 @@ TEST_F(BarrierNotify, BarrierRandREventsVertical)
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
     mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
-    XISetMask(mask.mask, XI_BarrierPointerReleased);
     XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, root, &mask, 1);
     delete[] mask.mask;
