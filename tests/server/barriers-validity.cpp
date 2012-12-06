@@ -10,6 +10,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
+#include "xit-event.h"
 #include "barriers-common.h"
 #include "helpers.h"
 
@@ -63,6 +64,27 @@ TEST_F(BarrierSimpleTest, MultipleClientSecurity)
     SetErrorTrap(dpy2);
     XFixesDestroyPointerBarrier(dpy2, barrier);
     const XErrorEvent *error = ReleaseErrorTrap(dpy2);
+    ASSERT_ERROR(error, BadAccess);
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISelectEvents(dpy1, root, &mask, 1);
+    delete[] mask.mask;
+
+    XIWarpPointer(dpy1, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy1, False);
+
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+
+    XITEvent<XIBarrierEvent> event(dpy1, GenericEvent, xi2_opcode, XI_BarrierHit);
+    ASSERT_EQ(XPending(dpy2), 0);
+
+    SetErrorTrap(dpy2);
+    XIBarrierReleasePointer(dpy2, VIRTUAL_CORE_POINTER_ID, event.ev->barrier, 1);
+    error = ReleaseErrorTrap(dpy2);
     ASSERT_ERROR(error, BadAccess);
 }
 
