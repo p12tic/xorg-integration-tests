@@ -259,7 +259,7 @@ TEST_F(BarrierConstrained, HorizontalBarrierNoDirectionBlocksMotion)
     XFixesDestroyPointerBarrier (dpy, barrier);
 }
 
-TEST_F(BarrierConstrained, HoritzontalBarrierPositiveYBlocksMotion)
+TEST_F(BarrierConstrained, HorizontalBarrierPositiveYBlocksMotion)
 {
     XORG_TESTCASE("Set up a horizontal pointer barrier. Ensure that mouse"
                   " movement is blocked in the positive Y direction when"
