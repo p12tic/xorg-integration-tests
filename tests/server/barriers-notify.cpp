@@ -291,10 +291,10 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
                   "Move pointer against barrier.\n"
                   "Expect events\n");
     /* variations
-       - core, xi2  (xi1 not needed)
+       TODO: - core, xi2  (xi1 not needed)
        - barrier event masks set in grab mask
        - owner_events true/false
-       - grab window == barrier window or other window
+       TODO: - grab window == barrier window or other window
 
        if OE is true and mask is set → event
        if OE is false and mask is set → event
