@@ -329,6 +329,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     /* if OE is false and mask is not set, but set on window → no event */
@@ -352,6 +353,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     /* if OE is false and mask is set → event */
@@ -368,6 +370,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -410,6 +413,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     /* if OE is false and mask is not set, but set on window → event */
@@ -425,6 +429,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     /* if OE is true and mask is set → event */
@@ -440,6 +445,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     /* if OE is false and mask is set → event */
@@ -455,6 +461,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -499,6 +506,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabOtherClient)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -553,6 +561,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
     XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
 
@@ -582,6 +591,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
     XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
 
@@ -601,6 +611,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
+        ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
     XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
 
