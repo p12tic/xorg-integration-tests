@@ -92,7 +92,7 @@ TEST_F(BarrierNotify, CorrectEventIDs)
         ASSERT_EQ(30, event.ev->root_y);
         ASSERT_EQ(-40, event.ev->dx);
         ASSERT_EQ(0, event.ev->dy);
-        ASSERT_EQ(1, event.ev->event_id);
+        ASSERT_EQ(1U, event.ev->eventid);
     }
 
     /* Move outside the hitbox, and ensure that we
@@ -100,14 +100,14 @@ TEST_F(BarrierNotify, CorrectEventIDs)
     dev->PlayOne(EV_REL, REL_X, 20, True);
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
     ASSERT_EQ(barrier, event.ev->barrier);
-    ASSERT_EQ(1, event.ev->event_id);
+    ASSERT_EQ(1U, event.ev->eventid);
 
     for (int i = 0; i < 10; i++) {
         dev->PlayOne(EV_REL, REL_X, -40, True);
 
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
-        ASSERT_EQ(2, event.ev->event_id);
+        ASSERT_EQ(2U, event.ev->eventid);
     }
 
     /* Ensure that we're still inside the hit box. Event ID
@@ -119,7 +119,7 @@ TEST_F(BarrierNotify, CorrectEventIDs)
 
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
-        ASSERT_EQ(2, event.ev->event_id);
+        ASSERT_EQ(2U, event.ev->eventid);
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -155,7 +155,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
-        ASSERT_EQ(1, event.ev->event_id);
+        ASSERT_EQ(1U, event.ev->eventid);
         ASSERT_FALSE((event.ev->flags & XIBarrierPointerReleased));
     }
 
@@ -168,7 +168,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
         ASSERT_EQ(barrier, event.ev->barrier);
-        ASSERT_EQ(1, event.ev->event_id);
+        ASSERT_EQ(1U, event.ev->eventid);
         ASSERT_TRUE((event.ev->flags & XIBarrierPointerReleased));
     }
 
@@ -324,7 +324,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -348,7 +348,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -365,7 +365,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -408,7 +408,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -424,7 +424,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -440,7 +440,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -456,7 +456,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -501,7 +501,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabOtherClient)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -556,7 +556,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -586,7 +586,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -606,7 +606,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(hit.ev);
-        ASSERT_EQ(hit.ev->window, root);
+        ASSERT_EQ(hit.ev->event, root);
         ASSERT_EQ(hit.ev->root, root);
         ASSERT_EQ(hit.ev->barrier, barrier);
         ASSERT_EQ(hit.ev->root_x, 20);
@@ -666,7 +666,7 @@ TEST_F(BarrierNotify, BarrierRandREventsVertical)
 
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
     ASSERT_EQ(barrier, event.ev->barrier);
-    ASSERT_EQ(1, event.ev->event_id);
+    ASSERT_EQ(1U, event.ev->eventid);
     ASSERT_EQ(event.ev->root_x, w - 20 - 1);
     ASSERT_LT(event.ev->root_y, h);
 }
