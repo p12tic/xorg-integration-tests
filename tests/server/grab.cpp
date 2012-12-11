@@ -514,19 +514,6 @@ public:
         XSync(dpy, False);
     }
 
-    void AssertNoEventsPending(::Display *dpy)
-    {
-        XSync(dpy, False);
-        /* A has rejected, expect no more TouchEnd */
-        if (XPending(dpy)) {
-            XEvent ev;
-            XPeekEvent(dpy, &ev);
-            std::stringstream ss;
-            ASSERT_EQ(XPending(dpy), 0) << "Event type " << ev.type << " (extension " <<
-                ev.xcookie.extension << " evtype " << ev.xcookie.evtype << ")";
-        }
-    }
-
     /**
      * Return a new synchronized client given our default server connection.
      * Client is initialised for XI 2.2
@@ -592,7 +579,7 @@ TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
 
         /* A has no ownership mask, everyone else doesn't have ownership
          * yet, so everyone only has the TouchBegin so far*/
-        AssertNoEventsPending(dpys[i]);
+        ASSERT_TRUE(NoEventPending(dpys[i]));
     }
 
     /* Now reject one-by-one */
@@ -603,7 +590,7 @@ TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
 
         XITEvent<XIDeviceEvent> tend(dpys[current_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
         ASSERT_TRUE(tend.ev);
-        AssertNoEventsPending(dpys[current_owner]);
+        ASSERT_TRUE(NoEventPending(dpys[current_owner]));
 
         /* Now we expect ownership */
         ASSERT_EQ(XPending(dpys[next_owner]), 1);
@@ -620,7 +607,7 @@ TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
     ASSERT_EQ(tend.ev->detail, touchid);
 
     for (int i = 0; i < NCLIENTS; i++)
-        AssertNoEventsPending(dpys[i]);
+        ASSERT_TRUE(NoEventPending(dpys[i]));
 }
 
 TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
@@ -676,7 +663,7 @@ TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
     ASSERT_TRUE(A_end.ev);
     ASSERT_EQ(A_end.ev->detail, touchid);
 
-    AssertNoEventsPending(dpy2);
+    ASSERT_TRUE(NoEventPending(dpy2));
 }
 
 TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
@@ -730,7 +717,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
     ASSERT_TRUE(A_end.ev);
     ASSERT_EQ(A_end.ev->detail, touchid);
 
-    AssertNoEventsPending(dpy2);
+    ASSERT_TRUE(NoEventPending(dpy2));
 }
 
 TEST_F(TouchOwnershipTest, ActiveGrabOwnershipRejectTouch)
@@ -788,7 +775,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipRejectTouch)
     XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_TRUE(B_end.ev);
 
-    AssertNoEventsPending(dpy2);
+    ASSERT_TRUE(NoEventPending(dpy2));
 }
 
 TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
@@ -846,7 +833,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     ASSERT_TRUE(B_end.ev);
     ASSERT_EQ(B_end.ev->detail, touchid);
 
-    AssertNoEventsPending(dpy);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_F(TouchOwnershipTest, ActivePointerGrabForWholeTouch)
@@ -878,7 +865,7 @@ TEST_F(TouchOwnershipTest, ActivePointerGrabForWholeTouch)
     ASSERT_TRUE(B_begin.ev);
 
     /* No ownership event on the wire */
-    AssertNoEventsPending(dpy2);
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
@@ -893,7 +880,7 @@ TEST_F(TouchOwnershipTest, ActivePointerGrabForWholeTouch)
     XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_TRUE(B_end.ev);
 
-    AssertNoEventsPending(dpy);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
@@ -927,7 +914,7 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
     ASSERT_TRUE(B_begin.ev);
 
     /* No ownership event on the wire */
-    AssertNoEventsPending(dpy2);
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
 
@@ -939,7 +926,7 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
     XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_TRUE(B_end.ev);
 
-    AssertNoEventsPending(dpy);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 #endif /* HAVE_XI22 */
