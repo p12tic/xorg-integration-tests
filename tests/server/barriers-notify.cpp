@@ -41,10 +41,10 @@ TEST_F(BarrierNotify, ReceivesNotifyEvents)
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISelectEvents(dpy, root, &mask, 1);
-    free(mask.mask);
+    delete[] mask.mask;
     XSync(dpy, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
@@ -76,11 +76,11 @@ TEST_F(BarrierNotify, CorrectEventIDs)
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, root, &mask, 1);
-    free(mask.mask);
+    delete[] mask.mask;
     XSync(dpy, False);
 
     /* Ensure we have a bunch of BarrierHits on our hands. */
@@ -141,11 +141,11 @@ TEST_F(BarrierNotify, BarrierReleases)
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, root, &mask, 1);
-    free(mask.mask);
+    delete[] mask.mask;
     XSync(dpy, False);
 
     XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
@@ -198,10 +198,10 @@ TEST_F(BarrierNotify, DestroyWindow)
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISelectEvents(dpy, win, &mask, 1);
-    free(mask.mask);
+    delete[] mask.mask;
     XSync(dpy, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
@@ -253,10 +253,10 @@ TEST_F(BarrierNotify, UnmapWindow)
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISelectEvents(dpy, win, &mask, 1);
-    free(mask.mask);
+    delete[] mask.mask;
     XSync(dpy, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
@@ -731,11 +731,11 @@ TEST_F(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, win, &mask, 1);
-    free(mask.mask);
+    delete[] mask.mask;
     XSync(dpy, False);
 
     dev->PlayOne(EV_REL, REL_X, -40, True);
@@ -774,11 +774,11 @@ TEST_F(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_BarrierHit);
     XISetMask(mask.mask, XI_BarrierLeave);
     XISelectEvents(dpy, win, &mask, 1);
-    free(mask.mask);
+    delete[] mask.mask;
     XSync(dpy, False);
 
     /* Move the pointer, but don't hit the barrier. */
