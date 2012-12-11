@@ -572,6 +572,11 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
     dev->PlayOne(EV_REL, REL_X, -40, True);
     dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
+    {
+        XITEvent<XIDeviceEvent> press(dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+        ASSERT_TRUE(press.ev);
+    }
+
     ASSERT_FALSE(xorg::testing::XServer::WaitForEvent(dpy, 500));
     XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
 
