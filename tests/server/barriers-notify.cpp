@@ -675,3 +675,80 @@ TEST_F(BarrierNotify, BarrierRandREventsVertical)
     ASSERT_EQ(event.ev->root_x, w - 20 - 1);
     ASSERT_LT(event.ev->root_y, h);
 }
+
+TEST_F(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
+{
+    XORG_TESTCASE("Set up pointer barrier.\n"
+                  "Move the pointer into the barrier hitbox.\n"
+                  "Destroy the barrier.\n"
+                  "Ensure that we receive an event.");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    Window win = CreateWindow(dpy, root);
+
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy, False);
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISetMask(mask.mask, XI_BarrierLeave);
+    XISelectEvents(dpy, win, &mask, 1);
+    free(mask.mask);
+    XSync(dpy, False);
+
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+
+    /* Ensure we have a BarrierHit on our hands. */
+    {
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+    }
+
+    XFixesDestroyPointerBarrier(dpy, barrier);
+
+    {
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
+        ASSERT_EQ(0, event.ev->dx);
+        ASSERT_EQ(0, event.ev->dy);
+        ASSERT_TRUE(event.ev->flags & XIBarrierPointerReleased);
+    }
+}
+
+TEST_F(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
+{
+    XORG_TESTCASE("Set up pointer barrier.\n"
+                  "Move the pointer a bit, but don't make it touch the barrier.\n"
+                  "Destroy the barrier.\n"
+                  "Ensure that we didn't receive an event.");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    Window win = CreateWindow(dpy, root);
+
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy, False);
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = reinterpret_cast<unsigned char*>(calloc(mask.mask_len, 1));
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISetMask(mask.mask, XI_BarrierLeave);
+    XISelectEvents(dpy, win, &mask, 1);
+    free(mask.mask);
+    XSync(dpy, False);
+
+    /* Move the pointer, but don't hit the barrier. */
+    dev->PlayOne(EV_REL, REL_X, -5, True);
+
+    XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XFixesDestroyPointerBarrier(dpy, barrier);
+    ASSERT_FALSE(xorg::testing::XServer::WaitForEvent(dpy, 500));
+}
