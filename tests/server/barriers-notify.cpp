@@ -13,6 +13,8 @@
 #include "xit-event.h"
 #include "helpers.h"
 
+#if HAVE_XI23
+
 using namespace xorg::testing::evemu;
 
 class BarrierNotify : public BarrierTest {};
@@ -786,3 +788,4 @@ TEST_F(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
     XFixesDestroyPointerBarrier(dpy, barrier);
     ASSERT_FALSE(xorg::testing::XServer::WaitForEvent(dpy, 500));
 }
+#endif

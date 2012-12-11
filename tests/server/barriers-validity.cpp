@@ -49,6 +49,7 @@ TEST_F(BarrierSimpleTest, DestroyInvalidBarrier)
     ASSERT_ERROR(error, xfixes_error_base + BadBarrier);
 }
 
+#if HAVE_XI23
 TEST_F(BarrierSimpleTest, MultipleClientSecurity)
 {
     XORG_TESTCASE("Ensure that two clients can't delete"
@@ -89,6 +90,7 @@ TEST_F(BarrierSimpleTest, MultipleClientSecurity)
     error = ReleaseErrorTrap(dpy2);
     ASSERT_ERROR(error, BadAccess);
 }
+#endif
 
 TEST_F(BarrierSimpleTest, PixmapsNotAllowed)
 {

@@ -49,6 +49,9 @@ PKG_CHECK_MODULES(EVEMU, [evemu >= 1.0.10])
 PKG_CHECK_MODULES(XI22, [inputproto >= 2.2] [xi >= 1.6],
                   AC_DEFINE(HAVE_XI22, 1, [XI 2.2 available]),
                   [noop=noop])
+PKG_CHECK_MODULES(XI23, [inputproto >= 2.2.99] [xi >= 1.6.99],
+                  AC_DEFINE(HAVE_XI23, 1, [XI 2.3 available]),
+                  [noop=noop])
 PKG_CHECK_MODULES(XTEST, [xtst])
 PKG_CHECK_MODULES(XFIXES, [xfixes])
 PKG_CHECK_MODULES(XSCREENSAVER, [xscrnsaver])
