@@ -133,5 +133,14 @@ Window CreateWindow(Display *dpy, Window parent = None,
                     int x = 0, int y = 0,
                     int width = -1, int height = -1);
 
+/**
+ * Check if there are any events on the wire and if so, print information
+ * about the first one.
+ *
+ * Typical usage: ASSERT_TRUE(NoEventPending(dpy))
+ *
+ * @return true if the event queue is empty, false otherwise
+ */
+bool NoEventPending(Display *dpy);
 #endif
 

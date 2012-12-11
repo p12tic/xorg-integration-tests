@@ -232,3 +232,17 @@ Window CreateWindow(Display *dpy, Window parent,
     XSync(dpy, False);
     return win;
 }
+
+bool NoEventPending(::Display *dpy)
+{
+    XSync(dpy, False);
+    if (XPending(dpy)) {
+        XEvent ev;
+        XPeekEvent(dpy, &ev);
+        std::stringstream ss;
+        EXPECT_EQ(XPending(dpy), 0) << "Event type " << ev.type << " (extension " <<
+            ev.xcookie.extension << " evtype " << ev.xcookie.evtype << ")";
+    }
+
+    return XPending(dpy) == 0;
+}
