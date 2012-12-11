@@ -30,6 +30,11 @@ public:
                               &xfixes_error_base)) {
             ADD_FAILURE () << "Need XFixes.\n";
         }
+
+        int major, minor;
+        if (!XFixesQueryVersion (Display(), &major, &minor) ||
+                major < 5)
+            ADD_FAILURE () << "Need XFixes 5 or later\n";
     }
 
     /**
