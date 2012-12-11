@@ -65,6 +65,12 @@ public:
     int master_id_2;
 
     virtual void SetUp() {
+        SetUpDevices();
+        XITServerInputTest::SetUp();
+        ConfigureDevices();
+    }
+
+    virtual void SetUpDevices() {
         dev1 = std::auto_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
@@ -73,8 +79,6 @@ public:
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
                 ));
-        XITServerInputTest::SetUp();
-        ConfigureDevices();
     }
 
     void ConfigureDevices() {
