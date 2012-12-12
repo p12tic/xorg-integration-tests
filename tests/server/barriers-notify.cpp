@@ -292,9 +292,11 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
 
     ::Display *dpy = Display();
     Window root = DefaultRootWindow(dpy);
+    int sourceid;
+
     int deviceid;
 
-    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid)) << "Failed to find device.";
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &sourceid)) << "Failed to find device.";
 
     unsigned char event_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
     XIEventMask event_mask = { XIAllMasterDevices, sizeof (event_mask_bits), event_mask_bits };
@@ -321,7 +323,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
@@ -347,7 +349,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrab)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
@@ -384,9 +386,9 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     ::Display *dpy = Display();
     Window root = DefaultRootWindow(dpy);
     Window win = CreateWindow(dpy, root);
-    int deviceid;
+    int sourceid;
 
-    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid)) << "Failed to find device.";
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &sourceid)) << "Failed to find device.";
 
     unsigned char event_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
     XIEventMask event_mask = { XIAllMasterDevices, sizeof (event_mask_bits), event_mask_bits };
@@ -414,7 +416,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
@@ -432,7 +434,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
@@ -450,7 +452,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
@@ -468,7 +470,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
@@ -487,9 +489,9 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabOtherClient)
     XSynchronize(dpy, True);
     XSynchronize(dpy2, True);
     Window root = DefaultRootWindow(dpy);
-    int deviceid;
+    int sourceid;
 
-    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid)) << "Failed to find device.";
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &sourceid)) << "Failed to find device.";
 
     unsigned char event_mask_bits[XIMaskLen (XI_LASTEVENT)] = { 0 };
     XIEventMask event_mask = { XIAllMasterDevices, sizeof (event_mask_bits), event_mask_bits };
@@ -518,7 +520,7 @@ TEST_F(BarrierNotify, EventsDuringActiveGrabOtherClient)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
 
@@ -545,9 +547,9 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
 
     ::Display *dpy = Display();
     Window root = DefaultRootWindow(dpy);
-    int deviceid;
+    int sourceid;
 
-    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid)) << "Failed to find device.";
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &sourceid)) << "Failed to find device.";
 
     XIGrabModifiers mods = { (int)XIAnyModifier, 0 };
 
@@ -578,7 +580,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
     XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
@@ -615,7 +617,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
     XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
@@ -637,7 +639,7 @@ TEST_F(BarrierNotify, EventsDuringPassiveGrab)
         ASSERT_EQ(hit.ev->root_x, 20);
         ASSERT_EQ(hit.ev->root_y, 30);
         ASSERT_EQ(hit.ev->deviceid, VIRTUAL_CORE_POINTER_ID);
-        ASSERT_EQ(hit.ev->sourceid, deviceid);
+        ASSERT_EQ(hit.ev->sourceid, sourceid);
         ASSERT_TRUE((hit.ev->flags & XIBarrierDeviceIsGrabbed));
     }
     XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, 1, root, 1, &mods);
