@@ -145,6 +145,7 @@ TEST_P(BarrierNotify, ReceivesNotifyEvents)
     ASSERT_EQ(20, event.ev->root_x);
     ASSERT_EQ(-40, event.ev->dx);
     ASSERT_EQ(event.ev->deviceid, deviceid);
+    ASSERT_EQ(event.ev->sourceid, sourceid);
 
     XFixesDestroyPointerBarrier(dpy, barrier);
 }
@@ -182,6 +183,8 @@ TEST_P(BarrierNotify, CorrectEventIDs)
         ASSERT_EQ(-40, event.ev->dx);
         ASSERT_EQ(0, event.ev->dy);
         ASSERT_EQ(1U, event.ev->eventid);
+        ASSERT_EQ(event.ev->deviceid, deviceid);
+        ASSERT_EQ(event.ev->sourceid, sourceid);
     }
 
     /* Move outside the hitbox, and ensure that we
@@ -198,6 +201,8 @@ TEST_P(BarrierNotify, CorrectEventIDs)
         ASSERT_TRUE(event.ev);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(2U, event.ev->eventid);
+        ASSERT_EQ(event.ev->deviceid, deviceid);
+        ASSERT_EQ(event.ev->sourceid, sourceid);
     }
 
     /* Ensure that we're still inside the hit box. Event ID
@@ -210,6 +215,8 @@ TEST_P(BarrierNotify, CorrectEventIDs)
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(2U, event.ev->eventid);
+        ASSERT_EQ(event.ev->deviceid, deviceid);
+        ASSERT_EQ(event.ev->sourceid, sourceid);
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -243,6 +250,8 @@ TEST_P(BarrierNotify, BarrierReleases)
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1U, event.ev->eventid);
         ASSERT_FALSE((event.ev->flags & XIBarrierPointerReleased));
+        ASSERT_EQ(event.ev->deviceid, deviceid);
+        ASSERT_EQ(event.ev->sourceid, sourceid);
     }
 
     XIBarrierReleasePointer(dpy, deviceid, barrier, 1);
@@ -257,6 +266,8 @@ TEST_P(BarrierNotify, BarrierReleases)
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1U, event.ev->eventid);
         ASSERT_TRUE((event.ev->flags & XIBarrierPointerReleased));
+        ASSERT_EQ(event.ev->deviceid, deviceid);
+        ASSERT_EQ(event.ev->sourceid, sourceid);
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -292,6 +303,8 @@ TEST_P(BarrierNotify, DestroyWindow)
     ASSERT_EQ(barrier, event.ev->barrier);
     ASSERT_EQ(20, event.ev->root_x);
     ASSERT_EQ(-40, event.ev->dx);
+    ASSERT_EQ(event.ev->deviceid, deviceid);
+    ASSERT_EQ(event.ev->sourceid, sourceid);
 
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XDestroyWindow(dpy, win);
@@ -343,6 +356,8 @@ TEST_P(BarrierNotify, UnmapWindow)
     ASSERT_EQ(barrier, event.ev->barrier);
     ASSERT_EQ(20, event.ev->root_x);
     ASSERT_EQ(-40, event.ev->dx);
+    ASSERT_EQ(event.ev->deviceid, deviceid);
+    ASSERT_EQ(event.ev->sourceid, sourceid);
 
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XUnmapWindow(dpy, win);
@@ -778,6 +793,8 @@ TEST_P(BarrierNotify, BarrierRandREventsVertical)
     ASSERT_EQ(1U, event.ev->eventid);
     ASSERT_EQ(event.ev->root_x, w - 20 - 1);
     ASSERT_LT(event.ev->root_y, h);
+    ASSERT_EQ(event.ev->deviceid, deviceid);
+    ASSERT_EQ(event.ev->sourceid, sourceid);
 }
 
 TEST_P(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
@@ -815,6 +832,8 @@ TEST_P(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
         ASSERT_EQ(0, event.ev->dx);
         ASSERT_EQ(0, event.ev->dy);
         ASSERT_TRUE(event.ev->flags & XIBarrierPointerReleased);
+        ASSERT_EQ(event.ev->deviceid, deviceid);
+        ASSERT_EQ(event.ev->sourceid, 0);
     }
 }
 
