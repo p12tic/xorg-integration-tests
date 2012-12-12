@@ -17,7 +17,21 @@
 
 using namespace xorg::testing::evemu;
 
-class BarrierNotify : public BarrierDevices {};
+class BarrierNotify : public BarrierDevices {
+public:
+
+    virtual void SelectBarrierEvents(::Display *dpy, Window win) {
+        XIEventMask mask;
+        mask.deviceid = XIAllMasterDevices;
+        mask.mask_len = XIMaskLen(XI_LASTEVENT);
+        mask.mask = new unsigned char[mask.mask_len]();
+        XISetMask(mask.mask, XI_BarrierHit);
+        XISetMask(mask.mask, XI_BarrierLeave);
+        XISelectEvents(dpy, win, &mask, 1);
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+};
 
 #define ASSERT_PTR_POS(x, y)                            \
     QueryPointerPosition(dpy, &root_x, &root_y);        \
@@ -38,14 +52,9 @@ TEST_F(BarrierNotify, ReceivesNotifyEvents)
     barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, 0, NULL);
     XSync(dpy, False);
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISelectEvents(dpy, root, &mask, 1);
-    delete[] mask.mask;
     XSync(dpy, False);
+
+    SelectBarrierEvents(dpy, root);
 
     dev1->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -74,14 +83,7 @@ TEST_F(BarrierNotify, CorrectEventIDs)
     barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, 0, NULL);
     XSync(dpy, False);
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISetMask(mask.mask, XI_BarrierLeave);
-    XISelectEvents(dpy, root, &mask, 1);
-    delete[] mask.mask;
+    SelectBarrierEvents(dpy, root);
     XSync(dpy, False);
 
     /* Ensure we have a bunch of BarrierHits on our hands. */
@@ -140,15 +142,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     Window root = DefaultRootWindow(dpy);
     PointerBarrier barrier;
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISetMask(mask.mask, XI_BarrierLeave);
-    XISelectEvents(dpy, root, &mask, 1);
-    delete[] mask.mask;
-    XSync(dpy, False);
+    SelectBarrierEvents(dpy, root);
 
     XIWarpPointer(dpy, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
 
@@ -199,14 +193,7 @@ TEST_F(BarrierNotify, DestroyWindow)
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
     XSync(dpy, False);
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISelectEvents(dpy, win, &mask, 1);
-    delete[] mask.mask;
-    XSync(dpy, False);
+    SelectBarrierEvents(dpy, win);
 
     dev1->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -255,14 +242,7 @@ TEST_F(BarrierNotify, UnmapWindow)
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
     XSync(dpy, False);
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISelectEvents(dpy, win, &mask, 1);
-    delete[] mask.mask;
-    XSync(dpy, False);
+    SelectBarrierEvents(dpy, win);
 
     dev1->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -692,14 +672,7 @@ TEST_F(BarrierNotify, BarrierRandREventsVertical)
     Window root = DefaultRootWindow(dpy);
     PointerBarrier barrier;
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISetMask(mask.mask, XI_BarrierLeave);
-    XISelectEvents(dpy, root, &mask, 1);
-    delete[] mask.mask;
+    SelectBarrierEvents(dpy, root);
 
     int w = DisplayWidth(dpy, DefaultScreen(dpy));
     int h = DisplayHeight(dpy, DefaultScreen(dpy));
@@ -734,15 +707,7 @@ TEST_F(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
     XSync(dpy, False);
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISetMask(mask.mask, XI_BarrierLeave);
-    XISelectEvents(dpy, win, &mask, 1);
-    delete[] mask.mask;
-    XSync(dpy, False);
+    SelectBarrierEvents(dpy, win);
 
     dev1->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -778,15 +743,7 @@ TEST_F(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
     XSync(dpy, False);
 
-    XIEventMask mask;
-    mask.deviceid = XIAllMasterDevices;
-    mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = new unsigned char[mask.mask_len]();
-    XISetMask(mask.mask, XI_BarrierHit);
-    XISetMask(mask.mask, XI_BarrierLeave);
-    XISelectEvents(dpy, win, &mask, 1);
-    delete[] mask.mask;
-    XSync(dpy, False);
+    SelectBarrierEvents(dpy, win);
 
     /* Move the pointer, but don't hit the barrier. */
     dev1->PlayOne(EV_REL, REL_X, -5, True);
