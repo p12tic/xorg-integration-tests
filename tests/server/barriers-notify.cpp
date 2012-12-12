@@ -22,6 +22,8 @@ enum BarrierDeviceTestCombinations {
     VCP_ONLY,            /**< test for VCP, only one MD */
     TARGET_VCP,          /**< test for VCP with two MDs present */
     TARGET_POINTER2,     /**< test for second pointer with two MDs present */
+    TARGET_VCP_AND_ALL,  /**< select for 2 MDs, but use VCP as device */
+    TARGET_POINTER2_AND_ALL, /**< select for 2 MDs, but use second MD as device */
 };
 
 static std::string enum_to_string(enum BarrierDeviceTestCombinations b) {
@@ -30,6 +32,8 @@ static std::string enum_to_string(enum BarrierDeviceTestCombinations b) {
         case VCP_ONLY:            return "VCP_ONLY";
         case TARGET_VCP:          return "TARGET_VCP";
         case TARGET_POINTER2:     return "TARGET_POINTER2";
+        case TARGET_VCP_AND_ALL:  return "TARGET_VCP_AND_ALL";
+        case TARGET_POINTER2_AND_ALL:     return "TARGET_POINTER2_AND_ALL";
     }
 
     ADD_FAILURE() << "Bug. we shouldn't get here.";
@@ -43,7 +47,7 @@ public:
     int ndevices;
     int deviceid;
     int sourceid;
-    int *all_deviceids;
+    int all_deviceids[2];
 
     virtual void SetUp(){
         SetUpDevices();
@@ -57,6 +61,8 @@ public:
             /* Set up 2 MDs */
             case TARGET_VCP:
             case TARGET_POINTER2:
+            case TARGET_VCP_AND_ALL:
+            case TARGET_POINTER2_AND_ALL:
                 ConfigureDevices();
                 break;
             default:
@@ -81,30 +87,45 @@ public:
 
     virtual void SetDeviceValues(enum BarrierDeviceTestCombinations combination)
     {
-        static int vcpid = VIRTUAL_CORE_POINTER_ID;
         const char *source_dev;
+
         switch(combination) {
             case NO_DEVICE_SPECIFICS:
                 target_dev = &dev1;
-                deviceid = vcpid;
+                deviceid = VIRTUAL_CORE_POINTER_ID;
                 ndevices = 0;
-                all_deviceids = &vcpid;
                 source_dev = "--device1--";
                 break;
             case TARGET_VCP:
             case VCP_ONLY:
                 ndevices = 1;
-                deviceid = vcpid;
-                all_deviceids = &vcpid;
+                deviceid = VIRTUAL_CORE_POINTER_ID;
                 target_dev = &dev1;
                 source_dev = "--device1--";
+                all_deviceids[0] = VIRTUAL_CORE_POINTER_ID;
                 break;
             case TARGET_POINTER2:
                 ndevices = 1;
                 deviceid = master_id_2;
-                all_deviceids = &master_id_2;
                 target_dev = &dev2;
                 source_dev = "--device2--";
+                all_deviceids[0] = master_id_2;
+                break;
+            case TARGET_VCP_AND_ALL:
+                ndevices = 2;
+                deviceid = VIRTUAL_CORE_POINTER_ID;
+                target_dev = &dev1;
+                source_dev = "--device1--";
+                all_deviceids[0] = VIRTUAL_CORE_POINTER_ID;
+                all_deviceids[1] = master_id_2;
+                break;
+            case TARGET_POINTER2_AND_ALL:
+                ndevices = 2;
+                deviceid = master_id_2;
+                target_dev = &dev2;
+                source_dev = "--device2--";
+                all_deviceids[0] = VIRTUAL_CORE_POINTER_ID;
+                all_deviceids[1] = master_id_2;
                 break;
         }
 
@@ -868,6 +889,8 @@ TEST_P(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
 INSTANTIATE_TEST_CASE_P(, BarrierNotify, ::testing::Values(NO_DEVICE_SPECIFICS,
                                                            VCP_ONLY,
                                                            TARGET_VCP,
-                                                           TARGET_POINTER2));
+                                                           TARGET_POINTER2,
+                                                           TARGET_VCP_AND_ALL,
+                                                           TARGET_POINTER2_AND_ALL));
 
 #endif
