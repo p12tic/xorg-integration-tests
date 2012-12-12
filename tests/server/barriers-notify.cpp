@@ -51,6 +51,7 @@ TEST_F(BarrierNotify, ReceivesNotifyEvents)
 
     /* Ensure we have a BarrierHit on our hands. */
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+    ASSERT_TRUE(event.ev);
     ASSERT_EQ(barrier, event.ev->barrier);
     ASSERT_EQ(20, event.ev->root_x);
     ASSERT_EQ(-40, event.ev->dx);
@@ -89,6 +90,7 @@ TEST_F(BarrierNotify, CorrectEventIDs)
 
         /* Ensure we have a BarrierHit on our hands. */
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+        ASSERT_TRUE(event.ev);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(20, event.ev->root_x);
         ASSERT_EQ(30, event.ev->root_y);
@@ -156,6 +158,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     dev1->PlayOne(EV_REL, REL_X, -40, True);
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+        ASSERT_TRUE(event.ev);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1U, event.ev->eventid);
         ASSERT_FALSE((event.ev->flags & XIBarrierPointerReleased));
@@ -169,6 +172,7 @@ TEST_F(BarrierNotify, BarrierReleases)
     /* We should have a new event because we exited the hit box */
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
+        ASSERT_TRUE(event.ev);
         ASSERT_EQ(barrier, event.ev->barrier);
         ASSERT_EQ(1U, event.ev->eventid);
         ASSERT_TRUE((event.ev->flags & XIBarrierPointerReleased));
@@ -208,6 +212,7 @@ TEST_F(BarrierNotify, DestroyWindow)
 
     /* Ensure we have a BarrierHit on our hands. */
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+    ASSERT_TRUE(event.ev);
     ASSERT_EQ(barrier, event.ev->barrier);
     ASSERT_EQ(20, event.ev->root_x);
     ASSERT_EQ(-40, event.ev->dx);
@@ -263,6 +268,7 @@ TEST_F(BarrierNotify, UnmapWindow)
 
     /* Ensure we have a BarrierHit on our hands. */
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+    ASSERT_TRUE(event.ev);
     ASSERT_EQ(barrier, event.ev->barrier);
     ASSERT_EQ(20, event.ev->root_x);
     ASSERT_EQ(-40, event.ev->dx);
@@ -749,6 +755,7 @@ TEST_F(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
 
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
+        ASSERT_TRUE(event.ev);
         ASSERT_EQ(0, event.ev->dx);
         ASSERT_EQ(0, event.ev->dy);
         ASSERT_TRUE(event.ev->flags & XIBarrierPointerReleased);
