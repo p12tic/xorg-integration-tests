@@ -292,6 +292,8 @@ TEST_P(BarrierNotify, BarrierReleases)
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
+
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_P(BarrierNotify, DestroyWindow)
@@ -344,6 +346,7 @@ TEST_P(BarrierNotify, DestroyWindow)
                                                             XI_BarrierHit,
                                                             500));
 
+    ASSERT_TRUE(NoEventPending(dpy));
     XFixesDestroyPointerBarrier(dpy, barrier);
 }
 
@@ -856,6 +859,8 @@ TEST_P(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
         ASSERT_EQ(event.ev->deviceid, deviceid);
         ASSERT_EQ(event.ev->sourceid, 0);
     }
+
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_P(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
@@ -884,6 +889,8 @@ TEST_P(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XFixesDestroyPointerBarrier(dpy, barrier);
     ASSERT_FALSE(xorg::testing::XServer::WaitForEvent(dpy, 500));
+
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 INSTANTIATE_TEST_CASE_P(, BarrierNotify, ::testing::Values(NO_DEVICE_SPECIFICS,
