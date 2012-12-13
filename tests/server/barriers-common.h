@@ -80,6 +80,7 @@ public:
     virtual void SetUp() {
         SetUpDevices();
         BarrierBaseTest::SetUp();
+        RegisterXI2(2, 3);
 
         ConfigureDevices();
     }
