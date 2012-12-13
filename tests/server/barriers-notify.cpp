@@ -24,6 +24,10 @@ enum BarrierDeviceTestCombinations {
     TARGET_POINTER2,     /**< test for second pointer with two MDs present */
     TARGET_VCP_AND_ALL,  /**< select for 2 MDs, but use VCP as device */
     TARGET_POINTER2_AND_ALL, /**< select for 2 MDs, but use second MD as device */
+    LATE_SECOND_MD_VCP,  /**< create second MD after pointer barrier, but
+                              use VCP as moving device */
+    LATE_SECOND_MD_POINTER2,  /**< create second MD after pointer barrier, but
+                                   use second MD as moving device */
 };
 
 static std::string enum_to_string(enum BarrierDeviceTestCombinations b) {
@@ -34,6 +38,8 @@ static std::string enum_to_string(enum BarrierDeviceTestCombinations b) {
         case TARGET_POINTER2:     return "TARGET_POINTER2";
         case TARGET_VCP_AND_ALL:  return "TARGET_VCP_AND_ALL";
         case TARGET_POINTER2_AND_ALL:     return "TARGET_POINTER2_AND_ALL";
+        case LATE_SECOND_MD_VCP:  return "LATE_SECOND_MD_VCP";
+        case LATE_SECOND_MD_POINTER2:     return "LATE_SECOND_MD_POINTER2";
     }
 
     ADD_FAILURE() << "Bug. we shouldn't get here.";
@@ -56,6 +62,8 @@ public:
         switch(GetParam()) {
             case NO_DEVICE_SPECIFICS:
             case VCP_ONLY:
+            case LATE_SECOND_MD_VCP:
+            case LATE_SECOND_MD_POINTER2:
                 break;
 
             /* Set up 2 MDs */
@@ -127,9 +135,45 @@ public:
                 all_deviceids[0] = VIRTUAL_CORE_POINTER_ID;
                 all_deviceids[1] = master_id_2;
                 break;
+            case LATE_SECOND_MD_VCP:
+                ndevices = 0;
+                deviceid = -1;
+                target_dev = &dev1;
+                source_dev = "--device1--";
+                break;
+            case LATE_SECOND_MD_POINTER2:
+                ndevices = 0;
+                deviceid = -1;
+                target_dev = &dev2;
+                source_dev = "--device2--";
+                break;
         }
 
         ASSERT_TRUE(FindInputDeviceByName(Display(), source_dev, &sourceid)) << "Failed to find device.";
+    }
+
+    virtual void ConfigureLateDevices(enum BarrierDeviceTestCombinations combination)
+    {
+        switch(combination) {
+            case NO_DEVICE_SPECIFICS:
+            case VCP_ONLY:
+            case TARGET_VCP:
+            case TARGET_POINTER2:
+            case TARGET_VCP_AND_ALL:
+            case TARGET_POINTER2_AND_ALL:
+                break;
+            case LATE_SECOND_MD_VCP:
+                ConfigureDevices();
+                deviceid = VIRTUAL_CORE_POINTER_ID;
+                break;
+            case LATE_SECOND_MD_POINTER2:
+                ConfigureDevices();
+                deviceid = master_id_2;
+                break;
+            default:
+                FAIL();
+                break;
+        }
     }
 };
 
@@ -150,12 +194,14 @@ TEST_P(BarrierNotify, ReceivesNotifyEvents)
     Window root = DefaultRootWindow(dpy);
     PointerBarrier barrier;
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
-
     barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, ndevices, all_deviceids);
-    XSync(dpy, False);
 
     SelectBarrierEvents(dpy, root);
+
+    ConfigureLateDevices(combination);
+
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy, False);
 
     (*target_dev)->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -184,12 +230,14 @@ TEST_P(BarrierNotify, CorrectEventIDs)
     Window root = DefaultRootWindow(dpy);
     PointerBarrier barrier;
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
-
     barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, ndevices, all_deviceids);
-    XSync(dpy, False);
 
     SelectBarrierEvents(dpy, root);
+
+    ConfigureLateDevices(combination);
+
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy, False);
 
     /* Ensure we have a bunch of BarrierHits on our hands. */
     for (int i = 0; i < 10; i++) {
@@ -259,9 +307,11 @@ TEST_P(BarrierNotify, BarrierReleases)
 
     SelectBarrierEvents(dpy, root);
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
-
     barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, ndevices, all_deviceids);
+
+    ConfigureLateDevices(combination);
+
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XSync(dpy, False);
 
     (*target_dev)->PlayOne(EV_REL, REL_X, -40, True);
@@ -311,12 +361,15 @@ TEST_P(BarrierNotify, DestroyWindow)
     Window root = DefaultRootWindow(dpy);
     Window win = CreateWindow(dpy, root);
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
 
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, ndevices, all_deviceids);
-    XSync(dpy, False);
 
     SelectBarrierEvents(dpy, win);
+
+    ConfigureLateDevices(combination);
+
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy, False);
 
     (*target_dev)->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -365,12 +418,14 @@ TEST_P(BarrierNotify, UnmapWindow)
     Window root = DefaultRootWindow(dpy);
     Window win = CreateWindow(dpy, root);
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
-
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, ndevices, all_deviceids);
-    XSync(dpy, False);
 
     SelectBarrierEvents(dpy, win);
+
+    ConfigureLateDevices(combination);
+
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy, False);
 
     (*target_dev)->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -434,6 +489,8 @@ TEST_P(BarrierNotify, EventsDuringActiveGrab)
 
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, ndevices, all_deviceids);
     XSync(dpy, False);
+
+    ConfigureLateDevices(combination);
 
     /* if OE is true and mask is not set, but set on window → event */
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
@@ -525,6 +582,8 @@ TEST_P(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
 
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, ndevices, all_deviceids);
     XSync(dpy, False);
+
+    ConfigureLateDevices(combination);
 
     /* expect event regardless on owner_events setting */
     /* if OE is true and mask is not set, but set on window → event */
@@ -628,6 +687,8 @@ TEST_P(BarrierNotify, EventsDuringActiveGrabOtherClient)
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, ndevices, all_deviceids);
     XSync(dpy, False);
 
+    ConfigureLateDevices(combination);
+
     /* second client grabs device */
     XIGrabDevice(dpy2, deviceid, root, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &no_mask);
 
@@ -686,6 +747,8 @@ TEST_P(BarrierNotify, EventsDuringPassiveGrab)
 
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, root, 20, 20, 20, 40, 0, ndevices, all_deviceids);
     XSync(dpy, False);
+
+    ConfigureLateDevices(combination);
 
     /* if OE is true and mask is not set, but set on window → event */
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
@@ -805,9 +868,10 @@ TEST_P(BarrierNotify, BarrierRandREventsVertical)
     int w = DisplayWidth(dpy, DefaultScreen(dpy));
     int h = DisplayHeight(dpy, DefaultScreen(dpy));
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, w - 40 , h - 30);
-
     barrier = XFixesCreatePointerBarrier(dpy, root, w - 20, 0, w - 20, 4000, 0, ndevices, all_deviceids);
+
+    ConfigureLateDevices(combination);
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, w - 40 , h - 30);
 
     (*target_dev)->PlayOne(EV_REL, REL_X, 40, false);
     (*target_dev)->PlayOne(EV_REL, REL_Y, 100, true);
@@ -834,12 +898,15 @@ TEST_P(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
     Window root = DefaultRootWindow(dpy);
     Window win = CreateWindow(dpy, root);
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
-
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, ndevices, all_deviceids);
     XSync(dpy, False);
 
     SelectBarrierEvents(dpy, win);
+
+    ConfigureLateDevices(combination);
+
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy, False);
 
     (*target_dev)->PlayOne(EV_REL, REL_X, -40, True);
 
@@ -876,12 +943,15 @@ TEST_P(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
     Window root = DefaultRootWindow(dpy);
     Window win = CreateWindow(dpy, root);
 
-    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
-
     PointerBarrier barrier = XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, ndevices, all_deviceids);
     XSync(dpy, False);
 
     SelectBarrierEvents(dpy, win);
+
+    ConfigureLateDevices(combination);
+
+    XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy, False);
 
     /* Move the pointer, but don't hit the barrier. */
     (*target_dev)->PlayOne(EV_REL, REL_X, -5, True);
@@ -898,6 +968,8 @@ INSTANTIATE_TEST_CASE_P(, BarrierNotify, ::testing::Values(NO_DEVICE_SPECIFICS,
                                                            TARGET_VCP,
                                                            TARGET_POINTER2,
                                                            TARGET_VCP_AND_ALL,
-                                                           TARGET_POINTER2_AND_ALL));
+                                                           TARGET_POINTER2_AND_ALL,
+                                                           LATE_SECOND_MD_VCP,
+                                                           LATE_SECOND_MD_POINTER2));
 
 #endif
