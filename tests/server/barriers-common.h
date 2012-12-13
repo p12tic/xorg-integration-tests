@@ -10,20 +10,18 @@
 #include "xit-server-input-test.h"
 #include "device-interface.h"
 
-class BarrierTest : public XITServerInputTest,
-                    public DeviceInterface {
+class BarrierBaseTest : public XITServerInputTest {
 public:
     int xfixes_opcode;
     int xfixes_event_base;
     int xfixes_error_base;
 
-    /**
-     * Initializes a standard mouse device.
-     */
-    virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+    virtual void SetUp(void) {
         XITServerInputTest::SetUp();
+        RequireXFixes(5, 0);
+    }
 
+    virtual void RequireXFixes(int major_req, int minor_req) {
         if (!XQueryExtension (Display(), XFIXES_NAME,
                               &xfixes_opcode,
                               &xfixes_event_base,
@@ -33,8 +31,23 @@ public:
 
         int major, minor;
         if (!XFixesQueryVersion (Display(), &major, &minor) ||
-                major < 5)
-            ADD_FAILURE () << "Need XFixes 5 or later\n";
+            major * 100 + minor < major_req * 100 + minor_req)
+            ADD_FAILURE () << "Need XFixes " << major_req << "." << minor_req << ", got " << major << "." << minor;
+
+    }
+
+};
+
+class BarrierTest : public BarrierBaseTest,
+                    public DeviceInterface {
+public:
+
+    /**
+     * Initializes a standard mouse device.
+     */
+    virtual void SetUp() {
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        BarrierBaseTest::SetUp();
     }
 
     /**
@@ -56,7 +69,7 @@ public:
     }
 };
 
-class BarrierDevices : public XITServerInputTest {
+class BarrierDevices : public BarrierBaseTest {
 public:
     std::auto_ptr<xorg::testing::evemu::Device> dev1;
     std::auto_ptr<xorg::testing::evemu::Device> dev2;
@@ -66,7 +79,8 @@ public:
 
     virtual void SetUp() {
         SetUpDevices();
-        XITServerInputTest::SetUp();
+        BarrierBaseTest::SetUp();
+
         ConfigureDevices();
     }
 
