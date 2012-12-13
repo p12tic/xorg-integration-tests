@@ -226,6 +226,7 @@ TEST_P(BarrierNotify, ReceivesNotifyEvents)
     ASSERT_EQ(event.ev->sourceid, sourceid);
 
     XFixesDestroyPointerBarrier(dpy, barrier);
+
 }
 
 TEST_P(BarrierNotify, CorrectEventIDs)
@@ -983,4 +984,55 @@ INSTANTIATE_TEST_CASE_P(, BarrierNotify, ::testing::Values(NO_DEVICE_SPECIFICS,
                                                            LATE_SECOND_MD_VCP,
                                                            LATE_SECOND_MD_POINTER2));
 
+class BarrierMPXTest : public BarrierDevices {};
+
+TEST_F(BarrierMPXTest, BarrierLeaveOnMDDestroyWhenInsideHitbox)
+{
+    XORG_TESTCASE("Set up pointer barrier.\n"
+                  "Create two MDs\n"
+                  "Move the pointer into the barrier hitbox.\n"
+                  "Remove the MD.\n"
+                  "Ensure that we receive an event.");
+
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+    Window root = DefaultRootWindow(dpy);
+    Window win = CreateWindow(dpy, root);
+
+    XFixesCreatePointerBarrier(dpy, win, 20, 20, 20, 40, 0, 0, NULL);
+
+    SelectBarrierEvents(dpy, win);
+
+    XIWarpPointer(dpy, master_id_2, None, root, 0, 0, 0, 0, 30, 30);
+
+    dev2->PlayOne(EV_REL, REL_X, -40, True);
+
+    /* Ensure we have a BarrierHit on our hands. */
+    {
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
+    }
+
+    XIAnyHierarchyChangeInfo change;
+    change.remove = (XIRemoveMasterInfo) {
+        .type = XIRemoveMaster,
+        .deviceid = master_id_2,
+        .return_mode = XIAttachToMaster,
+        .return_pointer = VIRTUAL_CORE_POINTER_ID,
+        .return_keyboard = VIRTUAL_CORE_POINTER_ID + 1, /* VCK */
+    };
+
+    ASSERT_EQ(XIChangeHierarchy(dpy, &change, 1), Success) << "Couldn't remove new master device.";
+
+    {
+        XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
+        ASSERT_TRUE(event.ev);
+        ASSERT_EQ(0, event.ev->dx);
+        ASSERT_EQ(0, event.ev->dy);
+        ASSERT_TRUE(event.ev->flags & XIBarrierPointerReleased);
+        ASSERT_EQ(event.ev->deviceid, master_id_2);
+        ASSERT_EQ(event.ev->sourceid, 0);
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
 #endif
