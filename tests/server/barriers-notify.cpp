@@ -46,6 +46,29 @@ static std::string enum_to_string(enum BarrierDeviceTestCombinations b) {
     return "";
 }
 
+/**
+ * This test class is called with BarrierDeviceTestCombinations as parameter
+ * All tests have two slave devices, but the combinations tested are
+ * described below. Depending on which device is tested, target_dev points
+ * to the right slave device so we move the right pointer to trigger events.
+ *
+ * NO_DEVICE_SPECIFICS:
+ *      only one MD is set up, and the barrier requests doesn't use specific
+ *      device IDs. This is the most common real-world use-case
+ * VCP_ONLY:
+ *      only one MD is set up (the VCP), the barrier is created to apply to
+ *      that pointer only
+ * TARGET_VCP/TARGET_POINTER2:
+ *      two MDs are set up (VCP and pointer 2), the barrier is created to
+ *      apply to the VCP or the pointer only, respectively.
+ * TARGET_VCP_AND_ALL/TARGET_POINTER2_AND_ALL:
+ *      two MDs are set up (VCP and pointer 2), the barrier is created to
+ *      apply to _both_ MDs.
+ * LATE_SECOND_MD_VCP/LATE_SECOND_MD_VCP:
+ *      The barrier has no specific deviceid, the second MD is created after
+ *      creating the barrier and we then move the VCP or the second MD,
+ *      respectively.
+ */
 class BarrierNotify : public BarrierDevices,
                       public ::testing::WithParamInterface<enum BarrierDeviceTestCombinations> {
 public:
