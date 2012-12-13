@@ -123,6 +123,20 @@ public:
         ASSERT_EQ(XIChangeHierarchy(dpy, &change, 1), Success) << "Couldn't attach device2 to the new master pointer.";
     }
 
+#if HAVE_XI23
+    virtual void SelectBarrierEvents(::Display *dpy, Window win) {
+        XIEventMask mask;
+        mask.deviceid = XIAllMasterDevices;
+        mask.mask_len = XIMaskLen(XI_LASTEVENT);
+        mask.mask = new unsigned char[mask.mask_len]();
+        XISetMask(mask.mask, XI_BarrierHit);
+        XISetMask(mask.mask, XI_BarrierLeave);
+        XISelectEvents(dpy, win, &mask, 1);
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+#endif
+
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device1--",

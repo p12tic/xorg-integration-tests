@@ -104,18 +104,6 @@ public:
         SetDeviceValues(GetParam());
     }
 
-    virtual void SelectBarrierEvents(::Display *dpy, Window win) {
-        XIEventMask mask;
-        mask.deviceid = XIAllMasterDevices;
-        mask.mask_len = XIMaskLen(XI_LASTEVENT);
-        mask.mask = new unsigned char[mask.mask_len]();
-        XISetMask(mask.mask, XI_BarrierHit);
-        XISetMask(mask.mask, XI_BarrierLeave);
-        XISelectEvents(dpy, win, &mask, 1);
-        delete[] mask.mask;
-        XSync(dpy, False);
-    }
-
     virtual void SetDeviceValues(enum BarrierDeviceTestCombinations combination)
     {
         const char *source_dev;
