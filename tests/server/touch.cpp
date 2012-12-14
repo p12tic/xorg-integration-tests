@@ -808,9 +808,9 @@ static std::vector<struct event_history_test> generate_event_history_test_cases(
         for (int gwidx = 0; gwidx < wd; gwidx++) {
             for (int ewidx = gwidx; ewidx < wd; ewidx++) {
                 struct event_history_test eht = {
-                    .window_depth = wd,
-                    .grab_window_idx = gwidx,
-                    .event_window_idx = ewidx,
+                    /* .window_depth =  */ wd,
+                    /* .grab_window_idx = */ gwidx,
+                    /* .event_window_id = */ ewidx
                 };
                 v.push_back(eht);
             }
