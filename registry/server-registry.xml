@@ -61,6 +61,35 @@
       <xit:testcase name="GrabDisabledDevices" success="true"/>
       <xit:testcase name="ImplicitGrabRawEvents" success="false"/>
     </xit:testsuite>
+    <xit:testsuite name="PointerGrabTypeTest">
+      <xit:testcase name="DifferentGrabTypesProhibited/0" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/1" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/2" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/3" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/4" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/5" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/6" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/7" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="DifferentGrabTypesProhibited/8" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+      </xit:testcase>
+    </xit:testsuite>
     <xit:testsuite name="ScreenSaverTest">
       <xit:testcase name="ScreenSaverActivateDeactivate" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=56649</xit:bug>

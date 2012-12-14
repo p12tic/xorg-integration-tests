@@ -2,6 +2,8 @@
 #include <config.h>
 #endif
 
+#include <tr1/tuple>
+
 #include <xorg/gtest/xorg-gtest.h>
 
 #include <X11/Xlib.h>
@@ -154,6 +156,113 @@ TEST_F(PointerGrabTest, GrabDisabledDevices)
     XSync(Display(), False);
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
+
+enum GrabType {
+    GRABTYPE_CORE,
+    GRABTYPE_XI1,
+    GRABTYPE_XI2,
+};
+
+static std::string grabtype_enum_to_string(enum GrabType gt) {
+    switch(gt) {
+        case GRABTYPE_CORE: return "GRABTYPE_CORE"; break;
+        case GRABTYPE_XI1:  return "GRABTYPE_XI1"; break;
+        case GRABTYPE_XI2:  return "GRABTYPE_XI2"; break;
+    }
+
+    ADD_FAILURE() << "BUG: shouldn't get here";
+    return NULL;
+}
+
+class PointerGrabTypeTest : public PointerGrabTest,
+                            public
+                            ::testing::WithParamInterface<std::tr1::tuple<enum ::GrabType, enum GrabType> > {};
+
+TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
+{
+    XORG_TESTCASE("Grab the pointer.\n"
+                  "Re-grab the pointer with a different type.\n"
+                  "Expect AlreadyGrabbed for differnt types\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=58255");
+
+    std::tr1::tuple<enum GrabType, enum GrabType> t = GetParam();
+    enum GrabType grab_type_1 = std::tr1::get<0>(t);
+    enum GrabType grab_type_2 = std::tr1::get<1>(t);
+    std::stringstream ss;
+    ss << grabtype_enum_to_string(grab_type_1) << " vs. " << grabtype_enum_to_string(grab_type_2);
+    SCOPED_TRACE(ss.str());
+
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+    Window root = DefaultRootWindow(dpy);
+    Status rc, expected_status = AlreadyGrabbed;
+    int deviceid;
+    XDevice *device = NULL;
+    XIEventMask mask;
+    mask.mask_len = 0;
+
+#define VIRTUAL_CORE_POINTER_XTEST_ID 4
+
+    if (grab_type_1 == grab_type_2) /* Overwriting grabs is permitted */
+        expected_status = GrabSuccess;
+
+    if (grab_type_1 == GRABTYPE_XI1 || grab_type_2 == GRABTYPE_XI1) /* XI1 can't grab the VCP */
+        deviceid = VIRTUAL_CORE_POINTER_XTEST_ID;
+    else
+        deviceid = VIRTUAL_CORE_POINTER_ID;
+
+    switch(grab_type_1) {
+        case GRABTYPE_CORE:
+            rc = XGrabPointer(dpy, root, true, 0, GrabModeAsync, GrabModeAsync, None,
+                              None, CurrentTime);
+            break;
+        case GRABTYPE_XI2:
+            rc = XIGrabDevice(dpy, deviceid, root, CurrentTime, None,
+                              GrabModeAsync, GrabModeAsync, True, &mask);
+            break;
+        case GRABTYPE_XI1:
+            deviceid = VIRTUAL_CORE_POINTER_XTEST_ID;
+            device = XOpenDevice(dpy, deviceid);
+            ASSERT_TRUE(device);
+            rc = XGrabDevice(dpy, device, root, False, 0, NULL,
+                             GrabModeAsync, GrabModeAsync, CurrentTime);
+            break;
+    }
+    ASSERT_EQ(rc, GrabSuccess);
+
+    switch(grab_type_2) {
+        case GRABTYPE_CORE:
+            if (grab_type_1 == GRABTYPE_XI1)
+                expected_status = GrabSuccess;
+            rc = XGrabPointer(dpy, root, true, 0, GrabModeAsync, GrabModeAsync, None,
+                              None, CurrentTime);
+            break;
+        case GRABTYPE_XI2:
+            rc = XIGrabDevice(dpy, deviceid, root, CurrentTime, None,
+                              GrabModeAsync, GrabModeAsync, True, &mask);
+
+            break;
+        case GRABTYPE_XI1:
+            if (grab_type_1 == GRABTYPE_CORE)
+                expected_status = GrabSuccess;
+            if (!device)
+                device = XOpenDevice(dpy, deviceid);
+            ASSERT_TRUE(device);
+            rc = XGrabDevice(dpy, device, root, False, 0, NULL,
+                             GrabModeAsync, GrabModeAsync, CurrentTime);
+            break;
+    }
+
+    ASSERT_EQ(rc, expected_status);
+
+    if (device)
+        XCloseDevice(dpy, device);
+}
+
+INSTANTIATE_TEST_CASE_P(, PointerGrabTypeTest,
+        ::testing::Combine(
+            ::testing::Values(GRABTYPE_CORE, GRABTYPE_XI1, GRABTYPE_XI2),
+            ::testing::Values(GRABTYPE_CORE, GRABTYPE_XI1, GRABTYPE_XI2)));
 
 #if HAVE_XI22
 class TouchGrabTest : public XITServerInputTest,
