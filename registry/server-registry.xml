@@ -301,6 +301,12 @@
         <xit:fix type="git">aad65415bff12c6860c19beac42e4165e598a40f</xit:fix>
       </xit:testcase>
     </xit:testsuite>
+    <xit:testsuite name="XTestPhysicalDeviceTest">
+      <xit:testcase name="ReleaseXTestOnPhysicalRelease" success="false">
+        <xit:bug type="bugzilla">http://bugs.freedesktop.org/28808</xit:bug>
+        <xit:fix type="git">14327858391ebe929b806efb53ad79e789361883</xit:fix>
+      </xit:testcase>
+    </xit:testsuite>
     <xit:testsuite name="XineramaTest">
       <xit:testcase name="ScreenCrossing/0" success="true"/>
       <xit:testcase name="ScreenCrossing/1" success="true"/>
