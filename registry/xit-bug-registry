@@ -563,10 +563,10 @@ def create_registry(args):
     xit_registry.set("name", reg_name)
     xit_registries.append(xit_registry)
 
-    for suite in results_dict.keys():
+    for suite in sorted(results_dict.keys()):
         xit_suite = E.testsuite()
         xit_suite.set("name", suite)
-        for r in results_dict[suite]:
+        for r in sorted(results_dict[suite]):
             xit_testcase = E.testcase()
             xit_testcase.set("name", r.name)
             xit_testcase.set("success", str(r.status).lower())
