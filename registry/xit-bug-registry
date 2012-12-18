@@ -653,39 +653,19 @@ def create_registry(args):
     else:
         reg_name = os.path.basename(args.results).split(".xml")[0]
 
-    NSMAP = { "xit" : XMLNS }
-    E = objectify.ElementMaker(annotate = False,
-                               namespace = NSMAP['xit'],
-                               nsmap = NSMAP)
-    xit_registries = E.registries()
-    xit_registry = E.registry()
-    xit_registry.set("name", reg_name)
+    registry = XITTestRegistry(reg_name);
 
     if args.auto_modversion == ["rpm"]:
-        xit_meta = E.meta()
         for module in DEFAULT_MODULES:
-            modversion = XITModuleVersion.getSystemVersion(module, "rpm")
-            xit_modversion = E.moduleversion(modversion.version)
-            xit_modversion.set("name", modversion.module)
-            xit_modversion.set("type", modversion.type)
-            xit_meta.append(xit_modversion)
-        xit_registry.append(xit_meta)
-
-    xit_registries.append(xit_registry)
+            registry.moduleversions.append(XITModuleVersion.getSystemVersion(module, "rpm"))
 
     for suite in sorted(results_dict.keys()):
-        xit_suite = E.testsuite()
-        xit_suite.set("name", suite)
         for r in sorted(results_dict[suite]):
-            xit_testcase = E.testcase()
-            xit_testcase.set("name", r.name)
-            xit_testcase.set("success", str(r.status).lower())
-            xit_suite.append(xit_testcase)
-        xit_registry.append(xit_suite)
+            testcase = XITTest(suite, r.name, str(r.status).lower())
+            registry.addTest(testcase);
 
-    lxml.etree.cleanup_namespaces(xit_registries)
     r = open_new_registry(args)
-    write_to_registry(r, lxml.etree.tostring(xit_registries, pretty_print=True))
+    write_to_registry(r, registry.toXML())
     sync_registry(args, r)
 
 def merge_registries(args):
