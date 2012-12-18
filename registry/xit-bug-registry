@@ -544,9 +544,49 @@ def verify_results(args):
     for result in sorted(results):
         verify_one_result(registry.getTest(result.suite, result.name), result, format_str)
 
+
+def print_modversions(name, v1, v2, use_colors=True):
+    if use_colors and v1 != v2:
+        color = termcolors.RED
+    else:
+        color = termcolors.DEFAULT
+    format_str = "{:<30} {:<50} {:<50}"
+    print color + format_str.format(name, v1, v2) + termcolors.DEFAULT
+
+def compare_meta(reg1, reg2):
+    print_modversions("Module name", "Registry 1", "Registry 2", False)
+    print_modversions("-----------", "----------", "----------", False)
+
+    r2_iter = iter(sorted(reg2.moduleversions))
+    try: 
+        r2_modversion = r2_iter.next()
+    except StopIteration:
+        pass
+
+    for r1_modversion in sorted(reg1.moduleversions):
+        try:
+            while cmp(r1_modversion.module, r2_modversion.module) > 0:
+                print_modversions(r2_modversion.module, "??", r2_modversion.version)
+                r2_modversion = r2_iter.next()
+        except StopIteration:
+            pass
+
+        module = r1_modversion.module
+        v1 = r1_modversion.version
+        v2 = r2_modversion.version if r1_modversion.module == r2_modversion.module else "??"
+        print_modversions(module, v1, v2)
+        if r1_modversion.module == r2_modversion.module:
+            try:
+                r2_modversion = r2_iter.next()
+            except StopIteration:
+                pass
+    print
+
 def compare_registries(args):
     reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
     reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
+
+    compare_meta(reg1, reg2)
 
     sname_len = 0
     tname_len = 0
