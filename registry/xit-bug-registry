@@ -465,7 +465,7 @@ class XITModuleVersion:
             raise subprocess.CalledProcessError(p.returncode, "")
         version = p.stdout.readline().strip()
 
-        return self.version == version
+        return self.version == version, version
 
     @classmethod
     def getSystemVersion(self, module, type ="rpm"):
@@ -561,6 +561,17 @@ def verify_one_result(test, result, format_str):
 
     print color + format_str.format(status_match, result.suite, result.name, str(result.status).lower(), expected_status) + termcolors.DEFAULT
 
+
+def check_installed_rpms(registry):
+    print_modversions("Module name", registry.name, "System-installed", False)
+    print_modversions("-----------", "-------------", "----------------", False)
+    for moduleversion in registry.moduleversions:
+        if moduleversion.type != "rpm":
+            continue
+        rc, version = moduleversion.compareSystemVersion()
+        print_modversions(moduleversion.module, moduleversion.version, version)
+
+
 def verify_results(args):
     """Verify a JUnit test result against the XIT test registry"""
     registry = load_registry(args)
@@ -571,6 +582,9 @@ def verify_results(args):
 
     sname_len = max([ len(x.suite) for x in results ]) + 1
     tname_len = max([ len(x.name) for x in results ]) + 1
+
+    if args.check_all:
+        check_installed_rpms(registry)
 
     format_str = "{0:<5}{1:<%d}{2:<%d}{3:>10}{4:>10}" % (sname_len, tname_len)
     print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
@@ -817,6 +831,7 @@ def parse_cmdline():
 
     verify_subparser = subparsers.add_parser("verify", help="Compare JUnit test results against the registry")
     verify_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
+    verify_subparser.add_argument("--check-all", default=False, action="store_true", help="Perform extra verification checks")
     verify_subparser.set_defaults(func = verify_results)
 
     compare_subparser = subparsers.add_parser("compare", help="Compare two test registries")
