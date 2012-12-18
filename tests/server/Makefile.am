@@ -10,6 +10,7 @@ server_SOURCES = \
                  xtest.cpp \
                  multihead.cpp \
                  misc.cpp \
+                 input.cpp \
                  barriers-common.h \
                  barriers-validity.cpp \
                  barriers-directions.cpp \
