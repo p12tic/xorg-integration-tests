@@ -572,7 +572,7 @@ def verify_results(args):
     sname_len = max([ len(x.suite) for x in results ]) + 1
     tname_len = max([ len(x.name) for x in results ]) + 1
 
-    format_str = "{:<5}{:<%d}{:<%d}{:>10}{:>10}" % (sname_len, tname_len)
+    format_str = "{0:<5}{1:<%d}{2:<%d}{3:>10}{4:>10}" % (sname_len, tname_len)
     print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
     print format_str.format("----", "---------", "--------", "------", "--------")
 
@@ -585,7 +585,7 @@ def print_modversions(name, v1, v2, use_colors=True):
         color = termcolors.RED
     else:
         color = termcolors.DEFAULT
-    format_str = "{:<30} {:<50} {:<50}"
+    format_str = "{0:<30} {1:<50} {2:<50}"
     print color + format_str.format(name, v1, v2) + termcolors.DEFAULT
 
 def compare_meta(reg1, reg2):
@@ -629,7 +629,7 @@ def compare_registries(args):
     sname_len = max([ len(x[0]) for x in reg1.listTestNames() ]) + 1
     tname_len = max([ len(x[1]) for x in reg1.listTestNames() ]) + 1
 
-    format_str = "{:<4}{:<%d}{:<%d}{:>10}{:>10}" % (sname_len, tname_len)
+    format_str = "{0:<4}{1:<%d}{2:<%d}{3:>10}{4:>10}" % (sname_len, tname_len)
 
     print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
     print format_str.format("----", "---------", "--------", "------", "--------")
