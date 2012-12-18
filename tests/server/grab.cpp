@@ -106,7 +106,7 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
                                                            1000));
     XEvent ev;
     XNextEvent(dpy, &ev);
-    ASSERT_FALSE(XPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy));
 
     /* Now press button, make sure sure we still get raw events */
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
@@ -129,7 +129,7 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
                                                            XI_RawMotion,
                                                            1000));
     XNextEvent(dpy, &ev);
-    ASSERT_FALSE(XPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_F(PointerGrabTest, GrabDisabledDevices)
@@ -414,7 +414,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
 
     XSelectInput(dpy2, root, PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
     XSync(dpy2, False);
-    ASSERT_FALSE(XPending(dpy2));
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     int repeats = GetParam();
 
@@ -484,7 +484,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
     delete[] mask.mask;
 
     XSync(dpy2, False);
-    ASSERT_FALSE(XPending(dpy2));
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     int repeats = GetParam();
 
@@ -508,12 +508,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
         ASSERT_EQ(ev.xcookie.evtype, XI_ButtonPress);
     }
 
-    if (XPending(dpy2)) {
-        XEvent ev;
-        XPeekEvent(dpy2, &ev);
-        ASSERT_FALSE(XPending(dpy2)) << "Event type " << ev.type << " (extension " <<
-            ev.xcookie.extension << " evtype " << ev.xcookie.evtype << ")";
-    }
+    ASSERT_TRUE(NoEventPending(dpy2));
 }
 
 INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleTaps, ::testing::Range(1, 11)); /* device num_touches is 5 */
@@ -756,7 +751,7 @@ TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
     ASSERT_EQ(B_begin.ev->detail, touchid);
 
     /* A has not rejected yet, no ownership */
-    ASSERT_EQ(XPending(dpy2), 0);
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     XIAllowTouchEvents(dpy, deviceid, touchid, root, XIAcceptTouch);
 
@@ -810,7 +805,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
     ASSERT_EQ(B_begin.ev->detail, touchid);
 
     /* A has not rejected yet, no ownership */
-    ASSERT_EQ(XPending(dpy2), 0);
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     XIAllowTouchEvents(dpy, deviceid, touchid, root, XIAcceptTouch);
 
@@ -864,7 +859,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipRejectTouch)
     ASSERT_EQ(B_begin.ev->detail, touchid);
 
     /* A has not rejected yet, no ownership */
-    ASSERT_EQ(XPending(dpy2), 0);
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     XIAllowTouchEvents(dpy, deviceid, touchid, root, XIRejectTouch);
 
@@ -921,7 +916,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     ASSERT_EQ(B_begin.ev->detail, touchid);
 
     /* A has not rejected yet, no ownership */
-    ASSERT_EQ(XPending(dpy2), 0);
+    ASSERT_TRUE(NoEventPending(dpy2));
 
     XIUngrabDevice(dpy, deviceid, CurrentTime);
 
