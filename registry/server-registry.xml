@@ -205,11 +205,36 @@
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/2" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/3" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/4" success="true"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/5" success="false"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/6" success="false"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/7" success="false"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/8" success="false"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/9" success="false"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/5" success="true">
+        <xit:fix type="git">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
+        <xit:fix type="git">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
+        <xit:fix type="git">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
+        <xit:fix type="git">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/6" success="true">
+        <xit:fix type="git">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
+        <xit:fix type="git">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
+        <xit:fix type="git">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
+        <xit:fix type="git">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/7" success="true">
+        <xit:fix type="git">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
+        <xit:fix type="git">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
+        <xit:fix type="git">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
+        <xit:fix type="git">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/8" success="true">
+        <xit:fix type="git">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
+        <xit:fix type="git">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
+        <xit:fix type="git">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
+        <xit:fix type="git">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/9" success="true">
+        <xit:fix type="git">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
+        <xit:fix type="git">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
+        <xit:fix type="git">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
+        <xit:fix type="git">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
+      </xit:testcase>
       <xit:testcase name="PassiveGrabPointerRelease/0" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/1" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/2" success="false"/>
@@ -224,8 +249,12 @@
     <xit:testsuite name="TouchOwnershipTest">
       <xit:testcase name="ActiveGrabOwnershipAcceptTouch" success="true"/>
       <xit:testcase name="ActiveGrabOwnershipRejectTouch" success="true"/>
-      <xit:testcase name="ActiveGrabOwnershipUngrabDevice" success="false"/>
-      <xit:testcase name="ActivePointerGrabForWholeTouch" success="false"/>
+      <xit:testcase name="ActiveGrabOwnershipUngrabDevice" success="true">
+        <xit:fix type="git">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="ActivePointerGrabForWholeTouch" success="true">
+        <xit:fix type="git">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
+      </xit:testcase>
       <xit:testcase name="ActivePointerUngrabDuringTouch" success="true"/>
       <xit:testcase name="NoOwnershipAfterAcceptTouch" success="true"/>
       <xit:testcase name="OwnershipAfterRejectTouch" success="true"/>
@@ -266,11 +295,13 @@
       <xit:testcase name="TouchSelectionConflicts/0" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
       </xit:testcase>
-      <xit:testcase name="TouchSelectionConflicts/1" success="false">
+      <xit:testcase name="TouchSelectionConflicts/1" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+        <xit:fix type="git">39f19b3f3b8c9b714e70e339dfb0083ff629ab2a</xit:fix>
       </xit:testcase>
-      <xit:testcase name="TouchSelectionConflicts/2" success="false">
+      <xit:testcase name="TouchSelectionConflicts/2" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+        <xit:fix type="git">39f19b3f3b8c9b714e70e339dfb0083ff629ab2a</xit:fix>
       </xit:testcase>
       <xit:testcase name="TouchSelectionConflicts/3" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
@@ -278,8 +309,9 @@
       <xit:testcase name="TouchSelectionConflicts/4" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
       </xit:testcase>
-      <xit:testcase name="TouchSelectionConflicts/5" success="false">
+      <xit:testcase name="TouchSelectionConflicts/5" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
+        <xit:fix type="git">39f19b3f3b8c9b714e70e339dfb0083ff629ab2a</xit:fix>
       </xit:testcase>
       <xit:testcase name="TouchSelectionConflicts/6" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57301</xit:bug>
@@ -302,9 +334,10 @@
       </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="XTestPhysicalDeviceTest">
-      <xit:testcase name="ReleaseXTestOnPhysicalRelease" success="false">
+      <xit:testcase name="ReleaseXTestOnPhysicalRelease" success="true">
         <xit:bug type="bugzilla">http://bugs.freedesktop.org/28808</xit:bug>
         <xit:fix type="git">14327858391ebe929b806efb53ad79e789361883</xit:fix>
+        <xit:fix type="git">c4fee9d2ecd6fdd4c05b04c9f02b23f10f2938b8</xit:fix>
       </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="XineramaTest">
