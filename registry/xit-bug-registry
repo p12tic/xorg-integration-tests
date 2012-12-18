@@ -854,7 +854,7 @@ def parse_cmdline():
     import_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
     import_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
     import_subparser.add_argument("--name", nargs=1, help="Human-readable name for registry (default: the filename)")
-    import_subparser.add_argument("--auto-modversion", nargs=1, help="Try to automatically get module versions for selected modules (default: rpm)")
+    import_subparser.add_argument("--auto-modversion", metavar="TYPE", nargs=1, help="Try to automatically get module versions for selected modules (default: rpm)")
     import_subparser.set_defaults(func = create_registry)
 
     merge_subparser = subparsers.add_parser("merge", help="Merge two registries together")
