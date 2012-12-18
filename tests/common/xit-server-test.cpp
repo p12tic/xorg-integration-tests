@@ -11,6 +11,7 @@
 
 void XITServerTest::SetUpEventListener() {
     failed = false;
+    synchronized = false;
 
     testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
     listeners.Append(this);
@@ -24,6 +25,16 @@ void XITServerTest::SetUp() {
     SetUpConfigAndLog();
     StartServer();
 }
+
+::Display* XITServerTest::Display() {
+    ::Display *dpy = xorg::testing::Test::Display();
+    if (!synchronized) {
+        XSynchronize(dpy, True);
+        synchronized = true;
+    }
+    return dpy;
+}
+
 
 void XITServerTest::TearDown() {
     alarm(0);

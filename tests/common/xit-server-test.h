@@ -60,6 +60,15 @@ protected:
     virtual bool Failed();
 
     /**
+     * When called the first time, the display connection is synchronized
+     * with XSynchronize(). This is only done once, a test-case that does
+     * not want the connection synchronized can undo so.
+     *
+     * @return The display connection to our server, synchronized
+     */
+    virtual ::Display* Display();
+
+    /**
      * The X server instance. This server is started with StartServer() but
      * may be started by child classes directly.
      */
@@ -74,6 +83,8 @@ protected:
 
 private:
     bool failed;
+
+    bool synchronized;
 
     /**
      * Callback for test results. If any test fails, ::Failed() will return
