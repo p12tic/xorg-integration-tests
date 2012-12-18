@@ -589,32 +589,44 @@ def print_modversions(name, v1, v2, use_colors=True):
     print color + format_str.format(name, v1, v2) + termcolors.DEFAULT
 
 def compare_meta(reg1, reg2):
-    print_modversions("Module name", "Registry 1", "Registry 2", False)
+    print_modversions("Module name", reg1.name, reg2.name, False)
     print_modversions("-----------", "----------", "----------", False)
 
+
+    r1_iter = iter(sorted(reg1.moduleversions))
     r2_iter = iter(sorted(reg2.moduleversions))
-    try: 
+
+    try:
+        r1_modversion = r1_iter.next()
         r2_modversion = r2_iter.next()
+        while True:
+            rc = cmp(r1_modversion, r2_modversion)
+            if rc == 0:
+                print_modversions(r1_modversion.module, r1_modversion.version, r2_modversion.version)
+                r1_modversion = r1_iter.next()
+                r2_modversion = r2_iter.next()
+            elif rc > 0:
+                print_modversions(r2_modversion.module, "???", r2_modversion.version)
+                r2_modversion = r2_iter.next()
+            elif rc < 0:
+                print_modversions(r1_modversion.module, r1_modversion.version, "???")
+                r1_modversion = r1_iter.next()
     except StopIteration:
         pass
 
-    for r1_modversion in sorted(reg1.moduleversions):
-        try:
-            while cmp(r1_modversion.module, r2_modversion.module) > 0:
-                print_modversions(r2_modversion.module, "??", r2_modversion.version)
-                r2_modversion = r2_iter.next()
-        except StopIteration:
-            pass
+    try:
+        while True:
+            r1_modversion = r1_iter.next()
+            print_modversions(r1_modversion.module, r1_modversion.version, "???")
+    except StopIteration:
+        pass
+    try:
+        while True:
+            r2_modversion = r2_iter.next()
+            print_modversions(r2_modversion.module, "???", r2_modversion.version)
+    except StopIteration:
+        pass
 
-        module = r1_modversion.module
-        v1 = r1_modversion.version
-        v2 = r2_modversion.version if r1_modversion.module == r2_modversion.module else "??"
-        print_modversions(module, v1, v2)
-        if r1_modversion.module == r2_modversion.module:
-            try:
-                r2_modversion = r2_iter.next()
-            except StopIteration:
-                pass
     print
 
 def compare_registries(args):
