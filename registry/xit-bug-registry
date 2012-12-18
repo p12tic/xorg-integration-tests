@@ -133,7 +133,7 @@ class XITTestRegistry:
 
                     for fix in testcase.iterchildren(tag=xmlns_tag("fix")):
                         type = fix.attrib["type"]
-                        tcase.addFix(XITFix.createFromType(type, fix.text))
+                        tcase.addFix(XITFix.createFromType(type, fix.text, fix.attrib))
 
                     reg.addTest(tcase)
             regs.append(reg)
@@ -177,7 +177,9 @@ class XITTestRegistry:
 
                 for fix in test.getFixes():
                     xit_fix = E.fix(fix.text)
-                    xit_fix.set("type", fix.type)
+                    xit_fix.set("type", fix.type);
+                    for arg, value in fix.extra_args.iteritems():
+                        xit_fix.set(arg, value)
                     xit_testcase.append(xit_fix)
 
                 for info in test.getInfo():
@@ -349,6 +351,7 @@ class XITFix:
     def __init__(self):
         self.type = None
         self.text = None
+        self.extra_args = {}
 
     def __str__(self):
         return self.text
@@ -363,18 +366,19 @@ class XITFix:
         return rc
 
     @classmethod
-    def createFromType(self, type, text):
+    def createFromType(self, type, text, extra_args = {}):
         if type == "git":
-            return XITFixGit(text)
+            return XITFixGit(text, extra_args)
         elif type == "rpm":
-            return XITFixRPM(text)
+            return XITFixRPM(text, extra_args)
         raise ValueError
 
 class XITFixGit(XITFix):
     """Represents a git commit known to affect the outcome of a testcase"""
-    def __init__(self, sha1):
+    def __init__(self, sha1, extra_args = {}):
         self.type = "git"
         self.text = sha1
+        self.extra_args = extra_args
 
     @property
     def sha1(self):
@@ -385,9 +389,10 @@ class XITFixGit(XITFix):
 
 class XITFixRPM(XITFix):
     """Represents a rpm package known to affect the outcome of a testcase"""
-    def __init__(self, rpm):
+    def __init__(self, rpm, extra_args = {}):
         self.type = "rpm"
         self.text = rpm
+        self.extra_args = extra_args
 
     @property
     def rpm(self):
@@ -738,7 +743,7 @@ def rm_bug(args):
     testcase.removeBug(XITBug("bugzilla", args.url))
     registry_from_string(args, registry.toXML())
 
-def add_fix(args, type, text):
+def add_fix(args, type, text, extra_args = {}):
     registry = load_registry(args)
     testcase = registry.getTest(args.testsuite, args.testcase)
 
@@ -746,11 +751,15 @@ def add_fix(args, type, text):
         print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
         sys.exit(1)
 
-    testcase.addFix(XITFix.createFromType(type, text))
+    testcase.addFix(XITFix.createFromType(type, text, extra_args))
     registry_from_string(args, registry.toXML())
 
 def add_commit(args):
-    add_fix(args, "git", args.sha1)
+    extra_args = {}
+    if args.repo:
+        extra_args["repo"] = args.repo
+
+    add_fix(args, "git", args.sha1, extra_args)
 
 def add_rpm(args):
     add_fix(args, "rpm", args.rpm)
@@ -869,6 +878,7 @@ def parse_cmdline():
 
     add_commit_subparser = edit_subparsers.add_parser("add-commit", help="Add git SHA1 of a commit that alters this test outcome")
     add_commit_subparser.add_argument("sha1", help="git commit SHA1")
+    add_commit_subparser.add_argument("--repo", help="git repository")
     add_commit_subparser.set_defaults(func = add_commit)
 
     rm_commit_subparser = edit_subparsers.add_parser("rm-commit", help="Remove git SHA1 of a commit listed in this test")
