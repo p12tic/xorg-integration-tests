@@ -63,6 +63,8 @@ def xmlns_tag(tag, ns=XMLNS):
     return "{" + ns + "}" + tag
 
 def str2bool(val):
+    if val == True or val == False:
+        return val
     if val in ["True", "true", "1"]:
         return True
     elif val in ["False", "false", "0"]:
@@ -232,7 +234,7 @@ class XITTestCase:
     def __init__(self, suite, name, status = True):
         self.suite = suite
         self.name = name
-        self.status = status
+        self.status = str2bool(status)
 
     @property
     def status(self):
