@@ -2,7 +2,7 @@
   <xit:registry name="xorg-upstream">
     <xit:meta>
       <xit:date>2012-12-18</xit:date>
-      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">3420a7778c7d5eaa638327f31dd460554c257bb1</xit:moduleversion>
+      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">bd91b05b631f13afd1f7a9d6cbc4f0c5408b523a</xit:moduleversion>
     </xit:meta>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
@@ -68,8 +68,9 @@
       <xit:testcase name="DifferentGrabTypesProhibited/1" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
       </xit:testcase>
-      <xit:testcase name="DifferentGrabTypesProhibited/2" success="false">
+      <xit:testcase name="DifferentGrabTypesProhibited/2" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+        <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">dd3242c87a0a58cba055eb99c0c3fcf03153e4b8</xit:fix>
       </xit:testcase>
       <xit:testcase name="DifferentGrabTypesProhibited/3" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
@@ -77,14 +78,17 @@
       <xit:testcase name="DifferentGrabTypesProhibited/4" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
       </xit:testcase>
-      <xit:testcase name="DifferentGrabTypesProhibited/5" success="false">
+      <xit:testcase name="DifferentGrabTypesProhibited/5" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+        <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">dd3242c87a0a58cba055eb99c0c3fcf03153e4b8</xit:fix>
       </xit:testcase>
-      <xit:testcase name="DifferentGrabTypesProhibited/6" success="false">
+      <xit:testcase name="DifferentGrabTypesProhibited/6" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+        <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">dd3242c87a0a58cba055eb99c0c3fcf03153e4b8</xit:fix>
       </xit:testcase>
-      <xit:testcase name="DifferentGrabTypesProhibited/7" success="false">
+      <xit:testcase name="DifferentGrabTypesProhibited/7" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
+        <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">dd3242c87a0a58cba055eb99c0c3fcf03153e4b8</xit:fix>
       </xit:testcase>
       <xit:testcase name="DifferentGrabTypesProhibited/8" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
