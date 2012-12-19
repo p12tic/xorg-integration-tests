@@ -330,7 +330,9 @@ class XITBug:
     """Represents a known bug related to a specific test case. Usually, this
        will be a link to a bugzilla database"""
 
-    def __init__(self, bug_type="bugzilla", url=""):
+    default_type = "bugzilla"
+
+    def __init__(self, bug_type=default_type, url=""):
         self.type = bug_type
         self.url = url
 
