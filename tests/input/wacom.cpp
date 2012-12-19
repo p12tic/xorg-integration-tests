@@ -473,6 +473,97 @@ TEST_P(WacomLensCursorTest, CursorMove)
 
 INSTANTIATE_TEST_CASE_P(, WacomLensCursorTest, ::testing::ValuesIn(lens_cursor_tablets));
 
+class WacomToolProximityTest : public XITServerInputTest,
+                               public DeviceInterface,
+                               public ::testing::WithParamInterface<int> {
+public:
+    virtual void SetUpConfigAndLog() {
+        std::string tool_type;
+        switch (GetParam()) {
+            case BTN_TOOL_PEN:
+            case BTN_TOOL_BRUSH:
+            case BTN_TOOL_AIRBRUSH:
+            case BTN_TOOL_PENCIL:
+                tool_type = "stylus";
+                break;
+            case BTN_TOOL_RUBBER:
+                tool_type = "eraser";
+                break;
+            case BTN_TOOL_MOUSE:
+            case BTN_TOOL_LENS:
+                tool_type = "cursor";
+                break;
+            default:
+                FAIL() << "Invalid tool type";
+        }
+
+        config.AddDefaultScreenWithDriver();
+        config.SetAutoAddDevices(false);
+        config.AddInputSection("wacom", "--cursor--",
+                               "Option \"Type\" \"" + tool_type + "\"\n"
+                               "Option \"GrabDevice\" \"off\"\n"
+                               "Option \"DebugLevel\" \"12\"\n"
+                               "Option \"CommonDBG\" \"12\"\n"
+                               "Option \"CursorProx\" \"63\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        config.WriteConfig();
+    }
+
+    virtual void SetUp() {
+        SetDevice("tablets/Wacom-Intuos4-8x13.desc");
+
+        int tool_type = GetParam();
+
+        /* bring device into prox */
+        dev->PlayOne(EV_ABS, ABS_X, 6784, false);
+        dev->PlayOne(EV_ABS, ABS_Y, 2946, false);
+        dev->PlayOne(EV_ABS, ABS_DISTANCE, 63, false);
+        dev->PlayOne(EV_KEY, tool_type, 1, false);
+        dev->PlayOne(EV_MSC, MSC_SERIAL, -494927850, true);
+
+        dev->PlayOne(EV_ABS, ABS_X, 6740, false);
+        dev->PlayOne(EV_ABS, ABS_DISTANCE, 45, false);
+        dev->PlayOne(EV_MSC, MSC_SERIAL, -494927850, true);
+
+        XITServerInputTest::SetUp();
+    }
+};
+
+
+TEST_P(WacomToolProximityTest, ToolMovesOnProximity)
+{
+    XORG_TESTCASE("Create device with the given tool.\n"
+                  "Get tool into proximity.\n"
+                  "Start server.\n"
+                  "Check that events from the tool move the cursor\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=56536");
+
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask |
+                                                          ButtonReleaseMask |
+                                                          PointerMotionMask |
+                                                          ButtonMotionMask);
+    dev->PlayOne(EV_ABS, ABS_X, 6800, false);
+    dev->PlayOne(EV_ABS, ABS_Y, 2900, false);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 40, false);
+    dev->PlayOne(EV_MSC, MSC_SERIAL, -494927850, true);
+
+    dev->PlayOne(EV_ABS, ABS_X, 6800, false);
+    dev->PlayOne(EV_ABS, ABS_Y, 2900, false);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 40, false);
+    dev->PlayOne(EV_MSC, MSC_SERIAL, -494927850, true);
+
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), MotionNotify));
+}
+
+INSTANTIATE_TEST_CASE_P(, WacomToolProximityTest, ::testing::Values(BTN_TOOL_PEN,
+                                                                    BTN_TOOL_AIRBRUSH,
+                                                                    BTN_TOOL_PENCIL,
+                                                                    BTN_TOOL_BRUSH,
+                                                                    BTN_TOOL_RUBBER,
+                                                                    BTN_TOOL_LENS,
+                                                                    BTN_TOOL_MOUSE));
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
