@@ -1,8 +1,8 @@
 <xit:registries xmlns:xit="http://www.x.org/xorg-integration-testing">
   <xit:registry name="xorg-upstream">
     <xit:meta>
-      <xit:date>2012-12-03</xit:date>
-      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">b51a1bd2766e7dc975ca8f1cacc3f8bd0e1a68a3</xit:moduleversion>
+      <xit:date>2012-12-18</xit:date>
+      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">3420a7778c7d5eaa638327f31dd460554c257bb1</xit:moduleversion>
     </xit:meta>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
