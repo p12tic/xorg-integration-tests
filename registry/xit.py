@@ -269,7 +269,8 @@ class XITTest(XITTestCase):
 
     def addBug(self, bug):
         """Add a reference to a known bug to this test case"""
-        self._bugs.append(bug)
+        if not bug in self._bugs:
+            self._bugs.append(bug)
 
     def removeBug(self, bug):
         """Remove a reference to a known bug to this test case"""
@@ -280,11 +281,13 @@ class XITTest(XITTestCase):
 
     def addInfo(self, info):
         """Add some general information about this test case"""
-        self._info.append(info)
+        if not info in self._info:
+            self._info.append(info)
 
     def addFix(self, fix):
         """Add fix information about this test case"""
-        self._fixes.append(fix)
+        if not fix in self._fixes:
+            self._fixes.append(fix)
 
     def removeFix(self, fix):
         """Add fix information about this test case"""
