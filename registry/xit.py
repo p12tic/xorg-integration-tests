@@ -284,6 +284,13 @@ class XITTest(XITTestCase):
         if not info in self._info:
             self._info.append(info)
 
+    def removeInfo(self, info):
+        """Add some general information about this test case"""
+        try:
+            self._info.remove(info)
+        except ValueError:
+            pass
+
     def addFix(self, fix):
         """Add fix information about this test case"""
         if not fix in self._fixes:
