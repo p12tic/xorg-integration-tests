@@ -757,6 +757,68 @@ TEST_F(SynapticsClickpadSoftButtonsTest, RightClick)
     XSync(Display(), True);
 }
 
+class SynapticsClickpadSoftButtonsWithAreaTest : public SynapticsClickpadSoftButtonsTest {
+public:
+    /**
+     * Sets up a single CorePointer synaptics clickpad device with the
+     * SoftButtonArea option set to 50% left/right, 82% from the top.
+     */
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("synaptics", "--device--",
+                               "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"ClickPad\"            \"on\"\n"
+                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"SoftButtonAreas\"     \"50% 0 82% 0 0 0 0 0\"\n"
+                               "Option \"AreaBottomEdge\"     \"3900\"\n"
+                               "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(SynapticsClickpadSoftButtonsTest, LeftClickInDeadArea)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.left-phys-click.events");
+
+    XEvent btn;
+    ASSERT_NE(XPending(Display()), 0) << "No event pending" << std::endl;
+    XNextEvent(Display(), &btn);
+
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 1U);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 1U);
+
+    XSync(Display(), True);
+}
+
+TEST_F(SynapticsClickpadSoftButtonsWithAreaTest, RightClickInDeadArea)
+{
+    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+    XSync(Display(), False);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.right-phys-click.events");
+
+    XEvent btn;
+    ASSERT_NE(XPending(Display()), 0) << "No event pending" << std::endl;
+    XNextEvent(Display(), &btn);
+
+    ASSERT_EQ(btn.xbutton.type, ButtonPress);
+    ASSERT_EQ(btn.xbutton.button, 3U);
+
+    XNextEvent(Display(), &btn);
+    ASSERT_EQ(btn.xbutton.type, ButtonRelease);
+    ASSERT_EQ(btn.xbutton.button, 3U);
+
+    XSync(Display(), True);
+}
+
 /**
  * Synaptics driver test for clickpad devices with the SoftButtonArea set at
  * runtime.
