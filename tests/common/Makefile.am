@@ -1,6 +1,6 @@
 include $(top_srcdir)/common.mk
 
-noinst_LIBRARIES = libxit.a
+noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS) libxit.a
 
 common_sources =  \
 		 $(top_srcdir)/tests/common/xit-event.h \

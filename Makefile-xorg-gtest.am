@@ -64,5 +64,5 @@ libxorg_gtest_main_a_CXXFLAGS = \
 	$(GTEST_CXXFLAGS) \
 	$(AM_CXXFLAGS)
 
-XORG_GTEST_LIBS = libxorg-gtest.a libgtest.a -lpthread $(X11_LIBS)
-XORG_GTEST_MAIN_LIBS = libxorg-gtest_main.a
+XORG_GTEST_LIBS = $(top_builddir)/tests/common/libxorg-gtest.a $(top_builddir)/tests/common/libgtest.a -lpthread $(X11_LIBS)
+XORG_GTEST_MAIN_LIBS = $(top_builddir)/tests/common/libxorg-gtest_main.a

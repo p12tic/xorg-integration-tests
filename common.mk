@@ -1,7 +1,5 @@
 include $(top_srcdir)/Makefile-xorg-gtest.am
 
-noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
-
 AM_CPPFLAGS = \
 	      $(XI_CFLAGS) \
 	      $(XFIXES_CFLAGS) \
