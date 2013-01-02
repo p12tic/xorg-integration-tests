@@ -1,6 +1,6 @@
 include $(top_srcdir)/Makefile-xorg-gtest.am
 
-noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS)
+noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS) libxit.a
 
 AM_CPPFLAGS = \
 	      $(XI_CFLAGS) \
@@ -38,3 +38,5 @@ common_sources =  \
 		 $(top_srcdir)/tests/common/device-interface.cpp \
 		 $(top_srcdir)/tests/common/device-interface.h  \
 		 $(top_srcdir)/tests/common/video-driver-test.h
+
+libxit_a_SOURCES = $(common_sources)

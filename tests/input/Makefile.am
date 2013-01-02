@@ -10,28 +10,27 @@ noinst_PROGRAMS = legacy-drivers \
 
 TESTS=$(noinst_PROGRAMS)
 
-legacy_drivers_SOURCES = legacy-drivers.cpp $(common_sources)
-legacy_drivers_LDADD = $(GTEST_LDADDS)
+legacy_drivers_SOURCES = legacy-drivers.cpp
+legacy_drivers_LDADD = $(GTEST_LDADDS) libxit.a
 
-input_module_load_SOURCES = input-module-load.cpp $(common_sources)
-input_module_load_LDADD = $(GTEST_LDADDS)
+input_module_load_SOURCES = input-module-load.cpp
+input_module_load_LDADD = $(GTEST_LDADDS) libxit.a
 
-kbd_driver_SOURCES = kbd.cpp $(common_sources)
-kbd_driver_LDADD = $(GTEST_LDADDS)
+kbd_driver_SOURCES = kbd.cpp
+kbd_driver_LDADD = $(GTEST_LDADDS) libxit.a
 
-mouse_driver_SOURCES = mouse.cpp $(common_sources)
-mouse_driver_LDADD = $(GTEST_LDADDS)
+mouse_driver_SOURCES = mouse.cpp
+mouse_driver_LDADD = $(GTEST_LDADDS) libxit.a
 
-evdev_driver_SOURCES = evdev.cpp $(common_sources)
-evdev_driver_LDADD = $(GTEST_LDADDS)
+evdev_driver_SOURCES = evdev.cpp
+evdev_driver_LDADD = $(GTEST_LDADDS) libxit.a
 
-synaptics_driver_SOURCES = synaptics.cpp $(common_sources)
-synaptics_driver_LDADD = $(GTEST_LDADDS)
+synaptics_driver_SOURCES = synaptics.cpp
+synaptics_driver_LDADD = $(GTEST_LDADDS) libxit.a
 
 wacom_driver_SOURCES = wacom_devs.h				\
 		       wacom-hovering-expresskeys.cpp		\
 		       wacom-input-matrix.cpp			\
-		       wacom.cpp				\
-		       $(common_sources)
-wacom_driver_LDADD = $(GTEST_LDADDS)
+		       wacom.cpp
+wacom_driver_LDADD = $(GTEST_LDADDS) libxit.a
 

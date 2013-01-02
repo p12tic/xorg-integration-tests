@@ -4,6 +4,6 @@ noinst_PROGRAMS = video-module-load
 
 TESTS=$(noinst_PROGRAMS)
 
-video_module_load_SOURCES = video-module-load.cpp $(common_sources)
-video_module_load_LDADD = $(GTEST_LDADDS)
+video_module_load_SOURCES = video-module-load.cpp
+video_module_load_LDADD = $(GTEST_LDADDS) libxit.a
 
