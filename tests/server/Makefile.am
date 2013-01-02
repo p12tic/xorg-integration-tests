@@ -1,4 +1,4 @@
-include $(top_srcdir)/tests/common/Makefile.am
+include $(top_srcdir)/common.mk
 
 noinst_PROGRAMS = server
 TESTS=$(noinst_PROGRAMS)
@@ -16,4 +16,4 @@ server_SOURCES = \
                  barriers-directions.cpp \
                  barriers-devices.cpp
 
-server_LDADD = $(GTEST_LDADDS) $(XTEST_LIBS) $(XFIXES_LIBS) $(XSCREENSAVER_LIBS) libxit.a
+server_LDADD = $(GTEST_LDADDS) $(XTEST_LIBS) $(XFIXES_LIBS) $(XSCREENSAVER_LIBS) $(XIT_LIBS)
