@@ -200,7 +200,7 @@ TEST_F(EvdevMouseTest, TerminateWithButtonDown)
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, 1);
 
-    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000), true);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonPress, -1, -1, 1000));
     XEvent ev;
     XNextEvent(Display(), &ev);
     ASSERT_FALSE(XPending(Display()));
@@ -216,7 +216,7 @@ TEST_F(EvdevMouseTest, BtnReleaseMaskOnly)
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
     dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
 
-    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonRelease, -1, -1, 1000), true);
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), ButtonRelease, -1, -1, 1000));
     XEvent ev;
     XNextEvent(Display(), &ev);
 
