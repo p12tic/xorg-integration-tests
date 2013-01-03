@@ -697,6 +697,73 @@ INSTANTIATE_TEST_CASE_P(, EvdevInvalidButtonMappingTest,
                         ::testing::Values(" ", "a", "64", "1 2 ", "-1",
                                           "1 a", "1 55", "1 -2"));
 
+class EvdevJoystickTest : public EvdevMouseTest {
+    virtual void SetUp() {
+        SetDevice("joysticks/Sony-PLAYSTATION(R)3-Controller.desc");
+        XITServerInputTest::SetUp();
+    }
+};
+
+TEST_F(EvdevJoystickTest, MTAxesNoButtons)
+{
+    XORG_TESTCASE("Set up a device with MT axes and only buttons > BTN_JOYSTICK\n"
+                  "Expect the device to _not_ be added.\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=58967");
+
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    XIEventMask mask;
+    mask.mask_len = XIMaskLen(XI_ButtonRelease);
+    mask.mask = new unsigned char[mask.mask_len]();
+    mask.deviceid = XIAllMasterDevices;
+
+    XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_ButtonRelease);
+
+    XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1);
+
+
+    XIDeviceInfo *info;
+    int ndevices;
+
+    info = XIQueryDevice(Display(), deviceid, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+    ASSERT_TRUE(info);
+    ASSERT_GT(info->num_classes, 2);
+    ASSERT_EQ(info->deviceid, deviceid);
+
+    bool btn_class_found = false;
+    for (int i = 0; i < info->num_classes; i++) {
+        if (info->classes[i]->type == XIButtonClass) {
+            XIButtonClassInfo *b = reinterpret_cast<XIButtonClassInfo*>(info->classes[i]);
+            ASSERT_EQ(b->num_buttons, 5); /* we add scrolling */
+            btn_class_found = true;
+            break;
+        }
+    }
+
+    ASSERT_TRUE(btn_class_found);
+
+    XIFreeDeviceInfo(info);
+
+    /*
+        Playing an event would trigger a bug.
+        [ 97436.293] (EE) BUG: triggered 'if (!b || !v)'
+        [ 97436.293] (EE) BUG: exevents.c:929 in UpdateDeviceState()
+    */
+
+    dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, 100);
+    dev->PlayOne(EV_ABS, ABS_MT_POSITION_Y, 100);
+    dev->PlayOne(EV_ABS, ABS_MT_TRACKING_ID, 1);
+    dev->PlayOne(EV_ABS, ABS_MT_SLOT, 1, true);
+
+    dev->PlayOne(EV_ABS, ABS_MT_TRACKING_ID, -1, true);
+
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(), GenericEvent, xi2_opcode, XI_ButtonPress));
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
