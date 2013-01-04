@@ -8,6 +8,20 @@
 #define _XIT_EVENT_H_
 
 /**
+ * Usage:
+ *   ASSERT_EVENT(XIDeviceEvent, myevent, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+ *   ASSERT_EQ(myevent->detail, 1U);
+ *
+ * or for core events:
+ *   ASSERT_EVENT(XMotionEvent, myevent, dpy, MotionNotify);
+ *   ASSERT_EQ(myevent->detail, 1U);
+ */
+#define ASSERT_EVENT(_type, _name, ...) \
+        XITEvent<_type> _name ## _xit_event(__VA_ARGS__); \
+        _type* _name = _name ## _xit_event.ev; \
+        ASSERT_TRUE(_name);
+
+/**
  * Template class to work around the Xlib cookie API.
  * Create a single EW object that pulls down then next event from the wire,
  * gets the cookie data (if needed) and frees the cookie data once the
