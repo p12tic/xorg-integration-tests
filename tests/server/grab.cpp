@@ -385,15 +385,19 @@ TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
 INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleModes, ::testing::Values(XIAcceptTouch, XIRejectTouch));
 
 class TouchGrabTestMultipleTaps : public TouchGrabTest,
-                                  public ::testing::WithParamInterface<int> { };
+                                  public ::testing::WithParamInterface<std::tr1::tuple<int, int> > {};
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFastSuccession)
 {
-    int repeats = GetParam();
+    std::tr1::tuple<int, int> t = GetParam();
+    int repeats = std::tr1::get<0>(t);
+    int mode = std::tr1::get<1>(t);
 
+    std::string strmode = (mode == GrabModeAsync) ? "GrabModeAsync" : "GrabModeSync";
     std::stringstream ss;
     ss << repeats;
-    XORG_TESTCASE("Grab button 1 (GrabModeAsync) from client C1\n"
+
+    XORG_TESTCASE("Grab button 1 (" + strmode + ") from client C1\n"
                   "Select for core button events from client C2\n"
                   "Generate " + ss.str() + " touch begin/end events\n"
                   "C2 must not receive button events\n"
@@ -410,7 +414,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     XIGrabModifiers mods;
     mods.modifiers = XIAnyModifier;
     XIGrabButton(dpy1, VIRTUAL_CORE_POINTER_ID, 1, DefaultRootWindow(dpy1),
-                 None, GrabModeAsync, GrabModeAsync, False, &mask, 1, &mods);
+                 None, mode, mode, False, &mask, 1, &mods);
     delete[] mask.mask;
 
     ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
@@ -432,10 +436,16 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     XSync(dpy2, False);
 
     ASSERT_TRUE(XPending(dpy1));
-    ASSERT_EQ(XPending(dpy1), repeats); // ButtonPress event
+    int event_count = 0;
     while (XPending(dpy1)) {
+        event_count++;
+
         ASSERT_EVENT(XIDeviceEvent, ev, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
+        if (mode == GrabModeSync)
+            XIAllowEvents(dpy1, ev->deviceid, XISyncDevice, CurrentTime);
     }
+
+    ASSERT_EQ(event_count, repeats); // ButtonPress event
 
     while (XPending(dpy2)) {
         ASSERT_EVENT(XIDeviceEvent, ev, dpy2, MotionNotify);
@@ -444,11 +454,15 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 {
-    int repeats = GetParam();
+    std::tr1::tuple<int, int> param = GetParam();
+    int repeats = std::tr1::get<0>(param);
+    int mode = std::tr1::get<1>(param);
 
+    std::string strmode = (mode == GrabModeAsync) ? "GrabModeAsync" : "GrabModeSync";
     std::stringstream ss;
     ss << repeats;
-    XORG_TESTCASE("Grab button 1 (GrabModeAsync) from client C1\n"
+
+    XORG_TESTCASE("Grab button 1 (" + strmode + ") from client C1\n"
                   "Select for touch events from client C2\n"
                   "Generate " + ss.str() + " touch begin/end events\n"
                   "C2 must not get touch events\n"
@@ -465,7 +479,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
     XIGrabModifiers mods;
     mods.modifiers = XIAnyModifier;
     XIGrabButton(dpy1, VIRTUAL_CORE_POINTER_ID, 1, DefaultRootWindow(dpy1),
-                 None, GrabModeAsync, GrabModeAsync, False, &mask, 1, &mods);
+                 None, mode, mode, False, &mask, 1, &mods);
     delete[] mask.mask;
 
     ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
@@ -499,15 +513,26 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
     XSync(dpy2, False);
 
     ASSERT_TRUE(XPending(dpy1));
-    ASSERT_EQ(XPending(dpy1), repeats); // ButtonPress event
+    int event_count = 0;
     while (XPending(dpy1)) {
+        event_count++;
+
         ASSERT_EVENT(XIDeviceEvent, ev, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
+        if (mode == GrabModeSync)
+            XIAllowEvents(dpy1, ev->deviceid, XISyncDevice, CurrentTime);
     }
+
+    ASSERT_EQ(event_count, repeats); // ButtonPress event
 
     ASSERT_TRUE(NoEventPending(dpy2));
 }
 
-INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleTaps, ::testing::Range(1, 11)); /* device num_touches is 5 */
+INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleTaps,
+        ::testing::Combine(
+            ::testing::Range(1, 11), /* device num_touches is 5 */
+            ::testing::Values(GrabModeSync, GrabModeAsync)
+        )
+);
 
 class TouchOwnershipTest : public TouchGrabTest {
 public:
