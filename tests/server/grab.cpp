@@ -437,17 +437,11 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     ASSERT_TRUE(XPending(dpy1));
     ASSERT_EQ(XPending(dpy1), repeats); // ButtonPress event
     while (XPending(dpy1)) {
-        XEvent ev;
-        XNextEvent(dpy1, &ev);
-        ASSERT_EQ(ev.type, GenericEvent);
-        ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
-        ASSERT_EQ(ev.xcookie.evtype, XI_ButtonPress);
+        ASSERT_EVENT(XIDeviceEvent, ev, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
     }
 
     while (XPending(dpy2)) {
-        XEvent ev;
-        XNextEvent(dpy2, &ev);
-        ASSERT_EQ(ev.type, MotionNotify);
+        ASSERT_EVENT(XIDeviceEvent, ev, dpy2, MotionNotify);
     }
 }
 
@@ -510,11 +504,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
     ASSERT_TRUE(XPending(dpy1));
     ASSERT_EQ(XPending(dpy1), repeats); // ButtonPress event
     while (XPending(dpy1)) {
-        XEvent ev;
-        XNextEvent(dpy1, &ev);
-        ASSERT_EQ(ev.type, GenericEvent);
-        ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
-        ASSERT_EQ(ev.xcookie.evtype, XI_ButtonPress);
+        ASSERT_EVENT(XIDeviceEvent, ev, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
     }
 
     ASSERT_TRUE(NoEventPending(dpy2));
