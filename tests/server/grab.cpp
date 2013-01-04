@@ -417,9 +417,6 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     ASSERT_TRUE(dpy2);
     Window root = DefaultRootWindow(dpy2);
 
-    int major = 2, minor = 0;
-    ASSERT_EQ(XIQueryVersion(dpy2, &major, &minor), Success);
-
     XSelectInput(dpy2, root, PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
     XSync(dpy2, False);
     ASSERT_TRUE(NoEventPending(dpy2));
