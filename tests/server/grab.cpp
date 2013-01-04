@@ -308,9 +308,12 @@ TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
 {
     int mode = GetParam();
     std::string strmode = (mode == XIAcceptTouch) ? "XIAcceptTouch" : "XIRejectTouch";
-    XORG_TESTCASE("Passive and active grab on the same device\n"
-                  "must receive an equal number of TouchBegin/TouchEnd "
-                  "events\nfor mode" + strmode  + ".\n"
+    XORG_TESTCASE("Grab button 1 on device\n"
+                  "Actively grab device\n"
+                  "Generate touch begin/end on the device\n"
+                  "XAllowTouch(" + strmode + ") on TouchBegin\n"
+                  "Expect one begin/end pair for XIAcceptTouch,\n"
+                  "two for XIRejectTouch\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=55738");
 
     int deviceid;
@@ -386,9 +389,14 @@ class TouchGrabTestMultipleTaps : public TouchGrabTest,
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFastSuccession)
 {
-    XORG_TESTCASE("A client selecting for core events on the \n"
-                  "root window must not receive ButtonPress and Release events \n"
-                  "if a passive button grabbing client has GrabModeAsync.\n"
+    int repeats = GetParam();
+
+    std::stringstream ss;
+    ss << repeats;
+    XORG_TESTCASE("Grab button 1 (GrabModeAsync) from client C1\n"
+                  "Select for core button events from client C2\n"
+                  "Generate " + ss.str() + " touch begin/end events\n"
+                  "C2 must not receive button events\n"
                   "This test exceeds num_touches on the device.\n");
 
     ::Display *dpy1 = Display();
@@ -415,8 +423,6 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     XSelectInput(dpy2, root, PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
     XSync(dpy2, False);
     ASSERT_TRUE(NoEventPending(dpy2));
-
-    int repeats = GetParam();
 
     /* for this test to succeed, the server mustn't start processing until
        the last touch event physically ends, so no usleep here*/
@@ -447,9 +453,14 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 {
-    XORG_TESTCASE("If a client has a async passive button grab on the "
-                  "root window,\na client with a touch selection on the next window "
-                  "down must not get touch events.\n"
+    int repeats = GetParam();
+
+    std::stringstream ss;
+    ss << repeats;
+    XORG_TESTCASE("Grab button 1 (GrabModeAsync) from client C1\n"
+                  "Select for touch events from client C2\n"
+                  "Generate " + ss.str() + " touch begin/end events\n"
+                  "C2 must not get touch events\n"
                   "This test exceeds num_touches on the device.\n");
 
     ::Display *dpy1 = Display();
@@ -485,8 +496,6 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 
     XSync(dpy2, False);
     ASSERT_TRUE(NoEventPending(dpy2));
-
-    int repeats = GetParam();
 
     /* for this test to succeed, the server mustn't start processing until
        the last touch event physically ends, so no usleep here*/
