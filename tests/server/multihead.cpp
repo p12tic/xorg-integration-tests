@@ -305,39 +305,32 @@ TEST_P(ZaphodTest, ScreenCrossingButtons)
 
     dev->PlayOne(EV_REL, REL_X, -width * 2, true);
 
-    XITEvent<XEnterWindowEvent> lwin_enter(ldpy, EnterNotify);
-    ASSERT_TRUE(lwin_enter.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    ASSERT_EVENT(XEnterWindowEvent, lwin_enter, ldpy, EnterNotify);
+    ASSERT_EQ(lwin_enter->window, lwin);
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
     dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
 
-    XITEvent<XButtonPressedEvent> lwin_press(ldpy, ButtonPress);
-    ASSERT_TRUE(lwin_press.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
-    XITEvent<XButtonPressedEvent> lwin_release(ldpy, ButtonRelease);
-    ASSERT_TRUE(lwin_release.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    ASSERT_EVENT(XButtonPressedEvent, lwin_press, ldpy, ButtonPress);
+    ASSERT_EQ(lwin_enter->window, lwin);
+    ASSERT_EVENT(XButtonPressedEvent, lwin_release, ldpy, ButtonRelease);
+    ASSERT_EQ(lwin_enter->window, lwin);
 
     dev->PlayOne(EV_REL, REL_X, width * 2, true);
 
-    XITEvent<XLeaveWindowEvent> lwin_leave(ldpy, LeaveNotify);
-    ASSERT_TRUE(lwin_enter.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    ASSERT_EVENT(XLeaveWindowEvent, lwin_leave, ldpy, LeaveNotify);
+    ASSERT_EQ(lwin_enter->window, lwin);
 
-    XITEvent<XEnterWindowEvent> rwin_enter(rdpy, EnterNotify);
-    ASSERT_TRUE(rwin_enter.ev);
-    ASSERT_EQ(rwin_enter.ev->window, rwin);
+    ASSERT_EVENT(XEnterWindowEvent, rwin_enter, rdpy, EnterNotify);
+    ASSERT_EQ(rwin_enter->window, rwin);
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
     dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
 
-    XITEvent<XButtonPressedEvent> rwin_press(rdpy, ButtonPress);
-    ASSERT_TRUE(rwin_press.ev);
-    ASSERT_EQ(rwin_enter.ev->window, rwin);
-    XITEvent<XButtonPressedEvent> rwin_release(rdpy, ButtonRelease);
-    ASSERT_TRUE(rwin_release.ev);
-    ASSERT_EQ(rwin_enter.ev->window, rwin);
+    ASSERT_EVENT(XButtonPressedEvent, rwin_press, rdpy, ButtonPress);
+    ASSERT_EQ(rwin_enter->window, rwin);
+    ASSERT_EVENT(XButtonPressedEvent, rwin_release, rdpy, ButtonRelease);
+    ASSERT_EQ(rwin_enter->window, rwin);
 }
 
 INSTANTIATE_TEST_CASE_P(, ZaphodTest, ::testing::Values(true, false));
@@ -410,39 +403,32 @@ TEST_P(XineramaTest, ScreenCrossingButtons)
     WarpPointer(dpy, 201, height/2);
     dev->PlayOne(EV_REL, REL_X, -10, true);
 
-    XITEvent<XEnterWindowEvent> lwin_enter(dpy, EnterNotify);
-    ASSERT_TRUE(lwin_enter.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    ASSERT_EVENT(XEnterWindowEvent, lwin_enter, dpy, EnterNotify);
+    ASSERT_EQ(lwin_enter->window, lwin);
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
     dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
 
-    XITEvent<XButtonPressedEvent> lwin_press(dpy, ButtonPress);
-    ASSERT_TRUE(lwin_press.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
-    XITEvent<XButtonPressedEvent> lwin_release(dpy, ButtonRelease);
-    ASSERT_TRUE(lwin_release.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    ASSERT_EVENT(XButtonPressedEvent, lwin_press, dpy, ButtonPress);
+    ASSERT_EQ(lwin_enter->window, lwin);
+    ASSERT_EVENT(XButtonPressedEvent, lwin_release, dpy, ButtonRelease);
+    ASSERT_EQ(lwin_enter->window, lwin);
 
     dev->PlayOne(EV_REL, REL_X, width, true);
 
-    XITEvent<XLeaveWindowEvent> lwin_leave(dpy, LeaveNotify);
-    ASSERT_TRUE(lwin_enter.ev);
-    ASSERT_EQ(lwin_enter.ev->window, lwin);
+    ASSERT_EVENT(XLeaveWindowEvent, lwin_leave, dpy, LeaveNotify);
+    ASSERT_EQ(lwin_enter->window, lwin);
 
-    XITEvent<XEnterWindowEvent> rwin_enter(dpy, EnterNotify);
-    ASSERT_TRUE(rwin_enter.ev);
-    ASSERT_EQ(rwin_enter.ev->window, rwin);
+    ASSERT_EVENT(XEnterWindowEvent, rwin_enter, dpy, EnterNotify);
+    ASSERT_EQ(rwin_enter->window, rwin);
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
     dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
 
-    XITEvent<XButtonPressedEvent> rwin_press(dpy, ButtonPress);
-    ASSERT_TRUE(rwin_press.ev);
-    ASSERT_EQ(rwin_enter.ev->window, rwin);
-    XITEvent<XButtonPressedEvent> rwin_release(dpy, ButtonRelease);
-    ASSERT_TRUE(rwin_release.ev);
-    ASSERT_EQ(rwin_enter.ev->window, rwin);
+    ASSERT_EVENT(XButtonPressedEvent, rwin_press, dpy, ButtonPress);
+    ASSERT_EQ(rwin_enter->window, rwin);
+    ASSERT_EVENT(XButtonPressedEvent, rwin_release, dpy, ButtonRelease);
+    ASSERT_EQ(rwin_enter->window, rwin);
 }
 
 INSTANTIATE_TEST_CASE_P(, XineramaTest, ::testing::Values(true, false));

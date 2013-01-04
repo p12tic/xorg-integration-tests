@@ -674,12 +674,11 @@ TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
 
     for (int i = 0; i < NCLIENTS; i++) {
         /* Expect touch begin on all clients */
-        XITEvent<XIDeviceEvent> tbegin(dpys[i], GenericEvent, xi2_opcode, XI_TouchBegin);
-        ASSERT_TRUE(tbegin.ev);
+        ASSERT_EVENT(XIDeviceEvent, tbegin, dpys[i], GenericEvent, xi2_opcode, XI_TouchBegin);
         if (touchid == -1)
-            touchid = tbegin.ev->detail;
+            touchid = tbegin->detail;
         else
-            ASSERT_EQ(touchid, tbegin.ev->detail);
+            ASSERT_EQ(touchid, tbegin->detail);
 
         /* A has no ownership mask, everyone else doesn't have ownership
          * yet, so everyone only has the TouchBegin so far*/
@@ -692,23 +691,20 @@ TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
         int next_owner = i;
         XIAllowTouchEvents(dpys[current_owner], VIRTUAL_CORE_POINTER_ID, touchid, win[current_owner], XIRejectTouch);
 
-        XITEvent<XIDeviceEvent> tend(dpys[current_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
-        ASSERT_TRUE(tend.ev);
+        ASSERT_EVENT(XIDeviceEvent, tend, dpys[current_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
         ASSERT_TRUE(NoEventPending(dpys[current_owner]));
 
         /* Now we expect ownership */
         ASSERT_EQ(XPending(dpys[next_owner]), 1);
-        XITEvent<XITouchOwnershipEvent> oe(dpys[next_owner], GenericEvent, xi2_opcode, XI_TouchOwnership);
-        ASSERT_TRUE(oe.ev);
-        ASSERT_EQ(oe.ev->touchid, (unsigned int)touchid);
+        ASSERT_EVENT(XITouchOwnershipEvent, oe, dpys[next_owner], GenericEvent, xi2_opcode, XI_TouchOwnership);
+        ASSERT_EQ(oe->touchid, (unsigned int)touchid);
     }
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
     int last_owner = NCLIENTS-1;
-    XITEvent<XIDeviceEvent> tend(dpys[last_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(tend.ev);
-    ASSERT_EQ(tend.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, tend, dpys[last_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(tend->detail, touchid);
 
     for (int i = 0; i < NCLIENTS; i++)
         ASSERT_TRUE(NoEventPending(dpys[i]));
@@ -738,17 +734,15 @@ TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
     /* Expect touch begin to A */
-    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(A_begin.ev);
-    int touchid = A_begin.ev->detail;
-    int deviceid = A_begin.ev->deviceid;
-    Window root = A_begin.ev->root;
+    ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    int touchid = A_begin->detail;
+    int deviceid = A_begin->deviceid;
+    Window root = A_begin->root;
 
 
     /* Now expect the touch begin to B */
-    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(B_begin.ev);
-    ASSERT_EQ(B_begin.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, B_begin, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EQ(B_begin->detail, touchid);
 
     /* A has not rejected yet, no ownership */
     ASSERT_TRUE(NoEventPending(dpy2));
@@ -757,15 +751,13 @@ TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
 
     /* Now we expect TouchEnd on B */
     ASSERT_EQ(XPending(dpy2), 1);
-    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(B_end.ev);
-    ASSERT_EQ(B_end.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(B_end->detail, touchid);
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(A_end.ev);
-    ASSERT_EQ(A_end.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(A_end->detail, touchid);
 
     ASSERT_TRUE(NoEventPending(dpy2));
 }
@@ -793,16 +785,14 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
     /* Expect touch begin to A */
-    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(A_begin.ev);
-    int touchid = A_begin.ev->detail;
-    int deviceid = A_begin.ev->deviceid;
-    Window root = A_begin.ev->root;
+    ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    int touchid = A_begin->detail;
+    int deviceid = A_begin->deviceid;
+    Window root = A_begin->root;
 
     /* Now expect the touch begin to B */
-    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(B_begin.ev);
-    ASSERT_EQ(B_begin.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, B_begin, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EQ(B_begin->detail, touchid);
 
     /* A has not rejected yet, no ownership */
     ASSERT_TRUE(NoEventPending(dpy2));
@@ -811,15 +801,13 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
 
     /* Now we expect TouchEnd */
     ASSERT_EQ(XPending(dpy2), 1);
-    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(B_end.ev);
-    ASSERT_EQ(B_end.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(B_end->detail, touchid);
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(A_end.ev);
-    ASSERT_EQ(A_end.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(A_end->detail, touchid);
 
     ASSERT_TRUE(NoEventPending(dpy2));
 }
@@ -847,37 +835,32 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipRejectTouch)
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
     /* Expect touch begin to A */
-    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(A_begin.ev);
-    int touchid = A_begin.ev->detail;
-    int deviceid = A_begin.ev->deviceid;
-    Window root = A_begin.ev->root;
+    ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    int touchid = A_begin->detail;
+    int deviceid = A_begin->deviceid;
+    Window root = A_begin->root;
 
     /* Now expect the touch begin to B */
-    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(B_begin.ev);
-    ASSERT_EQ(B_begin.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, B_begin, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EQ(B_begin->detail, touchid);
 
     /* A has not rejected yet, no ownership */
     ASSERT_TRUE(NoEventPending(dpy2));
 
     XIAllowTouchEvents(dpy, deviceid, touchid, root, XIRejectTouch);
 
-    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(A_end.ev);
-    ASSERT_EQ(A_end.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(A_end->detail, touchid);
 
     /* Now we expect TouchOwnership */
     ASSERT_EQ(XPending(dpy2), 1);
 
-    XITEvent<XITouchOwnershipEvent> oe(dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
-    ASSERT_TRUE(oe.ev);
-    ASSERT_EQ(oe.ev->touchid, (unsigned int)touchid);
+    ASSERT_EVENT(XITouchOwnershipEvent, oe, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
+    ASSERT_EQ(oe->touchid, (unsigned int)touchid);
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(B_end.ev);
+    ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
 
     ASSERT_TRUE(NoEventPending(dpy2));
 }
@@ -905,15 +888,13 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
     /* Expect touch begin to A */
-    XITEvent<XIDeviceEvent> A_begin(dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(A_begin.ev);
-    int touchid = A_begin.ev->detail;
-    int deviceid = A_begin.ev->deviceid;
+    ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    int touchid = A_begin->detail;
+    int deviceid = A_begin->deviceid;
 
     /* Now expect the touch begin to B */
-    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(B_begin.ev);
-    ASSERT_EQ(B_begin.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, B_begin, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EQ(B_begin->detail, touchid);
 
     /* A has not rejected yet, no ownership */
     ASSERT_TRUE(NoEventPending(dpy2));
@@ -921,21 +902,18 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     XIUngrabDevice(dpy, deviceid, CurrentTime);
 
     /* A needs TouchEnd */
-    XITEvent<XIDeviceEvent> A_end(dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(A_end.ev);
-    ASSERT_EQ(A_end.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(A_end->detail, touchid);
 
     /* Now we expect TouchOwnership on B */
     ASSERT_EQ(XPending(dpy2), 1);
-    XITEvent<XITouchOwnershipEvent> oe(dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
-    ASSERT_TRUE(oe.ev);
-    ASSERT_EQ(oe.ev->touchid, (unsigned int)touchid);
+    ASSERT_EVENT(XITouchOwnershipEvent, oe, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
+    ASSERT_EQ(oe->touchid, (unsigned int)touchid);
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(B_end.ev);
-    ASSERT_EQ(B_end.ev->detail, touchid);
+    ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EQ(B_end->detail, touchid);
 
     ASSERT_TRUE(NoEventPending(dpy));
 }
@@ -962,27 +940,23 @@ TEST_F(TouchOwnershipTest, ActivePointerGrabForWholeTouch)
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
-    XITEvent<XIDeviceEvent> A_btnpress(dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
-    ASSERT_TRUE(A_btnpress.ev);
+    ASSERT_EVENT(XIDeviceEvent, A_btnpress, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
 
-    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(B_begin.ev);
+    ASSERT_EVENT(XIDeviceEvent, B_begin, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
 
     /* No ownership event on the wire */
     ASSERT_TRUE(NoEventPending(dpy2));
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XITEvent<XIDeviceEvent> A_btnrelease(dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
-    ASSERT_TRUE(A_btnrelease.ev);
+    ASSERT_EVENT(XIDeviceEvent, A_btnrelease, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
 
     /* One event on the wire and it's TouchEnd, not ownership */
     ASSERT_EQ(XPending(dpy2), 1);
 
     XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
 
-    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(B_end.ev);
+    ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
 
     ASSERT_TRUE(NoEventPending(dpy));
 }
@@ -1011,24 +985,20 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
-    XITEvent<XIDeviceEvent> A_btnpress(dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
-    ASSERT_TRUE(A_btnpress.ev);
+    ASSERT_EVENT(XIDeviceEvent, A_btnpress, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
 
-    XITEvent<XIDeviceEvent> B_begin(dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
-    ASSERT_TRUE(B_begin.ev);
+    ASSERT_EVENT(XIDeviceEvent, B_begin, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
 
     /* No ownership event on the wire */
     ASSERT_TRUE(NoEventPending(dpy2));
 
     XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
 
-    XITEvent<XITouchOwnershipEvent> B_ownership(dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
-    ASSERT_TRUE(B_ownership.ev);
+    ASSERT_EVENT(XITouchOwnershipEvent, B_ownership, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XITEvent<XIDeviceEvent> B_end(dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
-    ASSERT_TRUE(B_end.ev);
+    ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
 
     ASSERT_TRUE(NoEventPending(dpy));
 }

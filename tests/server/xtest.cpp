@@ -161,17 +161,15 @@ TEST_F(XTestPhysicalDeviceTest, ReleaseXTestOnPhysicalRelease)
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
 
-    XITEvent<XButtonEvent> press(dpy, ButtonPress);
-    ASSERT_TRUE(press.ev);
-    ASSERT_EQ(press.ev->button, 1U);
+    ASSERT_EVENT(XButtonEvent, press, dpy, ButtonPress);
+    ASSERT_EQ(press->button, 1U);
 
     XTestFakeButtonEvent(dpy, 1, 1, 0);
 
     dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
 
-    XITEvent<XButtonEvent> release(dpy, ButtonRelease);
-    ASSERT_TRUE(release.ev);
-    ASSERT_EQ(release.ev->button, 1U);
+    ASSERT_EVENT(XButtonEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(release->button, 1U);
 
     Window root, child;
     int root_x, root_y, win_x, win_y;
