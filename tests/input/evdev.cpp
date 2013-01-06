@@ -26,19 +26,42 @@ typedef Keys_Map::iterator keys_mapIter;
 typedef std::vector<Key_Pair> MultiMedia_Keys_Map;
 typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
 
+class EvdevKeyboardTest : public XITServerInputTest,
+                          public DeviceInterface {
+public:
+    virtual void SetUp() {
+        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    /**
+     * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
+     * the evemu device. The input from GetParam() is used as XkbLayout.
+     */
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CoreKeyboard\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default mouse device to avoid server adding our device again */
+        config.AddInputSection("mouse", "mouse-device",
+                               "Option \"CorePointer\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
 /**
  * Evdev driver test for keyboard devices. Takes a string as parameter,
  * which is later used for the XkbLayout option.
  */
-class EvdevXKBTest : public XITServerInputTest,
-                     public DeviceInterface,
+class EvdevXKBTest : public EvdevKeyboardTest,
                      public ::testing::WithParamInterface<std::string> {
+public:
     /**
      * Initializes a standard keyboard device.
      */
     virtual void SetUp() {
-        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
-
         // Define a map of pair to hold each key/keysym per layout
         // US, QWERTY => qwerty
         Keys.insert (std::pair<std::string, Key_Pair> ("us", Key_Pair (KEY_Q, XK_q)));
@@ -70,7 +93,7 @@ class EvdevXKBTest : public XITServerInputTest,
         Multimedia_Keys.push_back (Key_Pair (KEY_NEXTSONG,       XF86XK_AudioNext));
         Multimedia_Keys.push_back (Key_Pair (KEY_PREVIOUSSONG,   XF86XK_AudioPrev));
 
-        XITServerInputTest::SetUp();
+        EvdevKeyboardTest::SetUp();
     }
 
     /**
