@@ -12,22 +12,12 @@ class InputModuleLoadTest : public SimpleInputDriverTest {};
 
 TEST_P(InputModuleLoadTest, CheckForLoadFailure)
 {
-    std::ifstream in_file(server.GetLogFilePath().c_str());
-    std::string line;
     std::string error_msg("Failed to load module");
     std::string param(GetParam());
 
-    // grep for error message in the log file...
     error_msg +=  " \"" + param + "\"";
-    if(in_file.is_open())
-    {
-        while (getline (in_file, line))
-        {
-            size_t found = line.find(error_msg);
-            Bool error = (found != std::string::npos);
-            ASSERT_FALSE (error) << "Module " << param << " failed to load" << std::endl << line <<  std::endl;
-        }
-    }
+    ASSERT_FALSE(SearchFileForString(server.GetLogFilePath(), error_msg))
+             << "Module " << param << " failed to load" << std::endl;
 }
 
 INSTANTIATE_TEST_CASE_P(, InputModuleLoadTest,

@@ -4,6 +4,7 @@
 #include "helpers.h"
 
 #include <sstream>
+#include <fstream>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -245,4 +246,22 @@ bool NoEventPending(::Display *dpy)
     }
 
     return XPending(dpy) == 0;
+}
+
+bool SearchFileForString(const std::string &path, const std::string &substring) {
+    std::ifstream in_file(path.c_str());
+    std::string line;
+
+    if(in_file.is_open())
+    {
+        while (getline (in_file, line))
+        {
+            size_t found = line.find(substring);
+            if (found != std::string::npos)
+                return true;
+        }
+    } else
+        ADD_FAILURE() << "Failed to open file " + path;
+
+    return false;
 }

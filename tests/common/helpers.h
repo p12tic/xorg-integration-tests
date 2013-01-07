@@ -142,5 +142,15 @@ Window CreateWindow(Display *dpy, Window parent = None,
  * @return true if the event queue is empty, false otherwise
  */
 bool NoEventPending(Display *dpy);
+
+
+/**
+ * Open the file at path and search it for the substring given. Search is
+ * per-line and for location of the substring within that line.
+ *
+ * @return true if the file at path contains the substring in any line, or
+ * false otherwise.
+ */
+bool SearchFileForString(const std::string &path, const std::string &substring);
 #endif
 
