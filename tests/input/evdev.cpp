@@ -51,6 +51,92 @@ public:
     }
 };
 
+class EvdevXKBConfigRulesTest : public EvdevKeyboardTest {
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CoreKeyboard\" \"on\"\n"
+                               "Option \"XKBrules\" \"xorg\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default mouse device to avoid server adding our device again */
+        config.AddInputSection("mouse", "mouse-device",
+                               "Option \"CorePointer\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(EvdevXKBConfigRulesTest, NoRuleChangeAllowed) {
+    XORG_TESTCASE("Start server with 'xorg' ruleset\n"
+                  "Verify evdev changes this to 'evdev'\n");
+
+
+    ASSERT_TRUE(SearchFileForString(server.GetLogFilePath(), "Option \"xkb_rules\" \"evdev\""));
+    ASSERT_FALSE(SearchFileForString(server.GetLogFilePath(), "Option \"xkb_rules\" \"xorg\""));
+}
+
+struct xkb_config {
+    std::string option;         /* option set in the server */
+    std::string parsed_option;  /* option actually parsed (server ignores _) */
+    std::string value;
+} xkb_configs[] = {
+    { "xkb_layout", "xkb_layout", "de" },
+    { "XkbLayout", "xkb_layout", "de" },
+    { "xkb_model", "xkb_model", "pc105" },
+    { "XkbModel", "xkb_model", "pc105" },
+    { "xkb_variant", "xkb_variant", "dvorak" },
+    { "XkbVariant", "xkb_variant", "dvorak" },
+    { "xkb_Options", "xkb_options", "compose:caps" },
+    { "XkbOptions", "xkb_options", "compose:caps" },
+
+    /* test for empty options */
+    { "xkb_layout", "xkb_layout", "" },
+    { "XkbLayout", "xkb_layout", "" },
+    { "xkb_model", "xkb_model", "" },
+    { "XkbModel", "xkb_model", "" },
+    { "xkb_variant", "xkb_variant", "" },
+    { "XkbVariant", "xkb_variant", "" },
+    { "xkb_options", "xkb_options", "" },
+    { "XkbOptions", "xkb_options", "" },
+};
+
+void PrintTo(const struct xkb_config &xkb, ::std::ostream *os) {
+    *os << "xkb: " << xkb.option << ": " << xkb.value;
+}
+
+class EvdevXKBConfigTest : public EvdevKeyboardTest,
+                           public ::testing::WithParamInterface<struct xkb_config> {
+    virtual void SetUpConfigAndLog() {
+        struct xkb_config xkb = GetParam();
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CoreKeyboard\" \"on\"\n"
+                               "Option \"" + xkb.option + "\" \"" + xkb.value + "\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default mouse device to avoid server adding our device again */
+        config.AddInputSection("mouse", "mouse-device",
+                               "Option \"CorePointer\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_P(EvdevXKBConfigTest, XKBOptionParseTest) {
+    XORG_TESTCASE("Init device with XKB options set.\n"
+                  "Ensure options show up in the serverlog as the driver parses them\n");
+
+    struct xkb_config xkb = GetParam();
+
+    if (xkb.value.length() > 0)
+        ASSERT_TRUE(SearchFileForString(server.GetLogFilePath(), "Option \"" + xkb.parsed_option + "\" \"" + xkb.value +"\""));
+    else /* error message is "requires a string value" but thanks to a typo
+            we'd need regex to check for that. oh well */
+        ASSERT_TRUE(SearchFileForString(server.GetLogFilePath(), "Option \"" + xkb.parsed_option + "\" requires"));
+}
+
+INSTANTIATE_TEST_CASE_P(, EvdevXKBConfigTest, ::testing::ValuesIn(xkb_configs));
+
+
 /**
  * Evdev driver test for keyboard devices. Takes a string as parameter,
  * which is later used for the XkbLayout option.
