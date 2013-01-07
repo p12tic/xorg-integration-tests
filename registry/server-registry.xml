@@ -51,6 +51,11 @@
       <xit:testcase name="InvalidZeroLengthBarrier/5" success="true"/>
       <xit:testcase name="InvalidZeroLengthBarrier/6" success="true"/>
     </xit:testsuite>
+    <xit:testsuite name="DGAPointerTest">
+      <xit:testcase name="StuckPointerButtonDuringGrab" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=59100</xit:bug>
+      </xit:testcase>
+    </xit:testsuite>
     <xit:testsuite name="EventQueueTest">
       <xit:testcase name="mieqOverflow" success="true"/>
     </xit:testsuite>
