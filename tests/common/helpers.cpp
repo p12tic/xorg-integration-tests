@@ -184,7 +184,7 @@ std::string DeviceIDToString(int deviceid) {
     }
 }
 
-Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y)
+Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y, int deviceid)
 {
     Window root, child;
     double win_x, win_y;
@@ -192,7 +192,7 @@ Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y)
     XIModifierState mods;
     XIGroupState group;
 
-    return XIQueryPointer (dpy, VIRTUAL_CORE_POINTER_ID,
+    return XIQueryPointer (dpy, deviceid,
                            DefaultRootWindow (dpy),
                            &root, &child,
                            root_x, root_y,

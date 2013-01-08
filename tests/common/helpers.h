@@ -119,7 +119,7 @@ std::string DeviceIDToString(int deviceid);
  * @return true if the pointer is on the same screen as the default root
  * window, false otherwise
  */
-Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y);
+Bool QueryPointerPosition(Display *dpy, double *root_x, double *root_y, int deviceid = VIRTUAL_CORE_POINTER_ID);
 
 /**
  * Warps the VCP to the position of the default root window.
@@ -142,7 +142,6 @@ Window CreateWindow(Display *dpy, Window parent = None,
  * @return true if the event queue is empty, false otherwise
  */
 bool NoEventPending(Display *dpy);
-
 
 /**
  * Open the file at path and search it for the substring given. Search is

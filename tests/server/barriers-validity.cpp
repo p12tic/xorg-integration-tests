@@ -10,6 +10,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
+#include "xit-event.h"
 #include "barriers-common.h"
 #include "helpers.h"
 
@@ -46,6 +47,66 @@ TEST_F(BarrierSimpleTest, DestroyInvalidBarrier)
     XFixesDestroyPointerBarrier(Display(), -1);
     const XErrorEvent *error = ReleaseErrorTrap(Display());
     ASSERT_ERROR(error, xfixes_error_base + BadBarrier);
+}
+
+#if HAVE_XI23
+TEST_F(BarrierSimpleTest, MultipleClientSecurity)
+{
+    XORG_TESTCASE("Ensure that two clients can't delete"
+                  " each other's barriers.\n");
+
+    ::Display *dpy1 = XOpenDisplay(server.GetDisplayString().c_str());
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    Window root = DefaultRootWindow(dpy1);
+
+    PointerBarrier barrier = XFixesCreatePointerBarrier(dpy1, root, 20, 20, 20, 40, 0, 0, NULL);
+    XSync(dpy1, False);
+
+    SetErrorTrap(dpy2);
+    XFixesDestroyPointerBarrier(dpy2, barrier);
+    const XErrorEvent *error = ReleaseErrorTrap(dpy2);
+    ASSERT_ERROR(error, BadAccess);
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_BarrierHit);
+    XISelectEvents(dpy1, root, &mask, 1);
+    XISelectEvents(dpy2, root, &mask, 1);
+    delete[] mask.mask;
+
+    XIWarpPointer(dpy1, VIRTUAL_CORE_POINTER_ID, None, root, 0, 0, 0, 0, 30, 30);
+    XSync(dpy1, False);
+    XSync(dpy2, False);
+
+    dev->PlayOne(EV_REL, REL_X, -40, True);
+
+    XITEvent<XIBarrierEvent> event(dpy1, GenericEvent, xi2_opcode, XI_BarrierHit);
+    ASSERT_EQ(XPending(dpy2), 0);
+
+    SetErrorTrap(dpy2);
+    XIBarrierReleasePointer(dpy2, VIRTUAL_CORE_POINTER_ID, event.ev->barrier, 1);
+    error = ReleaseErrorTrap(dpy2);
+    ASSERT_ERROR(error, BadAccess);
+}
+#endif
+
+TEST_F(BarrierSimpleTest, PixmapsNotAllowed)
+{
+    XORG_TESTCASE("Pixmaps are not allowed as drawable.\n"
+                  "Ensure error is generated\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    Pixmap p = XCreatePixmap(dpy, root, 10, 10, DefaultDepth(dpy, DefaultScreen(dpy)));
+    XSync(dpy, False);
+
+    SetErrorTrap(Display());
+    XFixesCreatePointerBarrier(dpy, p, 20, 20, 20, 40, BarrierPositiveX, 0, NULL);
+    const XErrorEvent *error = ReleaseErrorTrap(Display());
+    ASSERT_ERROR(error, BadWindow);
+    ASSERT_EQ(error->resourceid, p);
 }
 
 TEST_F(BarrierSimpleTest, InvalidDeviceCausesBadDevice)
