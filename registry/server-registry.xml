@@ -20,6 +20,7 @@
       <xit:testcase name="HoritzontalBarrierPositiveYBlocksMotion" success="true"/>
       <xit:testcase name="HorizontalBarrierBothDirectionsYBlocksNoMotion" success="true"/>
       <xit:testcase name="HorizontalBarrierNoDirectionBlocksMotion" success="true"/>
+      <xit:testcase name="HorizontalBarrierPositiveYBlocksMotion" success="true"/>
       <xit:testcase name="VerticalBarrierBothDirectionsXBlocksNoMotion" success="true"/>
       <xit:testcase name="VerticalBarrierNegativeXBlocksMotion" success="true"/>
       <xit:testcase name="VerticalBarrierNoDirectionBlocksMotion" success="true"/>
@@ -27,6 +28,9 @@
     </xit:testsuite>
     <xit:testsuite name="BarrierDevices">
       <xit:testcase name="BarrierBlocksCorrectDevices" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="BarrierMPXTest">
+      <xit:testcase name="BarrierLeaveOnMDDestroyWhenInsideHitbox" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="BarrierNonZeroArea">
       <xit:testcase name="InvalidNonZeroAreaBarrier/0" success="true"/>
@@ -37,10 +41,110 @@
       <xit:testcase name="InvalidNonZeroAreaBarrier/5" success="true"/>
       <xit:testcase name="InvalidNonZeroAreaBarrier/6" success="true"/>
     </xit:testsuite>
+    <xit:testsuite name="BarrierNotify">
+      <xit:testcase name="BarrierRandREventsVertical/0" success="true"/>
+      <xit:testcase name="BarrierRandREventsVertical/1" success="true"/>
+      <xit:testcase name="BarrierRandREventsVertical/2" success="true"/>
+      <xit:testcase name="BarrierRandREventsVertical/3" success="true"/>
+      <xit:testcase name="BarrierRandREventsVertical/4" success="true"/>
+      <xit:testcase name="BarrierRandREventsVertical/5" success="true"/>
+      <xit:testcase name="BarrierRandREventsVertical/6" success="true"/>
+      <xit:testcase name="BarrierRandREventsVertical/7" success="true"/>
+      <xit:testcase name="BarrierReleases/0" success="true"/>
+      <xit:testcase name="BarrierReleases/1" success="true"/>
+      <xit:testcase name="BarrierReleases/2" success="true"/>
+      <xit:testcase name="BarrierReleases/3" success="true"/>
+      <xit:testcase name="BarrierReleases/4" success="true"/>
+      <xit:testcase name="BarrierReleases/5" success="true"/>
+      <xit:testcase name="BarrierReleases/6" success="true"/>
+      <xit:testcase name="BarrierReleases/7" success="true"/>
+      <xit:testcase name="CorrectEventIDs/0" success="true"/>
+      <xit:testcase name="CorrectEventIDs/1" success="true"/>
+      <xit:testcase name="CorrectEventIDs/2" success="true"/>
+      <xit:testcase name="CorrectEventIDs/3" success="true"/>
+      <xit:testcase name="CorrectEventIDs/4" success="true"/>
+      <xit:testcase name="CorrectEventIDs/5" success="true"/>
+      <xit:testcase name="CorrectEventIDs/6" success="true"/>
+      <xit:testcase name="CorrectEventIDs/7" success="true"/>
+      <xit:testcase name="DestroyWindow/0" success="true"/>
+      <xit:testcase name="DestroyWindow/1" success="true"/>
+      <xit:testcase name="DestroyWindow/2" success="true"/>
+      <xit:testcase name="DestroyWindow/3" success="true"/>
+      <xit:testcase name="DestroyWindow/4" success="true"/>
+      <xit:testcase name="DestroyWindow/5" success="true"/>
+      <xit:testcase name="DestroyWindow/6" success="true"/>
+      <xit:testcase name="DestroyWindow/7" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/0" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/1" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/2" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/3" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/4" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/5" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/6" success="true"/>
+      <xit:testcase name="DoesntReceiveLeaveOnDestroyWhenOutsideHitbox/7" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/0" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/1" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/2" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/3" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/4" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/5" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/6" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrab/7" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/0" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/1" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/2" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/3" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/4" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/5" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/6" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabNonGrabWindow/7" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/0" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/1" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/2" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/3" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/4" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/5" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/6" success="true"/>
+      <xit:testcase name="EventsDuringActiveGrabOtherClient/7" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/0" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/1" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/2" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/3" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/4" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/5" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/6" success="true"/>
+      <xit:testcase name="EventsDuringPassiveGrab/7" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/0" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/1" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/2" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/3" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/4" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/5" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/6" success="true"/>
+      <xit:testcase name="ReceivesLeaveOnDestroyWhenInsideHitbox/7" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/0" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/1" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/2" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/3" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/4" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/5" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/6" success="true"/>
+      <xit:testcase name="ReceivesNotifyEvents/7" success="true"/>
+      <xit:testcase name="UnmapWindow/0" success="true"/>
+      <xit:testcase name="UnmapWindow/1" success="true"/>
+      <xit:testcase name="UnmapWindow/2" success="true"/>
+      <xit:testcase name="UnmapWindow/3" success="true"/>
+      <xit:testcase name="UnmapWindow/4" success="true"/>
+      <xit:testcase name="UnmapWindow/5" success="true"/>
+      <xit:testcase name="UnmapWindow/6" success="true"/>
+      <xit:testcase name="UnmapWindow/7" success="true"/>
+    </xit:testsuite>
     <xit:testsuite name="BarrierSimpleTest">
       <xit:testcase name="CreateAndDestroyBarrier" success="true"/>
       <xit:testcase name="DestroyInvalidBarrier" success="true"/>
       <xit:testcase name="InvalidDeviceCausesBadDevice" success="true"/>
+      <xit:testcase name="MultipleClientSecurity" success="true"/>
+      <xit:testcase name="PixmapsNotAllowed" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="BarrierZeroLength">
       <xit:testcase name="InvalidZeroLengthBarrier/0" success="true"/>
