@@ -215,42 +215,62 @@
     </xit:testsuite>
     <xit:testsuite name="TouchGrabTestMultipleTaps">
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/0" success="true"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/2" success="true"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/4" success="true"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/6" success="true"/>
-      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/8" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/1" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/10" success="true">
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
       </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/11" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/12" success="true">
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
       </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/13" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/14" success="true">
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
       </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/15" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/16" success="true">
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
       </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/17" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/18" success="true">
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">00def5144557cfe8bf535f926212a8e084dc7cf6</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">146f48c2934fc85ec095496da5c8f0102bc7f5b5</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">bc1f90a615018c05994fae3e678dd2341256cd82</xit:fix>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">ece8157a59751b3ed492fb2e1eb8d5f20221e195</xit:fix>
       </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/19" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/2" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/3" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/4" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/5" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/6" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/7" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/8" success="true"/>
+      <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/9" success="true"/>
       <xit:testcase name="PassiveGrabPointerRelease/0" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/1" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/10" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/11" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/12" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/13" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/14" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/15" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/16" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/17" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/18" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/19" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/2" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/3" success="false"/>
       <xit:testcase name="PassiveGrabPointerRelease/4" success="false"/>
