@@ -678,10 +678,10 @@ class XITTestRegistryCLI:
         sname_len = max([ len(x[0]) for x in reg1.listTestNames() ]) + 1
         tname_len = max([ len(x[1]) for x in reg1.listTestNames() ]) + 1
 
-        format_str = "{0:<4}{1:<%d}{2:<%d}{3:>10}{4:>10}" % (sname_len, tname_len)
+        format_str = "{0:<4}{1:<%d}{2:<%d}{3:>%d}{4:>%d}" % (sname_len, tname_len, len(reg1.name), len(reg2.name))
 
-        print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
-        print format_str.format("----", "---------", "--------", "------", "--------")
+        print format_str.format("Code", "TestSuite", "TestCase", reg1.name, reg2.name)
+        print format_str.format("----", "---------", "--------", "-" * len(reg1.name), "-" * len(reg2.name))
 
         for suite, test, status in sorted(reg1.listTestNames()):
             self.verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test), format_str)
