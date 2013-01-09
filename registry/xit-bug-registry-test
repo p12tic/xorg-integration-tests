@@ -6,6 +6,8 @@ import xit
 import itertools
 import tempfile
 import time
+import os
+import shutil
 
 class TestXITBug(unittest.TestCase):
 
@@ -287,8 +289,121 @@ class TestXITTestRegistry(unittest.TestCase):
             self.assertEqual(mod, mod2)
 
 
+class TestXITTestRegistryCLI(unittest.TestCase):
+    EXIT_TOO_FEW_ARGS_ERROR_CODE = 2
+    REGISTRY_SOURCE_FILE = "server-registry.xml"
+    REGISTRY_FILENAME = "/tmp/tmp.registry.xml"
+    RESULTS_FILE = "../server-results.xml"
 
 
+    def setUp(self):
+        """Make sure server-registry.xml is present, which it should be in
+        this directory"""
+        self.assertTrue(os.path.exists(self.REGISTRY_SOURCE_FILE))
+        self.assertTrue(os.path.exists(self.RESULTS_FILE))
+
+        shutil.copyfile(self.REGISTRY_SOURCE_FILE, self.REGISTRY_FILENAME)
+
+        self.cli = xit.XITTestRegistryCLI()
+        self.registry = self.cli.load_registry_from_file(self.REGISTRY_FILENAME)
+
+        # default args
+        self.args = ["-f", self.REGISTRY_FILENAME]
+
+    def test_load_registry(self):
+        noargs = ""
+
+        # not enough arguments
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(noargs)
+
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE)
+
+        # not enough arguments
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(self.args)
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE)
+
+    def test_list_registry(self):
+        args = self.args
+        args.append("list")
+        self.cli.run(args)
+
+    def test_show_info(self):
+        args = self.args
+        args.append("info");
+
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(args)
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE)
+
+
+        tests = self.registry.listTestNames()
+        self.assertGreater(len(tests), 0)
+
+        for suite, test, status in tests:
+            self.cli.run(args + [suite] + [test])
+
+    def test_compare(self):
+        args = self.args
+        args += ["compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME]
+        self.cli.run(args)
+
+    def test_merge(self):
+        args = self.args
+        args += ["merge", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME]
+        self.cli.run(args)
+
+    def test_edit(self):
+        args = self.args
+        args.append("edit")
+
+        tests = self.registry.listTestNames()
+        self.assertGreater(len(tests), 0)
+
+        for suite, test, status in tests:
+            tmpargs = args + [suite] + [test]
+
+            self.cli.run(tmpargs + ["add-bug"] + ["test-url"])
+            self.cli.run(tmpargs + ["rm-bug"] + ["test-url"])
+            self.cli.run(tmpargs + ["rm-bug"] + ["test-url"])
+            self.cli.run(tmpargs + ["add-rpm"] + ["blah.fc18.rpm"])
+            self.cli.run(tmpargs + ["rm-rpm"] + ["blah.fc18.rpm"])
+            self.cli.run(tmpargs + ["rm-rpm"] + ["blah.fc18.rpm"])
+            self.cli.run(tmpargs + ["add-commit"] + ["aba12345"])
+            self.cli.run(tmpargs + ["rm-commit"] + ["aba12345"])
+            self.cli.run(tmpargs + ["rm-commit"] + ["aba12345"])
+            self.cli.run(tmpargs + ["set-status"] + ["true"])
+            self.cli.run(tmpargs + ["set-status"] + ["false"])
+
+    def test_meta(self):
+        args = self.args
+        args.append("meta")
+
+        date_args = ["set-date", "2013-04-20"]
+
+        self.cli.run(args + date_args[0:1])
+        self.cli.run(args + date_args)
+
+        modversion_args = ["set-module-version", "xserver", "someversion", "--type=git"]
+
+        self.cli.run(args + modversion_args[0:3])
+        self.cli.run(args + modversion_args)
+
+    def test_create(self):
+        args = self.args
+        args.append("create")
+
+        self.cli.run(args + [self.RESULTS_FILE])
+        self.cli.run(args + ["--name", "somename", self.RESULTS_FILE])
+        self.cli.run(args + ["--auto-modversion", "rpm", self.RESULTS_FILE])
+
+    def test_create(self):
+        args = self.args
+        args.append("verify")
+
+        self.cli.run(args + [self.RESULTS_FILE])
+        self.cli.run(args + ["--check-all", self.RESULTS_FILE])
 
 if __name__ == '__main__':
     unittest.main()
