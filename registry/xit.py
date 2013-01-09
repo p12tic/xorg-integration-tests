@@ -74,14 +74,16 @@ def str2bool(val):
 
 class termcolors:
     DEFAULT = '\033[0m'
-    RED = '\033[31m'
-    GREEN = '\033[32m'
+    RED = '\033[1;31m'
+    GREEN = '\033[1;32m'
+    BLUE = '\033[1;34m'
 
     @classmethod
     def disable(self):
         self.DEFAULT = ''
         self.RED = ''
         self.GREEN = ''
+        self.BLUE = ''
 
 class XITTestRegistry:
     """Central class keeping a set of test cases and their results"""
@@ -574,13 +576,16 @@ class XITTestRegistryCLI:
             expected_status = str(test.status).lower()
             if str(test.status).lower() != str(result.status).lower():
                 status_match = "XX"
-                color = termcolors.RED
+                if result.status == True:
+                    color = termcolors.GREEN
+                else:
+                    color = termcolors.RED
             else:
                 status_match = "++" if test.status else "--"
         else:
             expected_status = ""
             status_match = "??"
-            color = termcolors.GREEN
+            color = termcolors.BLUE
 
         print color + format_str.format(status_match, result.suite, result.name, str(result.status).lower(), expected_status) + termcolors.DEFAULT
 
