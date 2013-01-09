@@ -1,0 +1,409 @@
+#!/usr/bin/env python
+#
+
+import unittest
+import xit
+import itertools
+import tempfile
+import time
+import os
+import shutil
+
+class TestXITBug(unittest.TestCase):
+
+    def test_defaults(self):
+        self.assertEqual(xit.XITBug.default_type, "bugzilla")
+
+    def test_init(self):
+        bug1 = xit.XITBug()
+        self.assertEqual(bug1.type, xit.XITBug.default_type)
+        self.assertEqual(bug1.url, "")
+
+        type = "sometype"
+        bug2 = xit.XITBug(type)
+        self.assertEqual(bug2.type, type)
+        self.assertEqual(bug2.url, "")
+
+        type = "sometype2"
+        url = "someurl"
+        bug3 = xit.XITBug(type, url)
+        self.assertEqual(bug3.type, type)
+        self.assertEqual(bug3.url, url)
+
+    def test_sorting(self):
+        for a, b in list(itertools.permutations(["a", "b"])):
+            bug1 = xit.XITBug(url = a)
+            bug2 = xit.XITBug(url = b)
+
+            self.assertEqual(cmp(bug1, bug2), cmp(a, b))
+
+            bug1 = xit.XITBug(url = a)
+            bug2 = xit.XITBug(url = b)
+
+            self.assertEqual(cmp(bug1, bug2), cmp(a, b))
+
+            bug1 = xit.XITBug(bug_type = a, url = b)
+            bug2 = xit.XITBug(bug_type = b, url = a)
+
+            self.assertEqual(cmp(bug1, bug2), cmp(a, b))
+
+            bug1 = xit.XITBug(bug_type = a, url = a)
+            bug2 = xit.XITBug(bug_type = a, url = b)
+
+            self.assertEqual(cmp(bug1, bug2), cmp(a, b))
+
+            bug1 = xit.XITBug(bug_type = b, url = a)
+            bug2 = xit.XITBug(bug_type = b, url = b)
+
+            self.assertEqual(cmp(bug1, bug2), cmp(a, b))
+
+    def test_eq(self):
+        for a, b in list(itertools.permutations(["a", "b"])):
+            bug1 = xit.XITBug(url = a)
+            bug2 = xit.XITBug(url = b)
+            self.assertEqual(bug1 ==  bug2, a == b)
+
+            bug1 = xit.XITBug(bug_type = a)
+            bug2 = xit.XITBug(bug_type = b)
+            self.assertEqual(bug1 ==  bug2, a == b)
+
+            bug1 = xit.XITBug(bug_type = a, url = a)
+            bug2 = xit.XITBug(bug_type = b, url = b)
+            self.assertEqual(bug1 ==  bug2, a == b)
+
+            bug1 = xit.XITBug(bug_type = a, url = b)
+            bug2 = xit.XITBug(bug_type = b, url = a)
+            self.assertEqual(bug1 ==  bug2, a == b)
+
+    def test_str(self):
+        url = "someurl"
+        bug = xit.XITBug(url = url)
+        self.assertEqual(str(bug), url)
+        bug = xit.XITBug(bug_type = "sometype", url = url)
+        self.assertEqual(str(bug), url)
+
+class TestXITFix(unittest.TestCase):
+    def test_init(self):
+        fix = xit.XITFix()
+        self.assertEqual(fix.type, None)
+        self.assertEqual(fix.text, None)
+        self.assertEqual(fix.extra_args, {})
+
+        extra_args = { "1" : "2" }
+
+        sha1 = "abac1234"
+        fix = xit.XITFixGit(sha1)
+        self.assertEqual(fix.type, "git")
+        self.assertEqual(fix.text, sha1)
+        self.assertEqual(fix.sha1, sha1)
+        self.assertEqual(fix.extra_args, {})
+
+        fix = xit.XITFixGit(sha1, extra_args)
+        self.assertEqual(fix.type, "git")
+        self.assertEqual(fix.text, sha1)
+        self.assertEqual(fix.sha1, sha1)
+        self.assertEqual(fix.extra_args, extra_args)
+
+        rpm = "asdf-1.2.3.rpm"
+        fix = xit.XITFixRPM(rpm)
+        self.assertEqual(fix.type, "rpm")
+        self.assertEqual(fix.text, rpm)
+        self.assertEqual(fix.rpm, rpm)
+        self.assertEqual(fix.extra_args, {})
+
+        fix = xit.XITFixRPM(rpm, extra_args)
+        self.assertEqual(fix.type, "rpm")
+        self.assertEqual(fix.text, rpm)
+        self.assertEqual(fix.rpm, rpm)
+        self.assertEqual(fix.extra_args, extra_args)
+
+    def test_create_from_type(self):
+        sha1 = "asdfbc1234"
+        fix = xit.XITFix.createFromType("git", sha1)
+        self.assertEqual(fix.type, "git")
+        self.assertEqual(fix.text, sha1)
+        self.assertEqual(fix.sha1, sha1)
+        self.assertEqual(fix.extra_args, {})
+
+        rpm = "rpm-234.12.rpm"
+        fix = xit.XITFix.createFromType("rpm", rpm)
+        self.assertEqual(fix.type, "rpm")
+        self.assertEqual(fix.text, rpm)
+        self.assertEqual(fix.rpm, rpm)
+        self.assertEqual(fix.extra_args, {})
+
+        extra_args = { "1" : "2" }
+
+        fix = xit.XITFix.createFromType("git", sha1, extra_args)
+        self.assertEqual(fix.type, "git")
+        self.assertEqual(fix.text, sha1)
+        self.assertEqual(fix.sha1, sha1)
+        self.assertEqual(fix.extra_args, extra_args)
+
+        fix = xit.XITFix.createFromType("rpm", rpm, extra_args)
+        self.assertEqual(fix.type, "rpm")
+        self.assertEqual(fix.text, rpm)
+        self.assertEqual(fix.rpm, rpm)
+        self.assertEqual(fix.extra_args, extra_args)
+
+
+class TestXITest(unittest.TestCase):
+    def test_init(self):
+        suite = "testsuite"
+        name = "testcase"
+        status = True
+
+        test = xit.XITTest(suite, name, status)
+        self.assertEqual(test.suite, suite)
+        self.assertEqual(test.name, name)
+        self.assertEqual(test.status, status)
+
+        status = False
+        test = xit.XITTest(suite, name, status)
+        self.assertEqual(test.suite, suite)
+        self.assertEqual(test.name, name)
+        self.assertEqual(test.status, status)
+
+
+        test = xit.XITTest(suite, name, "True")
+        self.assertEqual(test.status, True)
+
+        test = xit.XITTest(suite, name, "False")
+        self.assertEqual(test.status, False)
+
+    def test_add_bug(self):
+        suite = "testsuite"
+        name = "testcase"
+        status = True
+
+        test = xit.XITTest(suite, name, status)
+        self.assertEqual(len(test.getBugs()), 0)
+
+        bug = xit.XITBug("someurl");
+        test.addBug(bug);
+        self.assertEqual(len(test.getBugs()), 1)
+
+        test.addBug(bug);
+        self.assertEqual(len(test.getBugs()), 1)
+
+        bug_copy = xit.XITBug("someurl");
+        test.addBug(bug_copy)
+        self.assertEqual(len(test.getBugs()), 1)
+
+        bug2 = xit.XITBug("someotherurl");
+        test.addBug(bug2)
+        self.assertEqual(len(test.getBugs()), 2)
+
+        test.removeBug(bug2);
+        self.assertEqual(len(test.getBugs()), 1)
+        self.assertEqual(test.getBugs()[0], bug)
+
+        test.removeBug(bug2);
+        self.assertEqual(len(test.getBugs()), 1)
+        self.assertEqual(test.getBugs()[0], bug)
+
+        test.removeBug(bug);
+        self.assertEqual(len(test.getBugs()), 0)
+        self.assertEqual(test.getBugs(), [])
+
+        test.removeBug(bug);
+        self.assertEqual(len(test.getBugs()), 0)
+        self.assertEqual(test.getBugs(), [])
+
+    def test_add_info(self):
+        suite = "testsuite"
+        name = "testcase"
+        status = True
+
+        test = xit.XITTest(suite, name, status)
+        self.assertEqual(len(test.getInfo()), 0)
+
+        info = xit.XITInfoText("sometext");
+        test.addInfo(info);
+        self.assertEqual(len(test.getInfo()), 1)
+
+        test.addBug(info);
+        self.assertEqual(len(test.getInfo()), 1)
+
+        info_copy = xit.XITInfoText("sometext");
+        test.addInfo(info_copy)
+        self.assertEqual(len(test.getInfo()), 1)
+
+        info2 = xit.XITInfoText("someothertext");
+        test.addInfo(info2)
+        self.assertEqual(len(test.getInfo()), 2)
+
+        test.removeInfo(info2);
+        self.assertEqual(len(test.getInfo()), 1)
+        self.assertEqual(test.getInfo()[0], info)
+
+        test.removeInfo(info2);
+        self.assertEqual(len(test.getInfo()), 1)
+        self.assertEqual(test.getInfo()[0], info)
+
+        test.removeInfo(info);
+        self.assertEqual(len(test.getInfo()), 0)
+        self.assertEqual(test.getInfo(), [])
+
+        test.removeInfo(info);
+        self.assertEqual(len(test.getInfo()), 0)
+        self.assertEqual(test.getInfo(), [])
+
+class TestXITTestRegistry(unittest.TestCase):
+
+    def to_from_xml(self, reg):
+        xml = reg.toXML()
+
+        f = tempfile.TemporaryFile()
+        f.write(xml)
+        f.seek(0)
+
+        reg2 = xit.XITTestRegistry.fromXML(f)[0]
+        xml2 = reg2.toXML()
+
+        self.assertEqual(xml, xml2)
+
+        return reg2
+
+    def test_to_from_xml(self):
+        reg = xit.XITTestRegistry()
+        self.to_from_xml(reg);
+
+        reg = xit.XITTestRegistry("somename")
+        reg2 = self.to_from_xml(reg);
+        self.assertEqual(reg2.name, reg.name)
+        self.assertEqual(time.strftime("%Y%m%d", reg2.date), time.strftime("%Y%m%d", reg2.date))
+
+        mod = xit.XITModuleVersion("mod", "version", "git");
+        reg.moduleversions.append(mod)
+
+        reg2 = self.to_from_xml(reg);
+        for mod, mod2 in zip(reg.moduleversions, reg2.moduleversions):
+            self.assertEqual(mod, mod2)
+
+        mod = xit.XITModuleVersion("rpmmod", "rpmversion", "rpm");
+        reg.moduleversions.append(mod)
+
+        reg2 = self.to_from_xml(reg);
+        for mod, mod2 in zip(reg.moduleversions, reg2.moduleversions):
+            self.assertEqual(mod, mod2)
+
+
+class TestXITTestRegistryCLI(unittest.TestCase):
+    EXIT_TOO_FEW_ARGS_ERROR_CODE = 2
+    REGISTRY_SOURCE_FILE = "server-registry.xml"
+    REGISTRY_FILENAME = "/tmp/tmp.registry.xml"
+    RESULTS_FILE = "../server-results.xml"
+
+
+    def setUp(self):
+        """Make sure server-registry.xml is present, which it should be in
+        this directory"""
+        self.assertTrue(os.path.exists(self.REGISTRY_SOURCE_FILE))
+        self.assertTrue(os.path.exists(self.RESULTS_FILE))
+
+        shutil.copyfile(self.REGISTRY_SOURCE_FILE, self.REGISTRY_FILENAME)
+
+        self.cli = xit.XITTestRegistryCLI()
+        self.registry = self.cli.load_registry_from_file(self.REGISTRY_FILENAME)
+
+        # default args
+        self.args = ["-f", self.REGISTRY_FILENAME]
+
+    def test_load_registry(self):
+        noargs = ""
+
+        # not enough arguments
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(noargs)
+
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE)
+
+        # not enough arguments
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(self.args)
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE)
+
+    def test_list_registry(self):
+        args = self.args
+        args.append("list")
+        self.cli.run(args)
+
+    def test_show_info(self):
+        args = self.args
+        args.append("info");
+
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(args)
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE)
+
+
+        tests = self.registry.listTestNames()
+        self.assertGreater(len(tests), 0)
+
+        for suite, test, status in tests:
+            self.cli.run(args + [suite] + [test])
+
+    def test_compare(self):
+        args = self.args
+        args += ["compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME]
+        self.cli.run(args)
+
+    def test_merge(self):
+        args = self.args
+        args += ["merge", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME]
+        self.cli.run(args)
+
+    def test_edit(self):
+        args = self.args
+        args.append("edit")
+
+        tests = self.registry.listTestNames()
+        self.assertGreater(len(tests), 0)
+
+        for suite, test, status in tests:
+            tmpargs = args + [suite] + [test]
+
+            self.cli.run(tmpargs + ["add-bug"] + ["test-url"])
+            self.cli.run(tmpargs + ["rm-bug"] + ["test-url"])
+            self.cli.run(tmpargs + ["rm-bug"] + ["test-url"])
+            self.cli.run(tmpargs + ["add-rpm"] + ["blah.fc18.rpm"])
+            self.cli.run(tmpargs + ["rm-rpm"] + ["blah.fc18.rpm"])
+            self.cli.run(tmpargs + ["rm-rpm"] + ["blah.fc18.rpm"])
+            self.cli.run(tmpargs + ["add-commit"] + ["aba12345"])
+            self.cli.run(tmpargs + ["rm-commit"] + ["aba12345"])
+            self.cli.run(tmpargs + ["rm-commit"] + ["aba12345"])
+            self.cli.run(tmpargs + ["set-status"] + ["true"])
+            self.cli.run(tmpargs + ["set-status"] + ["false"])
+
+    def test_meta(self):
+        args = self.args
+        args.append("meta")
+
+        date_args = ["set-date", "2013-04-20"]
+
+        self.cli.run(args + date_args[0:1])
+        self.cli.run(args + date_args)
+
+        modversion_args = ["set-module-version", "xserver", "someversion", "--type=git"]
+
+        self.cli.run(args + modversion_args[0:3])
+        self.cli.run(args + modversion_args)
+
+    def test_create(self):
+        args = self.args
+        args.append("create")
+
+        self.cli.run(args + [self.RESULTS_FILE])
+        self.cli.run(args + ["--name", "somename", self.RESULTS_FILE])
+        self.cli.run(args + ["--auto-modversion", "rpm", self.RESULTS_FILE])
+
+    def test_create(self):
+        args = self.args
+        args.append("verify")
+
+        self.cli.run(args + [self.RESULTS_FILE])
+        self.cli.run(args + ["--check-all", self.RESULTS_FILE])
+
+if __name__ == '__main__':
+    unittest.main()
