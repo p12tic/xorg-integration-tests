@@ -972,11 +972,11 @@ class XITTestRegistryCLI:
         self.sync_registry(args, r)
 
 
-    def run(self):
+    def run(self, cmdline_args = sys.argv[1:]):
         if not sys.stdout.isatty():
             termcolors.disable()
 
         parser = self.parse_cmdline()
-        args = parser.parse_args()
+        args = parser.parse_args(cmdline_args)
 
         args.func(args)
