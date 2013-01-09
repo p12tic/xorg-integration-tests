@@ -936,7 +936,11 @@ class XITTestRegistryCLI:
         if args.file == None:
             print >> sys.stderr, "Reading from stdin"
             args.file = sys.stdin
-        registries = XITTestRegistry.fromXML(args.file)
+        return self.load_registry_from_file(args.file)
+
+
+    def load_registry_from_file(self, path):
+        registries = XITTestRegistry.fromXML(path)
         if len(registries) > 1:
             print >> sys.stderr, "More than one registry found in input file, this is not supported yet. Using first one only."
         elif len(registries) == 0:
