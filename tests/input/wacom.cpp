@@ -342,10 +342,10 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
     root_x1 = 0;
 
     // Move to device coord (1000,1000)
-    dev->PlayOne(EV_ABS, ABS_X, 1000, True);
-    dev->PlayOne(EV_ABS, ABS_Y, 1000, True);
-    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0, True);
-    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, True);
+    dev->PlayOne(EV_ABS, ABS_X, 1000);
+    dev->PlayOne(EV_ABS, ABS_Y, 1000);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, true);
 
     XSync (dpy, False);
     EXPECT_NE(XPending(dpy), 0) << "No event received??" << std::endl;
@@ -359,10 +359,10 @@ int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
 
     step = 10;
     for (loop = 1000; loop < 3000; loop += step) {
-        dev->PlayOne(EV_ABS, ABS_X, loop, True);
-        dev->PlayOne(EV_ABS, ABS_DISTANCE, step, True);
+        dev->PlayOne(EV_ABS, ABS_X, loop);
+        dev->PlayOne(EV_ABS, ABS_DISTANCE, step, true);
     }
-    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 0, True);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 0, true);
 
     XSync (dpy, False);
     EXPECT_NE(XPending(dpy), 0) << "Still no event received??" << std::endl;
