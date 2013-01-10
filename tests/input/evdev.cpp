@@ -43,6 +43,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CoreKeyboard\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default mouse device to avoid server adding our device again */
         config.AddInputSection("mouse", "mouse-device",
@@ -58,6 +59,7 @@ class EvdevXKBConfigRulesTest : public EvdevKeyboardTest {
         config.AddInputSection("evdev", "--device--",
                                "Option \"CoreKeyboard\" \"on\"\n"
                                "Option \"XKBrules\" \"xorg\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default mouse device to avoid server adding our device again */
         config.AddInputSection("mouse", "mouse-device",
@@ -113,6 +115,7 @@ class EvdevXKBConfigTest : public EvdevKeyboardTest,
         config.AddInputSection("evdev", "--device--",
                                "Option \"CoreKeyboard\" \"on\"\n"
                                "Option \"" + xkb.option + "\" \"" + xkb.value + "\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default mouse device to avoid server adding our device again */
         config.AddInputSection("mouse", "mouse-device",
@@ -194,6 +197,7 @@ public:
                                "Option \"XkbRules\"   \"xorg\"\n"
                                "Option \"XkbModel\"   \"dellusbmm\"\n"
                                "Option \"XkbLayout\"  \""+ GetParam() + "\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default mouse device to avoid server adding our device again */
         config.AddInputSection("mouse", "mouse-device",
@@ -286,6 +290,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "keyboard-device",
@@ -686,6 +691,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\""
                                "Option \"ButtonMapping\" \"" + ss.str() + "\"");
         config.WriteConfig();
@@ -732,6 +738,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\""
                                "Option \"ButtonMapping\" \"" + GetParam() + "\"");
         config.WriteConfig();
@@ -771,6 +778,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"Floating\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         config.WriteConfig();
     }
