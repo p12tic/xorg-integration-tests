@@ -34,20 +34,39 @@
 #include "helpers.h"
 
 /**
+ * Wacom driver test class for one device (Intuos4). Use this to test driver
+ * features that don't depend on the actual device much.
+ */
+class WacomDeviceTest : public XITServerInputTest,
+                        public DeviceInterface {
+public:
+    virtual void SetUp()
+    {
+        SetDevice("tablets/Wacom-Intuos4-6x9.desc");
+
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.SetAutoAddDevices(true);
+        config.WriteConfig();
+    }
+};
+
+
+/**
  * Wacom driver test class. This class takes a struct Tablet that defines
  * which device should be initialised.
  */
-class WacomDriverTest : public XITServerInputTest,
-                        public DeviceInterface,
+class WacomDriverTest : public WacomDeviceTest,
                         public ::testing::WithParamInterface<Tablet> {
 protected:
-
     /**
      * Write a configuration file for a hotplug-enabled server using the
      * dummy video driver.
      */
     virtual void SetUpConfigAndLog() {
-
         config.AddDefaultScreenWithDriver();
         config.SetAutoAddDevices(true);
         config.WriteConfig();
