@@ -31,6 +31,23 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+class PointerSubpixelTest : public PointerMotionTest {
+    /**
+     * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
+     * the evemu device. The input from GetParam() is used as XkbLayout.
+     */
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
                                "Option \"ConstantDeceleration\" \"20\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default keyboard device to avoid server adding our device again */
@@ -40,7 +57,7 @@ public:
     }
 };
 
-TEST_F(PointerMotionTest, NoSubpixelCoreEvents)
+TEST_F(PointerSubpixelTest, NoSubpixelCoreEvents)
 {
     XORG_TESTCASE("Move pointer by less than a pixels\n"
                   "Ensure no core motion event is received\n"

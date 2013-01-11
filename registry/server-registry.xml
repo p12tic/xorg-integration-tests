@@ -207,7 +207,7 @@
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
       </xit:testcase>
     </xit:testsuite>
-    <xit:testsuite name="PointerMotionTest">
+    <xit:testsuite name="PointerSubpixelTest">
       <xit:testcase name="NoSubpixelCoreEvents" success="false">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57383</xit:bug>
       </xit:testcase>
