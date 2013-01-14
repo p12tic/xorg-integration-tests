@@ -837,6 +837,7 @@ protected:
     virtual void SetUpConfigAndLog() {
         config.AddInputSection("evdev", "mouse",
                                "Option \"CorePointer\" \"on\""
+                               "Option \"GrabDevice\" \"on\"\n"
                                "Option \"AccelerationProfile\" \"-1\""
                                "Option \"Device\" \"" + mouse->GetDeviceNode() + "\"");
         TouchTest::SetUpConfigAndLog();

@@ -32,6 +32,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
@@ -132,6 +133,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "kbd-device",
