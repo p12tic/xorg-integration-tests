@@ -25,6 +25,8 @@ protected:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
+        config.AddInputClass("grab device", "MatchIsTouchscreen \"on\"",
+                             "Option \"GrabDevice\" \"on\"");
         config.SetAutoAddDevices(true);
         config.WriteConfig();
     }
