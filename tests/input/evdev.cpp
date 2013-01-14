@@ -1,11 +1,13 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <math.h>
 #include <stdexcept>
 #include <map>
 #include <fstream>
 #include <xorg/gtest/xorg-gtest.h>
 #include <linux/input.h>
+#include <tr1/tuple>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -17,6 +19,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "xit-server-input-test.h"
+#include "xit-event.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -831,6 +834,264 @@ TEST_F(EvdevJoystickTest, MTAxesNoButtons)
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 0);
 }
+
+#ifdef HAVE_XI22
+class EvdevTouchTest : public XITServerInputTest,
+                       public DeviceInterface {
+protected:
+    virtual void SetUp() {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"\n"
+                               "Option \"GrabDevice\" \"on\"");
+        config.WriteConfig();
+    }
+
+    virtual int RegisterXI2(int major, int minor)
+    {
+        return XITServerInputTest::RegisterXI2(2, 2);
+    }
+
+    virtual void TouchBegin(int x, int y) {
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
+        TouchUpdate(x, y);
+    }
+
+    virtual void TouchUpdate(int x, int y) {
+        dev->PlayOne(EV_ABS, ABS_X, x);
+        dev->PlayOne(EV_ABS, ABS_Y, y);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, x);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_Y, y);
+        /* same values as the recordings file */
+        dev->PlayOne(EV_ABS, ABS_MT_ORIENTATION, 0);
+        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MAJOR, 468);
+        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MINOR, 306);
+        dev->PlayOne(EV_SYN, SYN_MT_REPORT, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
+    virtual void TouchEnd() {
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
+};
+
+enum directions {
+    NONE,
+    CW, /* top screen edge is right */
+    INVERT, /* upside-down */
+    CCW, /* top screen edge is left */
+};
+
+enum config_type {
+    PROPERTY,
+    XORG_CONF
+};
+
+class EvdevTouchRotationTest : public EvdevTouchTest,
+                               public
+                               ::testing::WithParamInterface<std::tr1::tuple<enum config_type, enum directions> > {
+public:
+    void GetRotationSettings(enum directions dir, unsigned char *swap_axes,
+                             unsigned char *invert_x, unsigned char *invert_y)
+    {
+        switch(dir) {
+            case NONE:
+                *swap_axes = 0;
+                *invert_x = 0;
+                *invert_y = 0;
+                break;
+            case INVERT:
+                *swap_axes = 0;
+                *invert_x = 1;
+                *invert_y = 1;
+                break;
+            case CW:
+                *swap_axes = 1;
+                *invert_x = 1;
+                *invert_y = 0;
+                break;
+            case CCW:
+                *swap_axes = 1;
+                *invert_x = 0;
+                *invert_y = 1;
+                break;
+        }
+    }
+
+    virtual void SetUpConfigAndLog() {
+        std::tr1::tuple<enum config_type, enum directions> t = GetParam();
+        enum config_type config_type = std::tr1::get<0>(t);
+        enum directions dir = std::tr1::get<1>(t);
+
+        unsigned char swap_axes = 0, invert_x = 0, invert_y = 0;
+        if (config_type == XORG_CONF)
+            GetRotationSettings(dir, &swap_axes, &invert_x, &invert_y);
+
+        std::string sw = swap_axes ? "on" : "off";
+        std::string ix = invert_x ? "on" : "off";
+        std::string iy = invert_y ? "on" : "off";
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"SwapAxes\" \"" + sw + "\"\n" +
+                               "Option \"InvertX\" \"" + ix + "\"\n" +
+                               "Option \"InvertY\" \"" + iy + "\"\n" +
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"\n"
+                               "Option \"GrabDevice\" \"on\"");
+        config.WriteConfig();
+    }
+
+    virtual void SetRotationProperty(::Display *dpy, int deviceid, enum directions dir)
+    {
+        Atom swap_axes_prop = XInternAtom(dpy, "Evdev Axes Swap", True);
+        Atom invert_axes_prop = XInternAtom(dpy, "Evdev Axis Inversion", True);
+
+        unsigned char swap;
+        unsigned char inversion[2];
+
+        GetRotationSettings(dir, &swap, &inversion[0], &inversion[1]);
+
+        XIChangeProperty(dpy, deviceid, swap_axes_prop, XA_INTEGER, 8,
+                         PropModeReplace, &swap, 1);
+        XIChangeProperty(dpy, deviceid, invert_axes_prop, XA_INTEGER, 8,
+                         PropModeReplace, inversion, 2);
+        XSync(dpy, True);
+    }
+};
+
+TEST_P(EvdevTouchRotationTest, AxisSwapInversion)
+{
+    std::tr1::tuple<enum config_type, enum directions> t = GetParam();
+    enum config_type config_type = std::tr1::get<0>(t);
+    enum directions dir = std::tr1::get<1>(t);
+
+    XORG_TESTCASE("Init a touch device.\n"
+                  "Set rotation/axis inversion properties\n"
+                  "Send events\n"
+                  "Ensure event coordinates are rotated\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=59340");
+
+    std::string direction;
+    switch (dir) {
+        case NONE: direction = "none"; break;
+        case CW: direction = "cw"; break;
+        case CCW: direction = "ccw"; break;
+        case INVERT: direction = "inverted"; break;
+    }
+
+    SCOPED_TRACE("Rotation is " + direction);
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    if (config_type == PROPERTY)
+        SetRotationProperty(dpy, deviceid, dir);
+
+    XIEventMask mask;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+    XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
+
+    int w = DisplayWidth(dpy, DefaultScreen(dpy));
+    int h = DisplayHeight(dpy, DefaultScreen(dpy));
+
+    int devw = 9600, devh = 7200; /* from recordings file */
+
+    TouchBegin(devw * 0.25, devh * 0.25);
+
+    ASSERT_EVENT(XIDeviceEvent, begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+
+    /* scaling in the server may get us a pixel or so off */
+#define EXPECT_APPROX(v, expected) \
+    EXPECT_GE(v, expected - 1); \
+    EXPECT_LE(v, expected + 1);
+
+    /* x movement first */
+    for (int i = 30; i < 75; i += 5) {
+        double xpos = i/100.0;
+        double x_expect, y_expect;
+
+        TouchUpdate(devw * xpos, devh * 0.25);
+
+        switch(dir) {
+            case NONE:
+                x_expect = w * xpos;
+                y_expect = h * 0.25;
+                break;
+            case CW:
+                x_expect = w * 0.75;
+                y_expect = h * xpos;
+                break;
+            case CCW:
+                x_expect = w * 0.25;
+                y_expect = h * (1 - xpos);
+                break;
+            case INVERT:
+                x_expect = w * (1 - xpos);
+                y_expect = h * 0.75;
+                break;
+        }
+
+
+        ASSERT_EVENT(XIDeviceEvent, update, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
+        EXPECT_APPROX(update->root_x, x_expect);
+        EXPECT_APPROX(update->root_y, y_expect);
+    }
+
+    /* y movement */
+    for (int i = 30; i < 75; i += 5) {
+        double ypos = i/100.0;
+        double x_expect, y_expect;
+
+        TouchUpdate(devw * 0.25, devh * ypos);
+
+        switch(dir) {
+            case NONE:
+                x_expect = w * 0.25;
+                y_expect = h * ypos;
+                break;
+            case CW:
+                x_expect = w * (1 - ypos);
+                y_expect = h * 0.25;
+                break;
+            case CCW:
+                x_expect = w * ypos;
+                y_expect = h * 0.75;
+                break;
+            case INVERT:
+                x_expect = w * 0.75;
+                y_expect = h * (1 - ypos);
+                break;
+        }
+
+        ASSERT_EVENT(XIDeviceEvent, update, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
+        EXPECT_APPROX(update->root_x, x_expect);
+        EXPECT_APPROX(update->root_y, y_expect);
+    }
+
+    TouchEnd();
+}
+INSTANTIATE_TEST_CASE_P(, EvdevTouchRotationTest,
+        ::testing::Combine(
+            ::testing::Values(PROPERTY, XORG_CONF),
+            ::testing::Values(NONE, CW, CCW, INVERT)));
+
+#endif
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
