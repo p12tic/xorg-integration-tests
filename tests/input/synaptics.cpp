@@ -49,7 +49,7 @@ public:
                                "Option \"Protocol\"            \"event\"\n"
                                "Option \"CorePointer\"         \"on\"\n"
                                "Option \"TapButton1\"          \"1\"\n"
-                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
                                "Option \"FastTaps\"            \"1\"\n"
                                "Option \"VertTwoFingerScroll\" \"1\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
@@ -156,7 +156,7 @@ class SynapticsSmoothScrollTest : public SynapticsTest,
                                "Option \"Protocol\"            \"event\"\n"
                                "Option \"CorePointer\"         \"on\"\n"
                                "Option \"TapButton1\"          \"1\"\n"
-                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
                                "Option \"FastTaps\"            \"1\"\n"
                                "Option \"VertTwoFingerScroll\" \"1\"\n"
                                "Option \"HorizTwoFingerScroll\" \"1\"\n"
@@ -401,7 +401,7 @@ public:
         config.AddInputSection("synaptics", "--device--",
                                "Option \"CorePointer\"         \"on\"\n"
                                "Option \"TapButton1\"          \"1\"\n"
-                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
                                "Option \"VertTwoFingerScroll\" \"1\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
         config.WriteConfig();
@@ -708,7 +708,7 @@ public:
         config.AddInputSection("synaptics", "--device--",
                                "Option \"CorePointer\"         \"on\"\n"
                                "Option \"ClickPad\"            \"on\"\n"
-                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
                                "Option \"SoftButtonAreas\"     \"50% 0 82% 0 0 0 0 0\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
         config.WriteConfig();
@@ -769,7 +769,7 @@ public:
         config.AddInputSection("synaptics", "--device--",
                                "Option \"CorePointer\"         \"on\"\n"
                                "Option \"ClickPad\"            \"on\"\n"
-                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
                                "Option \"SoftButtonAreas\"     \"50% 0 82% 0 0 0 0 0\"\n"
                                "Option \"AreaBottomEdge\"     \"3900\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
@@ -835,7 +835,7 @@ public:
         config.AddInputSection("synaptics", "--device--",
                                "Option \"CorePointer\"         \"on\"\n"
                                "Option \"ClickPad\"            \"off\"\n"
-                               "Option \"GrabEventDevice\"     \"0\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
         config.WriteConfig();
     }
