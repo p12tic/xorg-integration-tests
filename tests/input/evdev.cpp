@@ -1203,6 +1203,165 @@ TEST_F(EvdevAxisLabelTest, RelAndAbsoluteAxes)
     CompareLabels(dpy, deviceid, l);
 }
 
+class EvdevQEMUTabletTest : public EvdevMouseTest {
+public:
+    void SetUp(void) {
+        SetDevice("tablets/QEMU-0.12.1-QEMU-USB-Tablet.desc");
+        XITServerInputTest::SetUp();
+    }
+};
+#if HAVE_XI22
+TEST_F(EvdevQEMUTabletTest, HasScrollingAxes) {
+    XORG_TESTCASE("Create QEMU virtual tablet device.\n"
+                  "Ensure scrolling axes are present.\n");
+
+    ::Display* dpy = Display();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    int ndevices;
+    XIDeviceInfo *info = XIQueryDevice(dpy, deviceid, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+
+    bool scroll_found = false;
+    for (int i = 0; i < info->num_classes; i++) {
+        if (info->classes[i]->type != XIScrollClass)
+            continue;
+
+        scroll_found = true;
+        XIScrollClassInfo *scroll = reinterpret_cast<XIScrollClassInfo*>(info->classes[i]);
+        ASSERT_EQ(scroll->scroll_type, XIScrollTypeVertical);
+    }
+
+    ASSERT_TRUE(scroll_found);
+}
+
+TEST_F(EvdevQEMUTabletTest, SmoothScrollingWorks) {
+    XORG_TESTCASE("Create QEMU virtual tablet device.\n"
+                  "Send scroll wheel events.\n"
+                  "Verify smooth scroll events are received on the right valuator\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=54387");
+
+    ::Display* dpy = Display();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_Motion);
+    mask.mask = new unsigned char[mask.mask_len]();
+
+    XISetMask(mask.mask, XI_Motion);
+    XISelectEvents(dpy, DefaultRootWindow(dpy), &mask , 1);
+
+    dev->PlayOne(EV_REL, REL_WHEEL, -1, true);
+
+    ASSERT_EVENT(XIDeviceEvent, down, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(down->valuators.mask[0], 1 << 2); /* only scroll valuator moved */
+    ASSERT_EQ(down->valuators.values[0], -1.0);
+
+    dev->PlayOne(EV_REL, REL_WHEEL, 1, true);
+    ASSERT_EVENT(XIDeviceEvent, up, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(up->valuators.mask[0], 1 << 2); /* only scroll valuator moved */
+    ASSERT_EQ(up->valuators.values[0], 0);
+}
+#endif
+
+TEST_F(EvdevQEMUTabletTest, HasAbsoluteAxes) {
+    XORG_TESTCASE("Create QEMU virtual tablet device.\n"
+                  "Ensure abs x and y axes are present.\n");
+
+    ::Display* dpy = Display();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    int ndevices;
+    XIDeviceInfo *info = XIQueryDevice(dpy, deviceid, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+
+    bool x_found, y_found = false;
+    int naxes = 0;
+    for (int i = 0; i < info->num_classes; i++) {
+        if (info->classes[i]->type != XIValuatorClass)
+            continue;
+
+        naxes++;
+
+        XIValuatorClassInfo *v = reinterpret_cast<XIValuatorClassInfo*>(info->classes[i]);
+        if (v->number < 2) {
+            ASSERT_EQ(v->mode, Absolute);
+            ASSERT_EQ(v->min, 0);
+            ASSERT_EQ(v->max, 0x7FFF);
+
+            if (v->number == 0) {
+                x_found = true;
+                ASSERT_EQ(v->label, XInternAtom(dpy, "Abs X", True));
+            } else if (v->number == 1) {
+                y_found = true;
+                ASSERT_EQ(v->label, XInternAtom(dpy, "Abs Y", True));
+            }
+        }
+    }
+
+    ASSERT_TRUE(x_found);
+    ASSERT_TRUE(y_found);
+}
+
+TEST_F(EvdevQEMUTabletTest, AbsoluteAxesWork) {
+    ::Display* dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
+
+    int w = DisplayWidth(dpy, DefaultScreen(dpy));
+    int h = DisplayHeight(dpy, DefaultScreen(dpy));
+
+    int coords[][4] = {
+        { 0x7FFF, 0x7FFF/2, w - 1, (h - 1)/2 },
+        { 0x0, 0x0, 0, 0 },
+        { 0x7FFF/2, 0x0, (w - 1)/2, 0},
+        { 0x7FFF, 0x7FFF/2, w - 1, (h - 1)/2 },
+        { 0x7FFF, 0x7FFF, w - 1, h - 1 },
+        { -1, -1, -1, -1}
+    };
+
+    int i = 0;
+    while (coords[i][0] != -1) {
+        dev->PlayOne(EV_ABS, ABS_X, coords[i][0]);
+        dev->PlayOne(EV_ABS, ABS_Y, coords[i][1], true);
+        ASSERT_EVENT(XEvent, ev, dpy, MotionNotify);
+        ASSERT_EQ(ev->xmotion.x_root, coords[i][2]);
+        ASSERT_EQ(ev->xmotion.y_root, coords[i][3]);
+        i++;
+    }
+}
+
+TEST_F(EvdevQEMUTabletTest, ScrollingWorks) {
+    XORG_TESTCASE("Create QEMU virtual tablet device.\n"
+                  "Send scroll wheel events.\n"
+                  "Verify legacy scroll button events are received\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=54387");
+
+    ::Display* dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask|ButtonReleaseMask);
+
+    dev->PlayOne(EV_REL, REL_WHEEL, -1, true);
+
+    ASSERT_EVENT(XEvent, down_press, dpy, ButtonPress);
+    ASSERT_EQ(down_press->xbutton.button, 5U);
+    ASSERT_EVENT(XEvent, down_release, dpy, ButtonRelease);
+    ASSERT_EQ(down_press->xbutton.button, 5U);
+
+    dev->PlayOne(EV_REL, REL_WHEEL, 1, true);
+    ASSERT_EVENT(XEvent, up_press, dpy, ButtonPress);
+    ASSERT_EQ(up_press->xbutton.button, 4U);
+    ASSERT_EVENT(XEvent, up_release, dpy, ButtonRelease);
+    ASSERT_EQ(up_press->xbutton.button, 4U);
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
