@@ -1093,6 +1093,116 @@ INSTANTIATE_TEST_CASE_P(, EvdevTouchRotationTest,
 
 #endif
 
+class EvdevAxisLabelTest : public XITServerInputTest,
+                              public DeviceInterface {
+public:
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.SetAutoAddDevices(true);
+        config.WriteConfig();
+    }
+
+    std::vector<Atom> GetAxisLabels(::Display *dpy, int deviceid) {
+        int ndevices;
+        XIDeviceInfo *info = XIQueryDevice(dpy, deviceid, &ndevices);
+
+        EXPECT_EQ(ndevices, 1);
+
+        std::vector<Atom> atoms;
+
+        for (int i = 0; i < info->num_classes; i++) {
+            if (info->classes[i]->type != XIValuatorClass)
+                continue;
+
+            XIValuatorClassInfo *v = reinterpret_cast<XIValuatorClassInfo*>(info->classes[i]);
+            atoms.push_back(v->label);
+        }
+
+        return atoms;
+    }
+
+    std::vector<Atom> GetAtoms(::Display *dpy, std::vector<std::string> names) {
+        std::vector<Atom> atoms;
+
+        std::vector<std::string>::const_iterator it = names.begin();
+        while(it != names.end()) {
+            Atom a = XInternAtom(dpy, it->c_str(), True);
+            EXPECT_NE(a, (Atom)None) << "for label " << *it;
+            atoms.push_back(a);
+            it++;
+        }
+
+        return atoms;
+    }
+
+    int SetUpDevice(::Display *dpy, const std::string &recordings_file, const std::string name) {
+        int deviceid;
+
+        SetDevice(recordings_file);
+        EXPECT_TRUE(xorg::testing::XServer::WaitForDevice(dpy, name));
+        EXPECT_EQ(FindInputDeviceByName(dpy, name, &deviceid), 1);
+
+        return deviceid;
+    }
+
+    void CompareLabels(::Display *dpy, int deviceid, const char *axislabels[])
+    {
+        std::vector<std::string> strs;
+        const char **l = axislabels;
+
+        while(*l) {
+            strs.push_back(*l);
+            l++;
+        }
+
+        std::vector<Atom> expected_labels = GetAtoms(dpy, strs);
+        std::vector<Atom> labels = GetAxisLabels(dpy, deviceid);
+
+        ASSERT_EQ(labels.size(), expected_labels.size());
+
+        std::vector<Atom>::const_iterator label = labels.begin();
+        std::vector<Atom>::const_iterator expected = expected_labels.begin();
+
+        while (label != labels.end()) {
+            ASSERT_EQ(*label, *expected);
+            label++;
+            expected++;
+        }
+    }
+};
+
+TEST_F(EvdevAxisLabelTest, RelativeAxes)
+{
+    ::Display *dpy = Display();
+    int deviceid = SetUpDevice(dpy, "mice/PIXART-USB-OPTICAL-MOUSE.desc", "PIXART USB OPTICAL MOUSE");
+
+    const char *l[] = {"Rel X", "Rel Y", "Rel Vert Wheel", NULL};
+
+    CompareLabels(dpy, deviceid, l);
+
+}
+
+TEST_F(EvdevAxisLabelTest, AbsoluteAxes)
+{
+    ::Display *dpy = Display();
+    int deviceid = SetUpDevice(dpy, "tablets/N-Trig-MultiTouch.desc", "N-Trig MultiTouch");
+
+    const char *l[] = {"Abs MT Position X", "Abs MT Position Y", "Abs Misc",
+                       "Abs MT Touch Major", "Abs MT Touch Minor", "Abs MT Orientation", NULL};
+
+    CompareLabels(dpy, deviceid, l);
+}
+
+TEST_F(EvdevAxisLabelTest, RelAndAbsoluteAxes)
+{
+    ::Display *dpy = Display();
+    int deviceid = SetUpDevice(dpy, "tablets/QEMU-0.12.1-QEMU-USB-Tablet.desc", "QEMU 0.12.1 QEMU USB Tablet");
+
+    const char *l[] = {"Abs X", "Abs Y",  "Rel Vert Wheel", NULL};
+
+    CompareLabels(dpy, deviceid, l);
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
