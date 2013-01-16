@@ -19,6 +19,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "xit-server-input-test.h"
+#include "xit-event.h"
 #include "helpers.h"
 
 /* no implementation, this class only exists for better test names */
@@ -353,15 +354,12 @@ TEST(ElographicsTest, StylusMovement)
     } else
         ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
 
-    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(dpy, MotionNotify, -1, -1, 1000), true);
+    ASSERT_EVENT(XEvent, first, dpy, MotionNotify);
+    ASSERT_EVENT(XEvent, second, dpy, MotionNotify);
+    ASSERT_LT(first->xmotion.x_root, second->xmotion.x_root);
 
-    XEvent first, second;
-    XNextEvent(dpy, &first);
 
-    ASSERT_EQ(xorg::testing::XServer::WaitForEventOfType(dpy, MotionNotify, -1, -1, 1000), true);
-    XNextEvent(dpy, &second);
 
-    ASSERT_LT(first.xmotion.x_root, second.xmotion.x_root);
 
     int status;
     wait(&status);
