@@ -310,6 +310,21 @@ out:
     return rc;
 }
 
+pid_t elo_fork(void)
+{
+    /* fork here */
+    pid_t pid = fork();
+    if (pid == 0) { /* child */
+#ifdef __linux
+        prctl(PR_SET_PDEATHSIG, SIGTERM);
+#endif
+        if (elo_simulate())
+            throw new std::runtime_error("simulation failed\n");
+        exit(0);
+    }
+    return pid;
+}
+
 TEST(ElographicsTest, StylusMovement)
 {
     XOrgConfig config;
@@ -323,15 +338,7 @@ TEST(ElographicsTest, StylusMovement)
     config.AddDefaultScreenWithDriver();
 
     /* fork here */
-    pid_t pid = fork();
-    if (pid == 0) { /* child */
-#ifdef __linux
-        prctl(PR_SET_PDEATHSIG, SIGTERM);
-#endif
-        if (elo_simulate())
-            throw new std::runtime_error("simulation failed\n");
-        exit(0);
-    }
+    elo_fork();
 
     /* parent */
     server.Start(config);
