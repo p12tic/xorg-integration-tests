@@ -294,7 +294,7 @@ int elo_simulate(void)
     }
 
     for (i = 0; i < 30; i++) {
-        elo_init_packet(&packet, 100 * i, 10, 10);
+        elo_init_packet(&packet, 100 * i, 100 * i, 10);
         rc = write(fd, &packet, sizeof(packet));
         if (rc == -1 && errno == SIGPIPE)
             i--;
@@ -365,8 +365,105 @@ TEST(ElographicsTest, StylusMovement)
     ASSERT_EVENT(XEvent, second, dpy, MotionNotify);
     ASSERT_LT(first->xmotion.x_root, second->xmotion.x_root);
 
+    int status;
+    wait(&status);
 
+    config.RemoveConfig();
+    server.RemoveLogFile();
+}
 
+TEST(ElographicsTest, InvertX)
+{
+    XOrgConfig config;
+    XITServer server;
+
+    config.AddInputSection("elographics", "--device--",
+                           "Option \"CorePointer\" \"on\"\n"
+                           "Option \"DebugLevel\" \"10\"\n"
+                           "Option \"MinX\" \"3000\"\n"
+                           "Option \"MaxX\" \"0\"\n"
+                           "Option \"Model\" \"Sunit dSeries\"" /* does not send packets to device*/
+                           "Option \"Device\" \"/tmp/elographics.pipe\"\n");
+    config.AddDefaultScreenWithDriver();
+
+    /* fork here */
+    elo_fork();
+
+    /* parent */
+    server.Start(config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
+    XSync(dpy, False);
+
+    if (FindInputDeviceByName(dpy, "--device--") != 1) {
+        SCOPED_TRACE("\n"
+                     "	Elographics device '--device--' not found.\n"
+                     "	Maybe this is elographics < 1.4.\n"
+                     "	Checking for TOUCHSCREEN instead, see git commit\n"
+                     "	xf86-input-elographics-1.3.0-1-g55f337f");
+        ASSERT_EQ(FindInputDeviceByName(dpy, "TOUCHSCREEN"), 1);
+    } else
+        ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+
+    ASSERT_EVENT(XEvent, first, dpy, MotionNotify);
+    ASSERT_EVENT(XEvent, second, dpy, MotionNotify);
+    ASSERT_GT(first->xmotion.x_root, second->xmotion.x_root);
+    ASSERT_LT(first->xmotion.y_root, second->xmotion.y_root);
+
+    int status;
+    wait(&status);
+
+    config.RemoveConfig();
+    server.RemoveLogFile();
+}
+
+TEST(ElographicsTest, InvertY)
+{
+    XOrgConfig config;
+    XITServer server;
+
+    config.AddInputSection("elographics", "--device--",
+                           "Option \"CorePointer\" \"on\"\n"
+                           "Option \"DebugLevel\" \"10\"\n"
+                           "Option \"MinY\" \"3000\"\n"
+                           "Option \"MaxY\" \"0\"\n"
+                           "Option \"Model\" \"Sunit dSeries\"" /* does not send packets to device*/
+                           "Option \"Device\" \"/tmp/elographics.pipe\"\n");
+    config.AddDefaultScreenWithDriver();
+
+    /* fork here */
+    elo_fork();
+
+    /* parent */
+    server.Start(config);
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    int major = 2;
+    int minor = 0;
+    ASSERT_EQ(Success, XIQueryVersion(dpy, &major, &minor));
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
+    XSync(dpy, False);
+
+    if (FindInputDeviceByName(dpy, "--device--") != 1) {
+        SCOPED_TRACE("\n"
+                     "	Elographics device '--device--' not found.\n"
+                     "	Maybe this is elographics < 1.4.\n"
+                     "	Checking for TOUCHSCREEN instead, see git commit\n"
+                     "	xf86-input-elographics-1.3.0-1-g55f337f");
+        ASSERT_EQ(FindInputDeviceByName(dpy, "TOUCHSCREEN"), 1);
+    } else
+        ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+
+    ASSERT_EVENT(XEvent, first, dpy, MotionNotify);
+    ASSERT_EVENT(XEvent, second, dpy, MotionNotify);
+    ASSERT_LT(first->xmotion.x_root, second->xmotion.x_root);
+    ASSERT_GT(first->xmotion.y_root, second->xmotion.y_root);
 
     int status;
     wait(&status);
