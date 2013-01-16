@@ -89,6 +89,18 @@ void XOrgConfig::AddInputSection(const std::string &driver,
     sections.push_back(section.str());
 }
 
+void XOrgConfig::AddInputClass(const std::string &identifier,
+                               const std::string &matches,
+                               const std::string &options) {
+    std::stringstream section;
+    section << "Section \"InputClass\"\n"
+            << "    Identifier \"" << identifier << "\"\n"
+            << matches << "\n"
+            << options << "\n" <<
+            "EndSection\n";
+    sections.push_back(section.str());
+}
+
 void XOrgConfig::SetAutoAddDevices(bool enabled) {
     auto_add_devices = enabled;
 }

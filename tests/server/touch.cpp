@@ -25,6 +25,8 @@ protected:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
+        config.AddInputClass("grab device", "MatchIsTouchscreen \"on\"",
+                             "Option \"GrabDevice\" \"on\"");
         config.SetAutoAddDevices(true);
         config.WriteConfig();
     }
@@ -837,6 +839,7 @@ protected:
     virtual void SetUpConfigAndLog() {
         config.AddInputSection("evdev", "mouse",
                                "Option \"CorePointer\" \"on\""
+                               "Option \"GrabDevice\" \"on\"\n"
                                "Option \"AccelerationProfile\" \"-1\""
                                "Option \"Device\" \"" + mouse->GetDeviceNode() + "\"");
         TouchTest::SetUpConfigAndLog();

@@ -58,6 +58,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
                                /* Disable pointer acceleration to allow for accurate
                                 * pointer positions with EV_REL events... */
                                "Option \"AccelerationProfile\" \"-1\""
@@ -141,11 +142,13 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device1--",
                                "Option \"CorePointer\" \"on\""
+                               "Option \"GrabDevice\" \"on\"\n"
                                "Option \"AccelerationProfile\" \"-1\""
                                "Option \"Device\" \"" + dev1->GetDeviceNode() + "\"");
 
         config.AddInputSection("evdev", "--device2--",
                                "Option \"CorePointer\" \"on\""
+                               "Option \"GrabDevice\" \"on\"\n"
                                "Option \"AccelerationProfile\" \"-1\""
                                "Option \"Device\" \"" + dev2->GetDeviceNode() + "\"");
 

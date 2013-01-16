@@ -80,6 +80,24 @@ public:
                                  bool reference_from_layout = true);
 
     /**
+     * Add a Section InputClass to the config file, in the form of:
+     * @code
+     * Section "InputClass"
+     *    Identifier "<identifier>"
+     *    ... match conditions ...
+     *    ... options ...
+     * @endcode
+     *
+     * @param identifier The identifier for this input class
+     * @param matches Single string containing all match conditions
+     * @param options Single string containing all options to be set
+     */
+    virtual void AddInputClass(const std::string &identifier,
+                               const std::string &matches,
+                               const std::string &options);
+
+
+    /**
      * Add a Screen and Device section to the config file. The resulting
      * config file will look like this:
      *
