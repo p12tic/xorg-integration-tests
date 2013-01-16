@@ -297,8 +297,11 @@ int elo_simulate(void)
         rc = write(fd, &packet, sizeof(packet));
         if (rc == -1 && errno == SIGPIPE)
             i--;
-        usleep(500000);
+        usleep(50000);
     }
+
+    if (i == 30)
+        rc = 0;
 
 out:
     unlink(path);
@@ -324,8 +327,9 @@ TEST(ElographicsTest, StylusMovement)
 #ifdef __linux
         prctl(PR_SET_PDEATHSIG, SIGTERM);
 #endif
-        elo_simulate();
-        return;
+        if (elo_simulate())
+            throw new std::runtime_error("simulation failed\n");
+        exit(0);
     }
 
     /* parent */
@@ -358,6 +362,9 @@ TEST(ElographicsTest, StylusMovement)
     XNextEvent(dpy, &second);
 
     ASSERT_LT(first.xmotion.x_root, second.xmotion.x_root);
+
+    int status;
+    wait(&status);
 
     config.RemoveConfig();
     server.RemoveLogFile();
