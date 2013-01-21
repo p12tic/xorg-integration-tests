@@ -4,6 +4,7 @@ noinst_LIBRARIES = $(XORG_GTEST_BUILD_LIBS) libxit.a
 
 common_sources =  \
 		 $(top_srcdir)/tests/common/xit-event.h \
+		 $(top_srcdir)/tests/common/xit-property.h \
 		 $(top_srcdir)/tests/common/xit-server-test.cpp \
 		 $(top_srcdir)/tests/common/xit-server-test.h \
 		 $(top_srcdir)/tests/common/xit-server.cpp \
