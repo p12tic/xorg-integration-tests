@@ -1,8 +1,8 @@
 <xit:registries xmlns:xit="http://www.x.org/xorg-integration-testing">
   <xit:registry name="xorg-upstream">
     <xit:meta>
-      <xit:date>2012-12-18</xit:date>
-      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">bd91b05b631f13afd1f7a9d6cbc4f0c5408b523a</xit:moduleversion>
+      <xit:date>2013-01-21</xit:date>
+      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">069d8ed3eb659c48dd2b0f8b7b8c11f092fdb362</xit:moduleversion>
     </xit:meta>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
@@ -156,8 +156,10 @@
       <xit:testcase name="InvalidZeroLengthBarrier/6" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="DGAPointerTest">
-      <xit:testcase name="StuckPointerButtonDuringGrab" success="false">
+      <xit:testcase name="StuckPointerButtonDuringGrab" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=59100</xit:bug>
+        <xit:fix type="git">ad3bc571348a7007a2960bf87ae739397c5511ee</xit:fix>
+        <xit:fix type="git">c5f2818edbec2f87383baa6c6be5c389b73ca6f9</xit:fix>
       </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="EventQueueTest">
@@ -367,26 +369,66 @@
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/7" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/8" success="true"/>
       <xit:testcase name="PassiveGrabPointerEmulationMultipleTouchesFastSuccession/9" success="true"/>
-      <xit:testcase name="PassiveGrabPointerRelease/0" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/1" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/10" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/11" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/12" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/13" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/14" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/15" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/16" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/17" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/18" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/19" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/2" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/3" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/4" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/5" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/6" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/7" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/8" success="false"/>
-      <xit:testcase name="PassiveGrabPointerRelease/9" success="false"/>
+      <xit:testcase name="PassiveGrabPointerRelease/0" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/1" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/10" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/11" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/12" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/13" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/14" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/15" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/16" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/17" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/18" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/19" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/2" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/3" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/4" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/5" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/6" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/7" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/8" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="PassiveGrabPointerRelease/9" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="TouchOwnershipTest">
       <xit:testcase name="ActiveGrabOwnershipAcceptTouch" success="true"/>
@@ -413,10 +455,18 @@
       <xit:testcase name="EmulatedButton1MotionMaskOnTouch/1" success="true"/>
       <xit:testcase name="EmulatedButton1MotionMaskOnTouch/2" success="true"/>
       <xit:testcase name="EmulatedButton1MotionMaskOnTouch/3" success="true"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/0" success="false"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/1" success="false"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/2" success="false"/>
-      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/3" success="false"/>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/0" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/1" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/2" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndCore/3" success="true">
+        <xit:fix type="git">fa6ab7d9b2d7fd8184f1e068360607845f5c33ab</xit:fix>
+      </xit:testcase>
       <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/0" success="true"/>
       <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/1" success="true"/>
       <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/2" success="true"/>
