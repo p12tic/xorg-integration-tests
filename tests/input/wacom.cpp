@@ -2,6 +2,7 @@
 #include <config.h>
 #endif
 #include <stdexcept>
+#include <stdint.h>
 #include <map>
 #include <unistd.h>
 
@@ -30,6 +31,8 @@
 #include <unistd.h>
 
 #include "xit-server-input-test.h"
+#include "xit-property.h"
+#include "xit-event.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -40,6 +43,14 @@
 class WacomDeviceTest : public XITServerInputTest,
                         public DeviceInterface {
 public:
+
+    /**
+     * @return button number for idx minus the 4 scroll buttons
+     */
+    virtual int ButtonNumber(int idx) const {
+        return ((idx > 3) ? idx - 4 : idx);
+    }
+
     virtual void SetUp()
     {
         SetDevice("tablets/Wacom-Intuos4-6x9.desc");
@@ -586,6 +597,272 @@ INSTANTIATE_TEST_CASE_P(, WacomToolProximityTest, ::testing::Values(BTN_TOOL_PEN
                                                                     BTN_TOOL_RUBBER,
                                                                     BTN_TOOL_LENS,
                                                                     BTN_TOOL_MOUSE));
+
+
+class WacomPropertyTest : public WacomDeviceTest {
+public:
+    virtual void SetUp(void) {
+        WacomDeviceTest::SetUp();
+        ASSERT_EQ(FindInputDeviceByName(Display(), "Wacom Intuos4 6x9 stylus", &stylus_id), 1);
+    }
+
+    bool PropertyExists(::Display *dpy, int deviceid, const std::string &propname)
+    {
+        Atom prop;
+
+        prop = XInternAtom(dpy, propname.c_str(), True);
+        if (prop == None)
+            return false;
+
+
+        Atom *props;
+        int nprops;
+        props = XIListProperties(dpy, deviceid, &nprops);
+
+        bool prop_found = false;
+        while (nprops-- && !prop_found)
+            prop_found = (props[nprops] == prop);
+
+        XFree(props);
+
+        return prop_found;
+    }
+
+    unsigned char *GetPropertyData(::Display *dpy, int deviceid, const std::string &propname)
+    {
+        Atom prop;
+
+        prop = XInternAtom(dpy, propname.c_str(), True);
+        if (prop == None)
+            return NULL;
+
+        unsigned char *data;
+        Atom type;
+        int format;
+        unsigned long nitems, bytes_after;
+        XIGetProperty(dpy, stylus_id, prop, 0, 100, False,
+                      AnyPropertyType, &type, &format, &nitems, &bytes_after,
+                      &data);
+        return data;
+    }
+
+    int stylus_id;
+};
+
+TEST_F(WacomPropertyTest, ButtonActionPropertiesPresent)
+{
+    XORG_TESTCASE("Ensure the button action properties are present.\n");
+
+    ::Display *dpy = Display();
+
+    unsigned int nbuttons = 0;
+    XIDeviceInfo *info;
+    int ndevices;
+    info = XIQueryDevice(dpy, stylus_id, &ndevices);
+    ASSERT_EQ(ndevices, 1);
+    ASSERT_TRUE(info != NULL);
+
+    for (int i = 0; i < info->num_classes; i++) {
+        if (info->classes[i]->type != XIButtonClass)
+            continue;
+
+        XIButtonClassInfo *b = reinterpret_cast<XIButtonClassInfo*>(info->classes[i]);
+        nbuttons = b->num_buttons;
+        break;
+    }
+    XIFreeDeviceInfo(info);
+
+    ASSERT_GT(nbuttons, 0U);
+
+    ASSERT_PROPERTY(Atom, btnaction_prop, dpy, stylus_id, "Wacom Button Actions");
+    ASSERT_EQ(btnaction_prop.type, XA_ATOM);
+    ASSERT_EQ(btnaction_prop.nitems, nbuttons);
+    ASSERT_EQ(btnaction_prop.format, 32);
+
+    for (unsigned int i = 0; i < nbuttons; i++) {
+        if (i >= 3 && i <= 6) { /* scroll buttons, 0 indexed */
+            ASSERT_EQ(btnaction_prop.data[i], (Atom)None);
+            continue;
+        }
+
+        std::stringstream propname;
+        propname << "Wacom button action " << ButtonNumber(i);
+
+        ASSERT_PROPERTY(int, action_prop, dpy, stylus_id, propname.str());
+        ASSERT_EQ(btnaction_prop.data[i], action_prop.prop);
+    }
+}
+
+TEST_F(WacomPropertyTest, Button1DoubleMiddleClick)
+{
+    XORG_TESTCASE("Change Button0 action property to middle double click\n"
+                  "Trigger tip event.\n"
+                  "Ensure we get two press/release pairs for button 2.\n");
+
+    const unsigned int BTN1_PRESS   = 0x0080000 | 0x00100000 | 1; /* btn 1 press */
+    const unsigned int BTN2_PRESS   = 0x0080000 | 0x00100000 | 2; /* btn 1 press */
+    const unsigned int BTN2_RELEASE = 0x0080000 | 0x00000000 | 2; /* btn 1 release */
+    const std::string propname = "Wacom button action 0";
+
+    ::Display *dpy = Display();
+
+    ASSERT_PROPERTY(unsigned int, prop, dpy, stylus_id, propname);
+    ASSERT_NE(prop.prop, (Atom)None);
+    ASSERT_EQ(prop.nitems, 1U);
+    ASSERT_EQ(prop.At(0), BTN1_PRESS);
+
+               /* AC_BUTTON  AC_KEYBTNPRESS */
+    prop.Set(0, BTN2_PRESS);
+    prop.Set(1, BTN2_RELEASE);
+    prop.Set(2, BTN2_PRESS);
+    prop.Set(3, BTN2_RELEASE);
+    prop.Update();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
+
+    dev->PlayOne(EV_ABS, ABS_X, 4000);
+    dev->PlayOne(EV_ABS, ABS_Y, 4000);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1);
+    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+
+    dev->PlayOne(EV_ABS, ABS_X, 4200);
+    dev->PlayOne(EV_ABS, ABS_Y, 4200);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+    dev->PlayOne(EV_ABS, ABS_PRESSURE, 70);
+    dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
+    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+
+    dev->PlayOne(EV_ABS, ABS_X, 4000);
+    dev->PlayOne(EV_ABS, ABS_Y, 4000);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+    dev->PlayOne(EV_ABS, ABS_PRESSURE, 0);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 0);
+    dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
+    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+
+    ASSERT_EVENT(XEvent, press1, dpy, ButtonPress);
+    ASSERT_EQ(press1->xbutton.button, 2U);
+    ASSERT_EVENT(XEvent, release1, dpy, ButtonRelease);
+    ASSERT_EQ(release1->xbutton.button, 2U);
+    ASSERT_EVENT(XEvent, press2, dpy, ButtonPress);
+    ASSERT_EQ(press2->xbutton.button, 2U);
+    ASSERT_EVENT(XEvent, release2, dpy, ButtonRelease);
+    ASSERT_EQ(release2->xbutton.button, 2U);
+}
+
+TEST_F(WacomPropertyTest, ButtonActionInvalidFormat)
+{
+    XORG_TESTCASE("Try to change button 0 action property to a different format.\n"
+                  "Expect error\n");
+
+    const std::string propname = "Wacom button action ";
+
+    ::Display *dpy = Display();
+
+    ASSERT_PROPERTY(Atom, btnaction_prop, dpy, stylus_id, "Wacom Button Actions");
+
+    int data[1] = {0};
+
+    for (unsigned int i = 0; i < btnaction_prop.nitems; i++) {
+        std::stringstream ss;
+        ss << propname << ButtonNumber(i);
+
+        SetErrorTrap(dpy);
+        XITProperty<int> prop_8(dpy, stylus_id, ss.str(), XA_INTEGER, 8, 1, data);
+        ASSERT_ERROR(ReleaseErrorTrap(dpy), BadMatch);
+
+        SetErrorTrap(dpy);
+        XITProperty<int> prop_16(dpy, stylus_id, ss.str(), XA_INTEGER, 16, 1, data);
+        ASSERT_ERROR(ReleaseErrorTrap(dpy), BadMatch);
+    }
+}
+
+TEST_F(WacomPropertyTest, ButtonActionInvalidType)
+{
+    XORG_TESTCASE("Try to change button 0 action property to a different type.\n"
+                  "Expect error\n");
+
+    const std::string propname = "Wacom button action ";
+
+    ::Display *dpy = Display();
+
+    ASSERT_PROPERTY(Atom, btnaction_prop, dpy, stylus_id, "Wacom Button Actions");
+
+    int data[1] = {0};
+
+    /* All built-in types */
+    for (unsigned int i = XA_PRIMARY; i < XA_LAST_PREDEFINED; i++) {
+        if (i == XA_INTEGER)
+            continue;
+
+        for (unsigned int j = 0; j < btnaction_prop.nitems; j++) {
+            std::stringstream ss;
+            ss << propname << ButtonNumber(j);
+
+            SetErrorTrap(dpy);
+            XITProperty<int> prop_str(dpy, stylus_id, ss.str(), i, 32, 1, data);
+            ASSERT_ERROR(ReleaseErrorTrap(dpy), BadMatch);
+        }
+    }
+}
+
+TEST_F(WacomPropertyTest, ButtonActionHighButtonValue)
+{
+    XORG_TESTCASE("Try to change button 0 action property to a button > 32.\n"
+                  "Expect success\n");
+    const unsigned int BTN100_PRESS   = 0x0080000 | 0x00100000 | 100; /* btn 1 press */
+
+    const std::string propname = "Wacom button action 0";
+
+    ::Display *dpy = Display();
+
+    SetErrorTrap(dpy);
+    XITProperty<unsigned int> prop_str(dpy, stylus_id, propname, XA_INTEGER, 32, 1, &BTN100_PRESS);
+    ASSERT_FALSE(ReleaseErrorTrap(dpy));
+}
+
+TEST_F(WacomPropertyTest, ButtonActionPropertySetToNone)
+{
+    XORG_TESTCASE("Change button X action property value to None\n"
+                  "Ensure this triggers an error\n");
+
+    ::Display *dpy = Display();
+    ASSERT_PROPERTY(Atom, btnactions, dpy, stylus_id, "Wacom Button Actions");
+
+    for (unsigned int i = 0; i < btnactions.nitems; i++) {
+        const std::string propname = "Wacom button action ";
+        std::stringstream ss;
+        ss << propname << ButtonNumber(i);
+
+        ASSERT_PROPERTY(unsigned int, prop, dpy, stylus_id, ss.str());
+        prop.Resize(1);
+        prop.Set(0, None);
+
+        SetErrorTrap(dpy);
+        prop.Update();
+        ASSERT_ERROR(ReleaseErrorTrap(dpy), BadValue);
+    }
+}
+
+TEST_F(WacomPropertyTest, ButtonActionPropertyUnset)
+{
+    XORG_TESTCASE("Change Wacom Button Actions property value to None for a button\n"
+                  "Ensure this does not generate an error\n");
+
+    const std::string propname = "Wacom Button Actions";
+
+    ::Display *dpy = Display();
+
+    ASSERT_PROPERTY(unsigned int, prop, dpy, stylus_id, propname);
+    for (unsigned int i = 0; i < prop.nitems; i++) {
+        ASSERT_PROPERTY(unsigned int, prop, dpy, stylus_id, propname);
+        prop.Set(i, None);
+
+        SetErrorTrap(dpy);
+        prop.Update();
+        ASSERT_FALSE(ReleaseErrorTrap(dpy));
+    }
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
