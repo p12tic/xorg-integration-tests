@@ -51,6 +51,30 @@ public:
         return ((idx > 3) ? idx - 4 : idx);
     }
 
+    virtual void TipDown(void) {
+        dev->PlayOne(EV_ABS, ABS_X, 4000);
+        dev->PlayOne(EV_ABS, ABS_Y, 4000);
+        dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+
+        dev->PlayOne(EV_ABS, ABS_X, 4200);
+        dev->PlayOne(EV_ABS, ABS_Y, 4200);
+        dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+        dev->PlayOne(EV_ABS, ABS_PRESSURE, 70);
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
+    virtual void TipUp(void) {
+        dev->PlayOne(EV_ABS, ABS_X, 4000);
+        dev->PlayOne(EV_ABS, ABS_Y, 4000);
+        dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+        dev->PlayOne(EV_ABS, ABS_PRESSURE, 0);
+        dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 0);
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
     virtual void SetUp()
     {
         SetDevice("tablets/Wacom-Intuos4-6x9.desc");
@@ -720,25 +744,7 @@ TEST_F(WacomPropertyTest, Button1DoubleMiddleClick)
 
     XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
 
-    dev->PlayOne(EV_ABS, ABS_X, 4000);
-    dev->PlayOne(EV_ABS, ABS_Y, 4000);
-    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1);
-    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
-
-    dev->PlayOne(EV_ABS, ABS_X, 4200);
-    dev->PlayOne(EV_ABS, ABS_Y, 4200);
-    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
-    dev->PlayOne(EV_ABS, ABS_PRESSURE, 70);
-    dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
-    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
-
-    dev->PlayOne(EV_ABS, ABS_X, 4000);
-    dev->PlayOne(EV_ABS, ABS_Y, 4000);
-    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
-    dev->PlayOne(EV_ABS, ABS_PRESSURE, 0);
-    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 0);
-    dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
-    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    TipDown();
 
     ASSERT_EVENT(XEvent, press1, dpy, ButtonPress);
     ASSERT_EQ(press1->xbutton.button, 2U);
@@ -748,6 +754,10 @@ TEST_F(WacomPropertyTest, Button1DoubleMiddleClick)
     ASSERT_EQ(press2->xbutton.button, 2U);
     ASSERT_EVENT(XEvent, release2, dpy, ButtonRelease);
     ASSERT_EQ(release2->xbutton.button, 2U);
+
+    TipUp();
+    XSync(dpy, False);
+    ASSERT_EQ(XPending(dpy), 0);
 }
 
 TEST_F(WacomPropertyTest, ButtonActionInvalidFormat)
