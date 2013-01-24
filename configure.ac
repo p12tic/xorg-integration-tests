@@ -41,7 +41,6 @@ m4_ifndef([XORG_MACROS_VERSION],
 XORG_MACROS_VERSION(1.17)
 XORG_DEFAULT_OPTIONS
 XORG_ENABLE_INTEGRATION_TESTS(yes)
-XORG_WITH_DOXYGEN
 
 PKG_CHECK_MODULES(XI, x11 xi)
 PKG_CHECK_MODULES(XRANDR, xrandr)
@@ -90,8 +89,6 @@ AC_ARG_WITH(logpath, [AS_HELP_STRING([--with-logpath=/tmp]),
 AC_DEFINE_DIR(LOG_BASE_PATH, BASEPATH, [log and config file base path])
 
 AC_CONFIG_FILES([Makefile
-                 doc/Doxyfile
-                 doc/Makefile
                  recordings/Makefile
                  tests/Makefile
                  tests/common/Makefile
