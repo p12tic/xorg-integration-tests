@@ -10,6 +10,7 @@
 #include <linux/input.h>
 
 #include <X11/Xlib.h>
+#include <X11/XKBlib.h>
 #include <X11/Xatom.h>
 #define XK_LATIN1
 #include <X11/keysymdef.h>
@@ -872,6 +873,78 @@ TEST_F(WacomPropertyTest, ButtonActionPropertyUnset)
         prop.Update();
         ASSERT_FALSE(ReleaseErrorTrap(dpy));
     }
+}
+
+TEST_F(WacomPropertyTest, ButtonActionKeyPress)
+{
+    XORG_TESTCASE("Change button action to a key press.\n"
+                  "Press phys button.\n"
+                  "Ensure key press is received\n"
+                  "Release phys button.\n"
+                  "Ensure key release is received\n");
+
+    unsigned int KEY_A_KEYCODE = 38;
+    unsigned int KEY_A_PRESS   = 0x0010000 | 0x00100000 | KEY_A_KEYCODE;
+    const std::string propname = "Wacom button action 0";
+
+    ::Display *dpy = Display();
+
+    ASSERT_PROPERTY(unsigned int, prop, dpy, stylus_id, propname);
+    prop.Resize(1);
+    prop.Set(0, KEY_A_PRESS);
+    prop.Update();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), KeyPressMask | KeyReleaseMask |
+                                              ButtonPressMask | ButtonReleaseMask);
+
+    TipDown();
+    ASSERT_EVENT(XEvent, press, dpy, KeyPress);
+    ASSERT_EQ(press->xkey.keycode, KEY_A_KEYCODE);
+    ASSERT_EQ(XPending(dpy), 0);
+
+    TipUp();
+    ASSERT_EVENT(XEvent, release, dpy, KeyRelease);
+    ASSERT_EQ(release->xkey.keycode, KEY_A_KEYCODE);
+    ASSERT_EQ(XPending(dpy), 0);
+}
+
+TEST_F(WacomPropertyTest, ButtonActionKeyPressRelease)
+{
+    XORG_TESTCASE("Change button action to a key press and release.\n"
+                  "Press phys button.\n"
+                  "Ensure key press is received\n"
+                  "Ensure key release is received\n"
+                  "Release phys button.\n"
+                  "Ensure no more events are waiting\n");
+
+    unsigned int KEY_A_KEYCODE = 38;
+    unsigned int KEY_A_PRESS   = 0x0010000 | 0x00100000 | KEY_A_KEYCODE;
+    unsigned int KEY_A_RELEASE = 0x0010000 |              KEY_A_KEYCODE;
+    const std::string propname = "Wacom button action 0";
+
+    ::Display *dpy = Display();
+
+    ASSERT_PROPERTY(unsigned int, prop, dpy, stylus_id, propname);
+    prop.Resize(2);
+    prop.Set(0, KEY_A_PRESS);
+    prop.Set(1, KEY_A_RELEASE);
+    prop.Update();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), KeyPressMask | KeyReleaseMask |
+                                              ButtonPressMask | ButtonReleaseMask);
+
+    TipDown();
+    ASSERT_EVENT(XEvent, press, dpy, KeyPress);
+    ASSERT_EQ(press->xkey.keycode, KEY_A_KEYCODE);
+    ASSERT_EQ(XPending(dpy), 1);
+
+    ASSERT_EVENT(XEvent, release, dpy, KeyRelease);
+    ASSERT_EQ(release->xkey.keycode, KEY_A_KEYCODE);
+    ASSERT_EQ(XPending(dpy), 0);
+
+    TipUp();
+    XSync(dpy, False);
+    ASSERT_EQ(XPending(dpy), 0);
 }
 
 int main(int argc, char **argv) {
