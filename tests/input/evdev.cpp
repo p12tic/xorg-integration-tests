@@ -1362,6 +1362,54 @@ TEST_F(EvdevQEMUTabletTest, ScrollingWorks) {
     ASSERT_EQ(up_press->xbutton.button, 4U);
 }
 
+class EvdevTouchpadTest : public XITServerInputTest,
+                          public DeviceInterface {
+public:
+    /**
+     * Initializes a standard mouse device with two wheels.
+     */
+    virtual void SetUp() {
+        SetDevice("touchpads/SynPS2-Synaptics-TouchPad.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    /**
+     * Sets up an xorg.conf for a single evdev CorePointer device based on
+     * the evemu device.
+     */
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "keyboard-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(EvdevTouchpadTest, DeviceExists)
+{
+    ASSERT_TRUE(FindInputDeviceByName(Display(), "--device--"));
+}
+
+TEST_F(EvdevTouchpadTest, PointerMovement)
+{
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
+
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-move.events");
+
+    XSync(dpy, False);
+    ASSERT_GT(XPending(dpy), 0);
+    while (XPending(dpy) > 0) {
+        ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+    }
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
