@@ -49,6 +49,10 @@ public:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
+        config.AddInputClass("wacom", "MatchDriver \"wacom\"",
+                             "Option \"GrabDevice\" \"on\""
+                             "Option \"CommonDBG\" \"12\""
+                             "Option \"DebugLevel\" \"12\"");
         config.SetAutoAddDevices(true);
         config.WriteConfig();
     }
