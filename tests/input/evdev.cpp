@@ -44,6 +44,7 @@
 
 #include "xit-server-input-test.h"
 #include "xit-event.h"
+#include "xit-property.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -1418,6 +1419,26 @@ public:
 TEST_F(EvdevTouchpadTest, DeviceExists)
 {
     ASSERT_TRUE(FindInputDeviceByName(Display(), "--device--"));
+}
+
+TEST_F(EvdevTouchpadTest, AxisLabels)
+{
+    XORG_TESTCASE("Create evdev touchpad.\n"
+                  "Verify axis label property is as expected\n");
+
+    ::Display *dpy = Display();
+    const std::string propname = "Axis Labels";
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(Display(), "--device--", &deviceid));
+
+
+    ASSERT_PROPERTY(Atom, labels, dpy, deviceid, propname);
+    ASSERT_EQ(labels.nitems, 4U);
+    ASSERT_EQ(labels.data[0], XInternAtom(dpy, "Abs X", True));
+    ASSERT_EQ(labels.data[1], XInternAtom(dpy, "Abs Y", True));
+    ASSERT_EQ(labels.data[2], XInternAtom(dpy, "Abs Pressure", True));
+    ASSERT_EQ(labels.data[3], XInternAtom(dpy, "Abs Tool Width", True));
 }
 
 TEST_F(EvdevTouchpadTest, PointerMovement)
