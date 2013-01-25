@@ -28,6 +28,7 @@
 #ifndef _ATOM_HELPERS_H_
 #define _ATOM_HELPERS_H_
 
+#include <stdint.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <X11/Xatom.h>
 
