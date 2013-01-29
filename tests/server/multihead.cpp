@@ -34,6 +34,7 @@
 #include <xorg/gtest/xorg-gtest.h>
 
 #include <X11/Xlib.h>
+#include <X11/extensions/XTest.h>
 
 #include "xorg-conf.h"
 #include "xit-server.h"
@@ -220,6 +221,41 @@ public:
         return on_screen;
     }
 };
+
+TEST_P(ZaphodTest, ScreenCrossingXTestAbsolute)
+{
+    XORG_TESTCASE("In a setup with two ScreenRec (xinerama off), \n"
+                  "moving the pointer through XTest causes the pointer to move to the requested screen.\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=60001");
+
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    ASSERT_TRUE(dpy);
+    ASSERT_EQ(ScreenCount(dpy), 2);
+
+    /* we keep two separate connections to make the code a bit simpler */
+    ::Display *dpy2 = XOpenDisplay(std::string(server.GetDisplayString() + ".1").c_str());
+    ASSERT_TRUE(dpy2);
+    ASSERT_EQ(ScreenCount(dpy2), 2);
+
+    XSelectInput(dpy, RootWindow(dpy, 0), PointerMotionMask | LeaveWindowMask | EnterWindowMask);
+    XSelectInput(dpy2, RootWindow(dpy2, 1), PointerMotionMask | EnterWindowMask | LeaveWindowMask);
+    XSync(dpy, False);
+    XSync(dpy2, False);
+
+    /* Move to screen 0 */
+    XTestFakeMotionEvent(dpy, 0, 10, 10, 0);
+    XSync(dpy, False);
+    ASSERT_EVENT(XEvent, s1_motion, dpy, MotionNotify);
+    /* now to the other screen */
+    XTestFakeMotionEvent(dpy, 1, 10, 10, 0);
+    XSync(dpy, False);
+
+    ASSERT_EVENT(XEvent, s1_leave, dpy, LeaveNotify);
+    XSync(dpy, False);
+
+    ASSERT_EVENT(XEvent, s2_enter, dpy2, EnterNotify);
+    ASSERT_EVENT(XEvent, s2_enter_motion, dpy2, MotionNotify);
+}
 
 TEST_P(ZaphodTest, ScreenCrossing)
 {
