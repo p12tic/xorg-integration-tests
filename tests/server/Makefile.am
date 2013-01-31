@@ -18,4 +18,4 @@ server_SOURCES = \
                  barriers-devices.cpp \
                  barriers-notify.cpp
 
-server_LDADD = $(GTEST_LDADDS) $(XTEST_LIBS) $(XFIXES_LIBS) $(XSCREENSAVER_LIBS) $(XIT_LIBS) $(DGA_LIBS)
+server_LDADD = $(XIT_LIBS) $(GTEST_LDADDS) $(XTEST_LIBS) $(XFIXES_LIBS) $(XSCREENSAVER_LIBS) $(DGA_LIBS)

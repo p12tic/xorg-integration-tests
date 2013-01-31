@@ -15,10 +15,7 @@ AM_CPPFLAGS = \
 AM_CXXFLAGS = $(GTEST_CXXFLAGS) $(XORG_GTEST_CXXFLAGS)
 
 GTEST_LDADDS = \
-	       $(XI_LIBS) \
-	       $(XRANDR_LIBS) \
-	       $(XORG_GTEST_LIBS) \
-	       $(EVEMU_LIBS) \
-	       $(XORG_GTEST_MAIN_LIBS)
+	       $(XORG_GTEST_LIBS) $(XORG_GTEST_MAIN_LIBS) \
+	       $(XI_LIBS) $(XRANDR_LIBS) $(EVEMU_LIBS)
 
 XIT_LIBS=$(top_builddir)/tests/common/libxit.a

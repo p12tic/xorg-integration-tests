@@ -126,12 +126,10 @@ public:
         int device_id_2;
 
         XIAnyHierarchyChangeInfo change;
-        change.add = (XIAddMasterInfo) {
-            .type = XIAddMaster,
-            .name = (char *) "New Master",
-            .send_core = False,
-            .enable = True
-        };
+        change.add.type = XIAddMaster;
+        change.add.name = (char *) "New Master";
+        change.add.send_core = False;
+        change.add.enable = True;
 
         master_id_1 = VIRTUAL_CORE_POINTER_ID;
 
@@ -140,11 +138,10 @@ public:
         ASSERT_TRUE(FindInputDeviceByName(dpy, "New Master pointer", &master_id_2)) << "Failed to find the new master pointer.";
         ASSERT_TRUE(FindInputDeviceByName(dpy, "--device2--", &device_id_2)) << "Failed to find device2.";
 
-        change.attach = (XIAttachSlaveInfo) {
-            .type = XIAttachSlave,
-            .deviceid = device_id_2,
-            .new_master = master_id_2,
-        };
+        change.attach.type = XIAttachSlave;
+        change.attach.deviceid = device_id_2;
+        change.attach.new_master = master_id_2;
+
         ASSERT_EQ(XIChangeHierarchy(dpy, &change, 1), Success) << "Couldn't attach device2 to the new master pointer.";
     }
 
