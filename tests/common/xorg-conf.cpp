@@ -56,17 +56,21 @@ void XOrgConfig::WriteConfig(const std::string &path) {
     std::ofstream conffile(config_file.c_str());
     conffile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 
-    conffile << ""
-        "Section \"ServerLayout\"\n"
-        "    Identifier \"Dummy layout\"\n";
-    if (!auto_add_devices)
-        conffile << "    Option \"AutoAddDevices\" \"off\"\n";
-    if (!default_device.empty())
-        conffile << "    Screen 0 \"" << default_device << " screen\" 0 0\n";
+    bool need_server_layout = !auto_add_devices || !default_device.empty() || input_devices.size() > 0;
+
     std::vector<std::string>::const_iterator it;
-    for (it = input_devices.begin(); it != input_devices.end(); it++)
-        conffile << "    InputDevice \"" << *it << "\"\n";
-    conffile << "EndSection\n";
+    if (need_server_layout) {
+        conffile << ""
+            "Section \"ServerLayout\"\n"
+            "    Identifier \"Dummy layout\"\n";
+        if (!auto_add_devices)
+            conffile << "    Option \"AutoAddDevices\" \"off\"\n";
+        if (!default_device.empty())
+            conffile << "    Screen 0 \"" << default_device << " screen\" 0 0\n";
+        for (it = input_devices.begin(); it != input_devices.end(); it++)
+            conffile << "    InputDevice \"" << *it << "\"\n";
+        conffile << "EndSection\n";
+    }
 
     for (it = sections.begin(); it != sections.end(); it++)
         conffile << "\n" << *it;
