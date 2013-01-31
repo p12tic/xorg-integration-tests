@@ -66,6 +66,17 @@ public:
     virtual void WriteConfig(const std::string &path = "");
 
     /**
+     * Append the raw config string to the configuration. This new config is
+     * largely treated like any section and thus the default behavior of
+     * the config still applies (e.g. it will write out a ServerLayout
+     * section if needed). For complete config replacements, don't use any
+     * other calls than this one.
+     *
+     * @param config The raw configuration text.
+     */
+    virtual void AppendRawConfig(const std::string &config);
+
+    /**
      * Remove the config previously written (if any).
      *
      * This must be called explicitly, the destructor does not remove the

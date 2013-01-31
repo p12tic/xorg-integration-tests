@@ -76,6 +76,10 @@ void XOrgConfig::WriteConfig(const std::string &path) {
         conffile << "\n" << *it;
 }
 
+void XOrgConfig::AppendRawConfig(const std::string &config) {
+    sections.push_back(config);
+}
+
 void XOrgConfig::RemoveConfig() {
     unlink(GetPath().c_str());
 }
