@@ -402,6 +402,208 @@ INSTANTIATE_TEST_CASE_P(, SynapticsWarpTest,
                                           std::make_pair(-1, -1)
                             ));
 
+
+class SynapticsWarpZaphodTest : public SynapticsWarpTest {
+    virtual void SetUpConfigAndLog() {
+        if (xinerama.empty())
+            xinerama = "off";
+        config.SetAutoAddDevices(true); /* to avoid ServerLayout being
+                                           written */
+        config.AppendRawConfig(
+            "Section \"ServerLayout\"\n"
+            "	Identifier     \"X.org Configured\"\n"
+            "	Screen         0 \"Screen0\"\n"
+            "	Screen         1 \"Screen1\" LeftOf \"Screen0\"\n"
+            "	Option         \"Xinerama\" \"" + xinerama + "\n"
+            "	Option         \"AutoAddDevices\" \"off\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Device\"\n"
+            "	Identifier  \"Card0\"\n"
+            "	Driver      \"dummy\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Device\"\n"
+            "	Identifier  \"Card1\"\n"
+            "	Driver      \"dummy\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Screen\"\n"
+            "	Identifier \"Screen0\"\n"
+            "	Device     \"Card0\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Screen\"\n"
+            "	Identifier \"Screen1\"\n"
+            "	Device     \"Card1\"\n"
+            "EndSection"
+            "\n"
+            "Section \"InputDevice\"\n"
+            "   Identifier \"synaptics\"\n"
+            "   Driver \"synaptics\"\n"
+            "   Option \"Device\" \"" + dev->GetDeviceNode() + "\"\n"
+            "EndSection\n");
+        config.WriteConfig();
+    }
+
+protected:
+    std::string xinerama;
+};
+
+TEST_P(SynapticsWarpZaphodTest, WarpScaling)
+{
+    XORG_TESTCASE("Start server with Xinerama off\n"
+                  "Play synaptics event to ensure it is the lastSlave\n"
+                  "Warp pointer on left root window\n"
+                  "Compare coordinates to expected\n"
+                  "Warp pointer on right root window\n"
+                  "Compare coordinates to expected\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=53037");
+
+    ::Display *dpy = Display();
+    ASSERT_EQ(ScreenCount(dpy), 2);
+
+    /* Play one event so this device is lastSlave */
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-move.events");
+
+    int x = GetParam().first,
+        y = GetParam().second;
+
+    Window lroot = RootWindow(dpy, 1);
+    /* Warp on left root window */
+    XWarpPointer(dpy, 0, lroot, 0, 0, 0, 0, x, y);
+
+    Window root, child;
+    int rx, ry, wx, wy;
+    unsigned int mask;
+
+    bool same_screen;
+    same_screen= XQueryPointer(dpy, lroot, &root, &child,
+                               &rx, &ry, &wx, &wy, &mask);
+    ASSERT_TRUE(same_screen);
+    ASSERT_EQ(root, lroot);
+
+    /* Warping to negative of left screen should clip to 0 */
+    ASSERT_EQ(rx, std::max(x, 0));
+    ASSERT_EQ(ry, std::max(y, 0));
+
+    /* Now warp to right root window */
+    Window rroot = RootWindow(dpy, 0);
+    XWarpPointer(dpy, 0, rroot, 0, 0, 0, 0, x, y);
+    /* Query from left root window */
+    same_screen = XQueryPointer(dpy, lroot, &root, &child,
+                               &rx, &ry, &wx, &wy, &mask);
+    ASSERT_FALSE(same_screen);
+    ASSERT_EQ(root, rroot);
+    ASSERT_EQ(rx, std::max(x, 0));
+    ASSERT_EQ(ry, std::max(y, 0));
+
+    /* WarpPointer doesn't let us warp relative between two screens, so we
+       can't test that here */
+}
+
+INSTANTIATE_TEST_CASE_P(, SynapticsWarpZaphodTest,
+                        ::testing::Values(std::make_pair(0, 0),
+                                          std::make_pair(1, 1),
+                                          std::make_pair(2, 2),
+                                          std::make_pair(200, 200),
+                                          std::make_pair(-1, -1)
+                            ));
+
+class SynapticsWarpXineramaTest : public SynapticsWarpZaphodTest {
+    virtual void SetUp() {
+        xinerama = "on";
+        SynapticsWarpZaphodTest::SetUp();
+    }
+};
+
+TEST_P(SynapticsWarpXineramaTest, WarpScaling)
+{
+    XORG_TESTCASE("Start server with Xinerama on\n"
+                  "Play synaptics event to ensure it is the lastSlave\n"
+                  "Warp pointer on left root window\n"
+                  "Compare coordinates to expected\n"
+                  "Warp pointer on right root window\n"
+                  "Compare coordinates to expected\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=53037");
+
+    ::Display *dpy = Display();
+    ASSERT_EQ(ScreenCount(dpy), 1);
+
+    /* Play one event so this device is lastSlave */
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-move.events");
+
+    int x = GetParam().first,
+        y = GetParam().second;
+
+    Window root = DefaultRootWindow(dpy);
+
+    /* Warp on left screen */
+    XWarpPointer(dpy, 0, root, 0, 0, 0, 0, x, y);
+
+    Window r, child;
+    int rx, ry, wx, wy;
+    unsigned int mask;
+
+    XQueryPointer(dpy, root, &r, &child,
+                  &rx, &ry, &wx, &wy, &mask);
+
+    /* Warping to negative of left screen should clip to 0 */
+    ASSERT_EQ(rx, std::max(x, 0));
+    ASSERT_EQ(ry, std::max(y, 0));
+
+    int w = DisplayWidth(dpy, 0);
+
+    /* Now warp to right screen */
+    XWarpPointer(dpy, 0, root, 0, 0, 0, 0, w/2 + x, y);
+    XQueryPointer(dpy, root, &root, &child,
+                 &rx, &ry, &wx, &wy, &mask);
+    ASSERT_EQ(rx, w/2 + x);
+    ASSERT_EQ(ry, std::max(y, 0));
+}
+
+TEST_F(SynapticsWarpXineramaTest, WarpScalingRelative)
+{
+    XORG_TESTCASE("Start server with Xinerama on\n"
+                  "Play synaptics event to ensure it is the lastSlave\n"
+                  "Warp pointer to right screen\n"
+                  "Warp pointer relatively to the left\n"
+                  "Compare coordinates to expected\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=53037");
+
+    ::Display *dpy = Display();
+    ASSERT_EQ(ScreenCount(dpy), 1);
+
+    /* Play one event so this device is lastSlave */
+    dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-move.events");
+
+    Window root = DefaultRootWindow(dpy);
+
+    int w = DisplayWidth(dpy, 0);
+
+    /* Warp to right screen */
+    XWarpPointer(dpy, 0, root, 0, 0, 0, 0, w/2 + 10, 100);
+
+    Window child;
+    int rx, ry, wx, wy;
+    unsigned int mask;
+
+    /* Now warp relative right to left window */
+    XWarpPointer(dpy, 0, None, 0, 0, 0, 0, -100, 0);
+    XQueryPointer(dpy, root, &root, &child,
+                 &rx, &ry, &wx, &wy, &mask);
+    ASSERT_EQ(rx, w/2 + 10 - 100);
+    ASSERT_EQ(ry, 100);
+}
+
+INSTANTIATE_TEST_CASE_P(, SynapticsWarpXineramaTest,
+                        ::testing::Values(std::make_pair(0, 0),
+                                          std::make_pair(1, 1),
+                                          std::make_pair(2, 2),
+                                          std::make_pair(200, 200),
+                                          std::make_pair(-1, -1)
+                            ));
+
 /**
  * Synaptics driver test for clickpad devices.
  */
