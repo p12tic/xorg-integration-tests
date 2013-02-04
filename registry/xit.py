@@ -672,8 +672,8 @@ class XITTestRegistryCLI:
         print
 
     def compare_registries(self, args):
-        regs1 = XITTestRegistry.fromXML(args.reg1[0])
-        regs2 = XITTestRegistry.fromXML(args.reg2[0])
+        regs1 = XITTestRegistry.fromXML(args.reg1)
+        regs2 = XITTestRegistry.fromXML(args.reg2)
 
         # sort them so searching is simpler
         regs1.sort()
@@ -769,8 +769,8 @@ class XITTestRegistryCLI:
 
     def merge_add_registries(self, args):
         """Merge registry args.reg2 into regs.arg1, leaving all existing information in reg1 untouched"""
-        reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
-        reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
+        reg1 = XITTestRegistry.fromXML(args.reg1)[0]
+        reg2 = XITTestRegistry.fromXML(args.reg2)[0]
 
         # merge 2 into 1
         tests2 = reg2.listTestNames()
@@ -907,8 +907,8 @@ class XITTestRegistryCLI:
         verify_subparser.set_defaults(func = self.verify_results)
 
         compare_subparser = subparsers.add_parser("compare", help="Compare two test registries")
-        compare_subparser.add_argument("reg1", metavar="registry1.xml", nargs=1, help="Registry file no 1")
-        compare_subparser.add_argument("reg2", metavar="registry2.xml", nargs=1, help="Registry file no 2")
+        compare_subparser.add_argument("reg1", metavar="registry1.xml", help="Registry file no 1")
+        compare_subparser.add_argument("reg2", metavar="registry2.xml", help="Registry file no 2")
         compare_subparser.set_defaults(func = self.compare_registries)
 
         create_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
@@ -918,8 +918,8 @@ class XITTestRegistryCLI:
         create_subparser.set_defaults(func = self.create_registry)
 
         merge_subparser = subparsers.add_parser("merge", help="Merge two registries together")
-        merge_subparser.add_argument("reg1", metavar="registry1.xml", nargs=1, help="Registry file no 1")
-        merge_subparser.add_argument("reg2", metavar="registry2.xml", nargs=1, help="Registry file no 2")
+        merge_subparser.add_argument("reg1", metavar="registry1.xml", help="Registry file no 1")
+        merge_subparser.add_argument("reg2", metavar="registry2.xml", help="Registry file no 2")
         merge_subparser.add_argument("--add", default=True, action="store_true", help="Merge new test cases from registry 2 into registry 1, leaving existing test cases unmodified")
         merge_subparser.set_defaults(func = self.merge_registries)
 
