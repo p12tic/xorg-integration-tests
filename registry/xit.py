@@ -141,56 +141,64 @@ class XITTestRegistry:
             regs.append(reg)
         return regs
 
-    def toXML(self):
-        """Generate XML output from this registry and return it"""
+    def toXML(self, others=[]):
+        """Generate XML output from this registry and return it. If others
+           is a list, the resulting XML file contains all of the registries
+           provided including self. Otherwise, only self is written out."""
         NSMAP = { "xit" : "http://www.x.org/xorg-integration-testing" }
         E = objectify.ElementMaker(annotate = False,
                                    namespace = NSMAP['xit'],
                                    nsmap = NSMAP)
+
         xit_registries = E.registries()
-        xit_registry = E.registry()
-        xit_registry.set("name", self.name)
-        xit_registries.append(xit_registry)
 
-        xit_meta = E.meta()
-        xit_registry.append(xit_meta)
+        if len(others) == 0:
+            others = [self] # yikes
 
-        xit_date = E.date(time.strftime("%Y-%m-%d", self.date))
-        xit_meta.append(xit_date)
+        for r in others:
+            xit_registry = E.registry()
+            xit_registry.set("name", r.name)
+            xit_registries.append(xit_registry)
 
-        for modversion in sorted(self.moduleversions):
-            xit_modversion = E.moduleversion(modversion.version)
-            xit_modversion.set("name", modversion.module)
-            xit_modversion.set("type", modversion.type)
-            xit_meta.append(xit_modversion)
+            xit_meta = E.meta()
+            xit_registry.append(xit_meta)
 
-        for suite_name, suite in sorted(self.tests.iteritems()):
-            xit_suite = E.testsuite()
-            xit_suite.set("name", suite_name)
-            for name, test in sorted(suite.iteritems()):
-                xit_testcase = E.testcase()
-                xit_testcase.set("name", test.name)
-                xit_testcase.set("success", str(test.status).lower())
+            xit_date = E.date(time.strftime("%Y-%m-%d", r.date))
+            xit_meta.append(xit_date)
 
-                for bug in test.getBugs():
-                    xit_bug = E.bug(bug.url)
-                    xit_bug.set("type", bug.type)
-                    xit_testcase.append(xit_bug)
+            for modversion in sorted(r.moduleversions):
+                xit_modversion = E.moduleversion(modversion.version)
+                xit_modversion.set("name", modversion.module)
+                xit_modversion.set("type", modversion.type)
+                xit_meta.append(xit_modversion)
 
-                for fix in test.getFixes():
-                    xit_fix = E.fix(fix.text)
-                    xit_fix.set("type", fix.type);
-                    for arg, value in fix.extra_args.iteritems():
-                        xit_fix.set(arg, value)
-                    xit_testcase.append(xit_fix)
+            for suite_name, suite in sorted(r.tests.iteritems()):
+                xit_suite = E.testsuite()
+                xit_suite.set("name", suite_name)
+                for name, test in sorted(suite.iteritems()):
+                    xit_testcase = E.testcase()
+                    xit_testcase.set("name", test.name)
+                    xit_testcase.set("success", str(test.status).lower())
 
-                for info in test.getInfo():
-                    xit_info = E.testinfo(info.text)
-                    xit_info.set("type", info.type)
-                    xit_testcase.append(xit_info)
+                    for bug in test.getBugs():
+                        xit_bug = E.bug(bug.url)
+                        xit_bug.set("type", bug.type)
+                        xit_testcase.append(xit_bug)
 
-                xit_suite.append(xit_testcase)
-            xit_registry.append(xit_suite)
+                    for fix in test.getFixes():
+                        xit_fix = E.fix(fix.text)
+                        xit_fix.set("type", fix.type);
+                        for arg, value in fix.extra_args.iteritems():
+                            xit_fix.set(arg, value)
+                        xit_testcase.append(xit_fix)
+
+                    for info in test.getInfo():
+                        xit_info = E.testinfo(info.text)
+                        xit_info.set("type", info.type)
+                        xit_testcase.append(xit_info)
+
+                    xit_suite.append(xit_testcase)
+                xit_registry.append(xit_suite)
 
         lxml.etree.cleanup_namespaces(xit_registries)
         return lxml.etree.tostring(xit_registries, pretty_print=True)
@@ -765,18 +773,46 @@ class XITTestRegistryCLI:
         if args.add:
             self.merge_add_registries(args)
 
-    def merge_add_registries(self, args):
-        """Merge registry args.reg2 into regs.arg1, leaving all existing information in reg1 untouched"""
-        reg1 = XITTestRegistry.fromXML(args.reg1)[0]
-        reg2 = XITTestRegistry.fromXML(args.reg2)[0]
-
-        # merge 2 into 1
+    def merge_registry(self, reg1, reg2):
         tests2 = reg2.listTestNames()
         for suite, name, status in tests2:
             if reg1.getTest(suite, name) == None:
                 reg1.addTest(reg2.getTest(suite, name))
 
-        self.registry_from_string(args, reg1.toXML());
+
+    def merge_add_registries(self, args):
+        """Merge registry args.reg2 into regs.arg1, leaving all existing information in reg1 untouched"""
+        regs1 = XITTestRegistry.fromXML(args.reg1)
+        regs2 = XITTestRegistry.fromXML(args.reg2)
+
+        if args.regname != None:
+            r1 = self.find_reg(args.regname, regs1)
+            r2 = self.find_reg(args.regname, regs2)
+            if r1 == None and r2 == None:
+                logging.error("Invalid registrys name '%s'" % (args.regname))
+                sys.exit(1)
+
+            if r2 == None:
+                pass # do nothing
+            elif r1 == None:
+                regs1.append(r2)
+            else:
+                self.merge_registry(r1, r2)
+        else:
+            succeeded = []
+            for r1 in regs1:
+                r2 = self.find_reg(r1.name, regs2)
+                if r2 == None:
+                    continue
+                self.merge_registry(r1, r2)
+                succeeded.append(r1.name)
+
+            for r2 in regs2:
+                if r2.name in succeeded:
+                    continue
+                regs1.append(r2)
+
+        self.registry_from_string(args, r1.toXML(regs1))
 
     def add_bug(self, args):
         registry = self.load_registry(args)

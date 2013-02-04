@@ -368,9 +368,9 @@ class TestXITTestRegistryCLI(unittest.TestCase):
         self.assertEquals(e.exception.code, self.EXIT_GENERAL_FAILURE);
 
     def test_merge(self):
-        args = self.args
-        args += ["merge", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME]
-        self.cli.run(args)
+
+        self.cli.run(self.args + ["-r", "server", "merge", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
+        self.cli.run(self.args + ["merge", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
 
     def test_edit(self):
         args = self.args
