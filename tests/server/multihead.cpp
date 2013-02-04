@@ -37,25 +37,23 @@
 #include <X11/extensions/XTest.h>
 
 #include "xorg-conf.h"
-#include "xit-server.h"
+#include "xit-server-input-test.h"
 #include "xit-event.h"
 #include "helpers.h"
 #include "device-interface.h"
 
 using namespace xorg::testing;
 
-class MultiheadTest : public Test,
-                      private ::testing::EmptyTestEventListener {
+class MultiheadTest : public XITServerInputTest {
 public:
-    virtual void WriteConfig(bool left_of, bool xinerama) {
-        config_path = server.GetConfigPath();
-        std::ofstream config(config_path.c_str());
-        config << ""
+    virtual void SetUpConfigAndLog() {
+        config.SetAutoAddDevices(true);
+        config.AppendRawConfig(std::string() +
             "Section \"ServerLayout\"\n"
             "	Identifier     \"X.org Configured\"\n"
             "	Screen         0 \"Screen0\"\n"
-            "	Screen         1 \"Screen1\" " << ((left_of) ? "LeftOf" : "RightOf") << " \"Screen0\"\n"
-            "	Option         \"Xinerama\" \"" << (xinerama ? "on" : "off") << "\"\n"
+            "	Screen         1 \"Screen1\" " + (left_of ? "LeftOf" : "RightOf") + " \"Screen0\"\n"
+            "	Option         \"Xinerama\" \"" +  (xinerama ? "on" : "off") +"\"\n"
             "EndSection\n"
             "\n"
             "Section \"Device\"\n"
@@ -76,45 +74,17 @@ public:
             "Section \"Screen\"\n"
             "	Identifier \"Screen1\"\n"
             "	Device     \"Card1\"\n"
-            "EndSection";
-        config.close();
+            "EndSection");
+        config.WriteConfig();
     }
 
     virtual void SetUp() {
-        WriteConfig(left_of, xinerama);
-
-        server.SetDisplayNumber(133);
-        server.Start();
-
-        failed = false;
-
-        testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-        listeners.Append(this);
-    }
-
-    virtual void TearDown() {
-        if (!failed) {
-            unlink(config_path.c_str());
-            server.RemoveLogFile();
-        }
-
-        testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-        listeners.Release(this);
-    }
-
-    void OnTestPartResult(const ::testing::TestPartResult &test_part_result) {
-        failed = test_part_result.failed();
+        XITServerInputTest::SetUp();
     }
 
 protected:
-    XITServer server;
     bool xinerama;
     bool left_of;
-
-    std::string config_path;
-private:
-    std::string log_path;
-    bool failed;
 };
 
 class ZaphodTest : public MultiheadTest,
@@ -496,15 +466,14 @@ INSTANTIATE_TEST_CASE_P(, XineramaTest, ::testing::Values(true, false));
 class ZaphodTouchDeviceChangeTest : public MultiheadTest,
                                     public DeviceInterface {
 protected:
-    virtual void WriteConfig(bool left_of, bool xinerama) {
-        config_path = server.GetConfigPath();
-        std::ofstream config(config_path.c_str());
-        config << ""
+    virtual void SetUpConfigAndLog() {
+        config.SetAutoAddDevices(true);
+        config.AppendRawConfig(std::string() +
             "Section \"ServerLayout\"\n"
             "	Identifier     \"X.org Configured\"\n"
             "	Screen         0 \"Screen0\"\n"
-            "	Screen         1 \"Screen1\" " << ((left_of) ? "LeftOf" : "RightOf") << " \"Screen0\"\n"
-            "	Option         \"Xinerama\" \"" << (xinerama ? "on" : "off") << "\"\n"
+            "	Screen         1 \"Screen1\" " + (left_of ? "LeftOf" : "RightOf") + " \"Screen0\"\n"
+            "	Option         \"Xinerama\" \"" + (xinerama ? "on" : "off") + "\"\n"
             "	InputDevice    \"mouse\" \"CorePointer\"\n"
             "EndSection\n"
             "\n"
@@ -534,9 +503,8 @@ protected:
             "	Option      \"AccelerationProfile\" \"-1\"\n"
             "	Option      \"CorePointer\" \"on\"\n"
             "	Option \"Device\" \"" + mouse->GetDeviceNode() + "\"\n"
-            "EndSection\n";
-        config.close();
-        config.close();
+            "EndSection\n");
+        config.WriteConfig();
     }
 
     virtual void SetUp() {
