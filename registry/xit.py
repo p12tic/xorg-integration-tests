@@ -45,6 +45,7 @@ from lxml import objectify
 import lxml.etree
 import shutil
 import subprocess
+import logging
 
 DEFAULT_MODULES = ["xorg-x11-server-Xorg",
                    "xorg-x11-drv-evdev",
@@ -52,9 +53,6 @@ DEFAULT_MODULES = ["xorg-x11-server-Xorg",
                    "xorg-x11-drv-wacom",
                    "xorg-x11-drv-mouse",
                    "xorg-x11-drv-keyboard"]
-
-def debug(msg):
-    print >> sys.stderr, msg
 
 XMLNS = "http://www.x.org/xorg-integration-testing"
 def xmlns_tag(tag, ns=XMLNS):
@@ -683,11 +681,11 @@ class XITTestRegistryCLI:
         if regname != None:
             reg1 = self.find_reg(regname, regs1)
             if reg1 == None:
-                print >> sys.stderr, "Failed to find '%s' in first registry" % regname
+                logging.error("Failed to find '%s' in first registry" % regname)
                 sys.exit(1)
             reg2 = self.find_reg(regname, regs2)
             if reg2 == None:
-                print >> sys.stderr, "Failed to find '%s' in second registry" % regname
+                logging.error("Failed to find '%s' in second registry" % regname)
                 sys.exit(1)
             self.compare_registry(reg1, reg2);
         else:
@@ -706,7 +704,7 @@ class XITTestRegistryCLI:
                 failed_regs.append(r2.name)
 
             for f in failed_regs:
-                print >> sys.stderr, "Failed to compare '%s'" % f
+                logging.error("Failed to compare '%s'" % f)
 
 
     def find_reg(self, name, reglist):
@@ -785,7 +783,7 @@ class XITTestRegistryCLI:
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.addBug(XITBug("bugzilla", args.url))
@@ -796,7 +794,7 @@ class XITTestRegistryCLI:
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.removeBug(XITBug("bugzilla", args.url))
@@ -807,7 +805,7 @@ class XITTestRegistryCLI:
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.addFix(XITFix.createFromType(type, text, extra_args))
@@ -828,7 +826,7 @@ class XITTestRegistryCLI:
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.removeFix(XITFix.createFromType(type, text))
@@ -845,7 +843,7 @@ class XITTestRegistryCLI:
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         status = { "true" : True,
@@ -856,7 +854,7 @@ class XITTestRegistryCLI:
         try:
             testcase.status = status[args.status]
         except KeyError:
-            print >> sys.stderr, "Invalid status code, allowed are %s" % ",".join(status.keys())
+            logging.error("Invalid status code, allowed are %s" % ",".join(status.keys()))
             sys.exit(1)
 
         self.registry_from_string(args, registry.toXML())
@@ -974,7 +972,7 @@ class XITTestRegistryCLI:
 
     def load_registry(self, args):
         if args.file == None:
-            print >> sys.stderr, "Reading from stdin"
+            logging.error("Reading from stdin")
             args.file = sys.stdin
             regname = None
         return self.load_registry_from_file(args.file, args.regname)
@@ -986,12 +984,12 @@ class XITTestRegistryCLI:
                 for r in registries:
                     if r.name == regname:
                         return r
-                print >> sys.stderr, "Failed to find requested registry %s." % regname
+                logging.error("Failed to find requested registry %s." % regname)
                 sys.exit(1)
             else:
-                print >> sys.stderr, "Multiple registries found, but no name given. Using first."
+                logging.warning("Multiple registries found, but no name given. Using first.")
         elif len(registries) == 0:
-            print >> sys.stderr, "Failed to parse input file."
+            logging.error("Failed to parse input file.")
             sys.exit(1)
 
         return registries[0]
