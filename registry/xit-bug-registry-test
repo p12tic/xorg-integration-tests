@@ -360,9 +360,12 @@ class TestXITTestRegistryCLI(unittest.TestCase):
             self.cli.run(args + [suite] + [test])
 
     def test_compare(self):
-        args = self.args
-        args += ["compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME]
-        self.cli.run(args)
+        self.cli.run(self.args + ["compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
+        self.cli.run(self.args + ["-r", "server", "compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
+
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(self.args + ["-r", "doesnotexist", "compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
+        self.assertEquals(e.exception.code, self.EXIT_GENERAL_FAILURE);
 
     def test_merge(self):
         args = self.args

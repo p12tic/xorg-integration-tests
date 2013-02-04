@@ -672,9 +672,48 @@ class XITTestRegistryCLI:
         print
 
     def compare_registries(self, args):
-        reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
-        reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
+        regs1 = XITTestRegistry.fromXML(args.reg1[0])
+        regs2 = XITTestRegistry.fromXML(args.reg2[0])
 
+        # sort them so searching is simpler
+        regs1.sort()
+        regs2.sort()
+
+        regname = args.regname
+        if regname != None:
+            reg1 = self.find_reg(regname, regs1)
+            if reg1 == None:
+                print >> sys.stderr, "Failed to find '%s' in first registry" % regname
+                sys.exit(1)
+            reg2 = self.find_reg(regname, regs2)
+            if reg2 == None:
+                print >> sys.stderr, "Failed to find '%s' in second registry" % regname
+                sys.exit(1)
+            self.compare_registry(reg1, reg2);
+        else:
+            failed_regs = []
+            done_regs = []
+            for r1 in regs1:
+                r2 = self.find_reg(r1.name, regs2)
+                if r2 == None:
+                    failed_regs.append(r1.name)
+                else:
+                    self.compare_registry(r1, r2)
+                    done_regs.append(r1.name)
+            for r2 in regs2:
+                if r2.name in done_regs:
+                    continue
+                failed_regs.append(r2.name)
+
+            for f in failed_regs:
+                print >> sys.stderr, "Failed to compare '%s'" % f
+
+
+    def find_reg(self, name, reglist):
+        r = [r for r in reglist if r.name == name]
+        return r[0] if len(r) > 0 else None
+
+    def compare_registry(self, reg1, reg2):
         self.compare_meta(reg1, reg2)
 
         sname_len = 0
