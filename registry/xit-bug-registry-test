@@ -290,6 +290,7 @@ class TestXITTestRegistry(unittest.TestCase):
 
 
 class TestXITTestRegistryCLI(unittest.TestCase):
+    EXIT_GENERAL_FAILURE = 1
     EXIT_TOO_FEW_ARGS_ERROR_CODE = 2
     REGISTRY_SOURCE_FILE = "server-registry.xml"
     REGISTRY_FILENAME = "/tmp/tmp.registry.xml"
@@ -324,10 +325,24 @@ class TestXITTestRegistryCLI(unittest.TestCase):
             self.cli.run(self.args)
         self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE)
 
+        # with a registry that doesn't exist
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(self.args + ["-r", "doesnotexist"])
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE);
+
+        # with a registry that does exist
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(self.args + ["-r", "server"])
+        self.assertEquals(e.exception.code, self.EXIT_TOO_FEW_ARGS_ERROR_CODE);
+
     def test_list_registry(self):
-        args = self.args
-        args.append("list")
-        self.cli.run(args)
+        self.cli.run(self.args + ["list"])
+
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(self.args + ["-r", "doesnotexist", "list"])
+        self.assertEquals(e.exception.code, self.EXIT_GENERAL_FAILURE);
+
+        self.cli.run(self.args + ["-r", "server", "list"])
 
     def test_show_info(self):
         args = self.args

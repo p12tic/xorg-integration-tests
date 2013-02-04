@@ -851,6 +851,7 @@ class XITTestRegistryCLI:
                 "compare the test result with the registry of known test "
                 "successes/failures.\n")
         parser.add_argument("-f", "--file", help="file containing XIT test registry, modified in-place (default: stdin/stdout) ", action="store", required=False)
+        parser.add_argument("-r", "--regname", metavar="registry-name", default=None, help="Work on the named test registry (defaults to first if not given) ", action="store", required=False)
         subparsers = parser.add_subparsers(title="Actions", help=None)
 
         list_subparser = subparsers.add_parser("list", help="List all test cases")
@@ -936,13 +937,20 @@ class XITTestRegistryCLI:
         if args.file == None:
             print >> sys.stderr, "Reading from stdin"
             args.file = sys.stdin
-        return self.load_registry_from_file(args.file)
+            regname = None
+        return self.load_registry_from_file(args.file, args.regname)
 
-
-    def load_registry_from_file(self, path):
+    def load_registry_from_file(self, path, regname = None):
         registries = XITTestRegistry.fromXML(path)
         if len(registries) > 1:
-            print >> sys.stderr, "More than one registry found in input file, this is not supported yet. Using first one only."
+            if regname != None:
+                for r in registries:
+                    if r.name == regname:
+                        return r
+                print >> sys.stderr, "Failed to find requested registry %s." % regname
+                sys.exit(1)
+            else:
+                print >> sys.stderr, "Multiple registries found, but no name given. Using first."
         elif len(registries) == 0:
             print >> sys.stderr, "Failed to parse input file."
             sys.exit(1)
