@@ -1,5 +1,7 @@
 include $(top_srcdir)/Makefile-xorg-gtest.am
 
+TESTS_ENVIRONMENT=GTEST_OUTPUT="xml:$(top_builddir)/results/latest/"
+
 AM_CPPFLAGS = \
 	      $(XI_CFLAGS) \
 	      $(XFIXES_CFLAGS) \
