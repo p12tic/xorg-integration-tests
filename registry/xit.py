@@ -111,7 +111,11 @@ class XITTestRegistry:
                         type = modversion.attrib["type"]
                     except KeyError:
                         type = "git"
-                    mv = XITModuleVersion(modversion.attrib["name"], modversion.text, type)
+                    try:
+                        repo = modversion.attrib["repo"]
+                    except KeyError:
+                        repo = None
+                    mv = XITModuleVersion(modversion.attrib["name"], modversion.text, type, repo)
                     reg.moduleversions.append(mv)
 
             for suite in registry.iterchildren(tag=xmlns_tag("testsuite")):
@@ -170,6 +174,9 @@ class XITTestRegistry:
                 xit_modversion = E.moduleversion(modversion.version)
                 xit_modversion.set("name", modversion.module)
                 xit_modversion.set("type", modversion.type)
+                if modversion.repo:
+                    xit_modversion.set("repo", modversion.repo)
+
                 xit_meta.append(xit_modversion)
 
             for suite_name, suite in sorted(r.tests.iteritems()):
@@ -470,9 +477,10 @@ class XITInfoURL(XITInfo):
 
 class XITModuleVersion:
     """Represents a module version of a particular component."""
-    def __init__(self, module, version, type = "git"):
+    def __init__(self, module, version, type = "git", repo=None):
         self.module = module
         self.version = version
+        self.repo = repo
         self.type = type
 
     def __str__(self):
