@@ -1,5 +1,5 @@
 <xit:registries xmlns:xit="http://www.x.org/xorg-integration-testing">
-  <xit:registry name="xorg-upstream">
+  <xit:registry name="server">
     <xit:meta>
       <xit:date>2013-01-21</xit:date>
       <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">069d8ed3eb659c48dd2b0f8b7b8c11f092fdb362</xit:moduleversion>
@@ -549,12 +549,379 @@
       </xit:testcase>
       <xit:testcase name="ScreenCrossingButtons/0" success="true"/>
       <xit:testcase name="ScreenCrossingButtons/1" success="true"/>
+      <xit:testcase name="ScreenCrossingXTestAbsolute/0" success="true"/>
+      <xit:testcase name="ScreenCrossingXTestAbsolute/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTouchDeviceChangeTest">
       <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="true">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=49347</xit:bug>
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">3b9f1c701787965246638c1a6fd99fb2b6078114</xit:fix>
       </xit:testcase>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="input-module-load">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="InputModuleLoadTest">
+      <xit:testcase name="CheckForLoadFailure/0" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/1" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/10" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/11" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/12" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/13" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/2" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/3" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/4" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/5" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/6" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/7" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/8" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/9" success="true"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="kbd-driver">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="KeyboardTest">
+      <xit:testcase name="DeviceExists/0" success="true"/>
+      <xit:testcase name="DeviceExists/1" success="true"/>
+      <xit:testcase name="DeviceExists/2" success="true"/>
+      <xit:testcase name="KeyboardLayout/0" success="true"/>
+      <xit:testcase name="KeyboardLayout/1" success="false"/>
+      <xit:testcase name="KeyboardLayout/2" success="false"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="legacy-drivers">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="AcecadTest">
+      <xit:testcase name="InputDeviceSectionWithOptionDevice" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="AiptekTest">
+      <xit:testcase name="InputDeviceSectionWithType/0" success="true"/>
+      <xit:testcase name="InputDeviceSectionWithType/1" success="true"/>
+      <xit:testcase name="InputDeviceSectionWithType/2" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="ElographicsTest">
+      <xit:testcase name="InputDeviceSectionWithOptionDevice" success="true"/>
+      <xit:testcase name="InvertX" success="true"/>
+      <xit:testcase name="InvertY" success="true"/>
+      <xit:testcase name="StylusMovement" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="LegacyInputDriverTest">
+      <xit:testcase name="InputDeviceSectionSimple/0" success="true"/>
+      <xit:testcase name="InputDeviceSectionSimple/1" success="true"/>
+      <xit:testcase name="InputDeviceSectionSimple/2" success="true"/>
+      <xit:testcase name="InputDeviceSectionSimple/3" success="true"/>
+      <xit:testcase name="InputDeviceSectionSimple/4" success="true"/>
+      <xit:testcase name="InputDeviceSectionSimple/5" success="true"/>
+      <xit:testcase name="InputDeviceSectionSimple/6" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="VoidTest">
+      <xit:testcase name="InputDeviceSectionSimple" success="true"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="evdev-driver">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="EvdevAxisLabelTest">
+      <xit:testcase name="AbsoluteAxes" success="true"/>
+      <xit:testcase name="RelAndAbsoluteAxes" success="true"/>
+      <xit:testcase name="RelativeAxes" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevButtonMappingTest">
+      <xit:testcase name="ButtonMapping/0" success="true"/>
+      <xit:testcase name="ButtonMapping/1" success="true"/>
+      <xit:testcase name="ButtonMapping/2" success="true"/>
+      <xit:testcase name="ButtonMapping/3" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevFloatingSlaveTest">
+      <xit:testcase name="FloatingDevice" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevInvalidButtonMappingTest">
+      <xit:testcase name="InvalidButtonMapping/0" success="true"/>
+      <xit:testcase name="InvalidButtonMapping/1" success="true"/>
+      <xit:testcase name="InvalidButtonMapping/2" success="true"/>
+      <xit:testcase name="InvalidButtonMapping/3" success="true"/>
+      <xit:testcase name="InvalidButtonMapping/4" success="true"/>
+      <xit:testcase name="InvalidButtonMapping/5" success="true"/>
+      <xit:testcase name="InvalidButtonMapping/6" success="true"/>
+      <xit:testcase name="InvalidButtonMapping/7" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevJoystickTest">
+      <xit:testcase name="MTAxesNoButtons" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevMouseTest">
+      <xit:testcase name="BtnReleaseMaskOnly" success="true"/>
+      <xit:testcase name="DevNode" success="true"/>
+      <xit:testcase name="MiddleButtonEmulation" success="true"/>
+      <xit:testcase name="ScrollWheel" success="true"/>
+      <xit:testcase name="SmoothScrolling" success="true"/>
+      <xit:testcase name="SmoothScrollingAvailable" success="true"/>
+      <xit:testcase name="TerminateWithButtonDown" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevQEMUTabletTest">
+      <xit:testcase name="AbsoluteAxesWork" success="true"/>
+      <xit:testcase name="HasAbsoluteAxes" success="true"/>
+      <xit:testcase name="HasScrollingAxes" success="true"/>
+      <xit:testcase name="ScrollingWorks" success="true"/>
+      <xit:testcase name="SmoothScrollingWorks" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevTouchRotationTest">
+      <xit:testcase name="AxisSwapInversion/0" success="true"/>
+      <xit:testcase name="AxisSwapInversion/1" success="true"/>
+      <xit:testcase name="AxisSwapInversion/2" success="true"/>
+      <xit:testcase name="AxisSwapInversion/3" success="true"/>
+      <xit:testcase name="AxisSwapInversion/4" success="true"/>
+      <xit:testcase name="AxisSwapInversion/5" success="true"/>
+      <xit:testcase name="AxisSwapInversion/6" success="true"/>
+      <xit:testcase name="AxisSwapInversion/7" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevTouchpadTest">
+      <xit:testcase name="AxisLabels" success="true"/>
+      <xit:testcase name="DeviceExists" success="true"/>
+      <xit:testcase name="PointerMovement" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevXKBConfigRulesTest">
+      <xit:testcase name="NoRuleChangeAllowed" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevXKBConfigTest">
+      <xit:testcase name="XKBOptionParseTest/0" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/1" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/10" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/11" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/12" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/13" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/14" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/15" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/2" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/3" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/4" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/5" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/6" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/7" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/8" success="true"/>
+      <xit:testcase name="XKBOptionParseTest/9" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="EvdevXKBTest">
+      <xit:testcase name="DeviceExists/0" success="true"/>
+      <xit:testcase name="DeviceExists/1" success="true"/>
+      <xit:testcase name="DeviceExists/2" success="true"/>
+      <xit:testcase name="KeyboardLayout/0" success="true"/>
+      <xit:testcase name="KeyboardLayout/1" success="true"/>
+      <xit:testcase name="KeyboardLayout/2" success="true"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="mouse-driver">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="MouseTest">
+      <xit:testcase name="BtnPress" success="false"/>
+      <xit:testcase name="BtnRelease" success="true"/>
+      <xit:testcase name="DevNode" success="true"/>
+      <xit:testcase name="Move" success="true"/>
+      <xit:testcase name="ScrollWheel" success="true"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="synaptics-driver">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="SynapticsClickPad">
+      <xit:testcase name="HotPlugSoftButtons" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsClickpadSoftButtonsRuntimeTest">
+      <xit:testcase name="SoftButtonsFirst" success="true"/>
+      <xit:testcase name="SoftButtonsSecond" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsClickpadSoftButtonsTest">
+      <xit:testcase name="LeftClick" success="true"/>
+      <xit:testcase name="LeftClickInDeadArea" success="true"/>
+      <xit:testcase name="RightClick" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsClickpadSoftButtonsWithAreaTest">
+      <xit:testcase name="RightClickInDeadArea" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsClickpadTest">
+      <xit:testcase name="ClickpadProperties" success="true"/>
+      <xit:testcase name="DisableDevice" success="true"/>
+      <xit:testcase name="DisableDeviceOneFingerDown" success="true"/>
+      <xit:testcase name="DisableDeviceOneFingerDownAndLift" success="true"/>
+      <xit:testcase name="DisableDeviceOneFingerResume" success="true"/>
+      <xit:testcase name="DisableDeviceOneFingerTwoFingersResume" success="true"/>
+      <xit:testcase name="DisableDeviceTwoFingersDown" success="true"/>
+      <xit:testcase name="DisableDeviceTwoFingersDownAndLift" success="true"/>
+      <xit:testcase name="DisableDeviceTwoFingersOneFingerResume" success="true"/>
+      <xit:testcase name="DisableDeviceTwoFingersResume" success="true"/>
+      <xit:testcase name="Tap" success="true"/>
+      <xit:testcase name="VertScrollDown" success="true"/>
+      <xit:testcase name="VertScrollUp" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsSmoothScrollTest">
+      <xit:testcase name="ScrollDelta/0" success="true"/>
+      <xit:testcase name="ScrollDelta/1" success="true"/>
+      <xit:testcase name="ScrollDelta/2" success="true"/>
+      <xit:testcase name="ScrollDelta/3" success="true"/>
+      <xit:testcase name="ScrollDelta/4" success="true"/>
+      <xit:testcase name="ScrollDelta/5" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsTest">
+      <xit:testcase name="DevicePresent" success="true"/>
+      <xit:testcase name="ScrollWheel" success="true"/>
+      <xit:testcase name="SmoothScrollingAvailable" success="true"/>
+      <xit:testcase name="TapAndDragEvent" success="true"/>
+      <xit:testcase name="TapEvent" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsWarpTest">
+      <xit:testcase name="WarpScaling/0" success="true"/>
+      <xit:testcase name="WarpScaling/1" success="true"/>
+      <xit:testcase name="WarpScaling/2" success="true"/>
+      <xit:testcase name="WarpScaling/3" success="true"/>
+      <xit:testcase name="WarpScaling/4" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsWarpXineramaTest">
+      <xit:testcase name="WarpScaling/0" success="true"/>
+      <xit:testcase name="WarpScaling/1" success="true"/>
+      <xit:testcase name="WarpScaling/2" success="true"/>
+      <xit:testcase name="WarpScaling/3" success="true"/>
+      <xit:testcase name="WarpScaling/4" success="true"/>
+      <xit:testcase name="WarpScalingRelative" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="SynapticsWarpZaphodTest">
+      <xit:testcase name="WarpScaling/0" success="true"/>
+      <xit:testcase name="WarpScaling/1" success="true"/>
+      <xit:testcase name="WarpScaling/2" success="true"/>
+      <xit:testcase name="WarpScaling/3" success="true"/>
+      <xit:testcase name="WarpScaling/4" success="true"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="wacom-driver">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="WacomDriver">
+      <xit:testcase name="PrivToolDoubleFree" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="WacomDriverTest">
+      <xit:testcase name="DeviceNames/0" success="true"/>
+      <xit:testcase name="DeviceNames/1" success="true"/>
+      <xit:testcase name="DeviceNames/10" success="true"/>
+      <xit:testcase name="DeviceNames/11" success="true"/>
+      <xit:testcase name="DeviceNames/12" success="false"/>
+      <xit:testcase name="DeviceNames/13" success="false"/>
+      <xit:testcase name="DeviceNames/14" success="true"/>
+      <xit:testcase name="DeviceNames/2" success="true"/>
+      <xit:testcase name="DeviceNames/3" success="true"/>
+      <xit:testcase name="DeviceNames/4" success="true"/>
+      <xit:testcase name="DeviceNames/5" success="true"/>
+      <xit:testcase name="DeviceNames/6" success="true"/>
+      <xit:testcase name="DeviceNames/7" success="true"/>
+      <xit:testcase name="DeviceNames/8" success="true"/>
+      <xit:testcase name="DeviceNames/9" success="false"/>
+      <xit:testcase name="DeviceType/0" success="true"/>
+      <xit:testcase name="DeviceType/1" success="true"/>
+      <xit:testcase name="DeviceType/10" success="true"/>
+      <xit:testcase name="DeviceType/11" success="true"/>
+      <xit:testcase name="DeviceType/12" success="false"/>
+      <xit:testcase name="DeviceType/13" success="true"/>
+      <xit:testcase name="DeviceType/14" success="true"/>
+      <xit:testcase name="DeviceType/2" success="true"/>
+      <xit:testcase name="DeviceType/3" success="true"/>
+      <xit:testcase name="DeviceType/4" success="true"/>
+      <xit:testcase name="DeviceType/5" success="true"/>
+      <xit:testcase name="DeviceType/6" success="true"/>
+      <xit:testcase name="DeviceType/7" success="true"/>
+      <xit:testcase name="DeviceType/8" success="true"/>
+      <xit:testcase name="DeviceType/9" success="true"/>
+      <xit:testcase name="Rotation/0" success="true"/>
+      <xit:testcase name="Rotation/1" success="true"/>
+      <xit:testcase name="Rotation/10" success="true"/>
+      <xit:testcase name="Rotation/11" success="true"/>
+      <xit:testcase name="Rotation/12" success="false"/>
+      <xit:testcase name="Rotation/13" success="false"/>
+      <xit:testcase name="Rotation/14" success="true"/>
+      <xit:testcase name="Rotation/2" success="true"/>
+      <xit:testcase name="Rotation/3" success="true"/>
+      <xit:testcase name="Rotation/4" success="true"/>
+      <xit:testcase name="Rotation/5" success="true"/>
+      <xit:testcase name="Rotation/6" success="true"/>
+      <xit:testcase name="Rotation/7" success="true"/>
+      <xit:testcase name="Rotation/8" success="true"/>
+      <xit:testcase name="Rotation/9" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="WacomHoveringTest">
+      <xit:testcase name="HoveringTest" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="WacomLensCursorTest">
+      <xit:testcase name="CursorMove/0" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="WacomMatrixTest">
+      <xit:testcase name="DevicePresent" success="true"/>
+      <xit:testcase name="InputMatrix" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="WacomPropertyTest">
+      <xit:testcase name="Button1DoubleMiddleClick" success="false"/>
+      <xit:testcase name="ButtonActionHighButtonValue" success="false"/>
+      <xit:testcase name="ButtonActionInvalidFormat" success="false"/>
+      <xit:testcase name="ButtonActionInvalidType" success="false"/>
+      <xit:testcase name="ButtonActionKeyPress" success="false"/>
+      <xit:testcase name="ButtonActionKeyPressRelease" success="false"/>
+      <xit:testcase name="ButtonActionPropertiesPresent" success="false"/>
+      <xit:testcase name="ButtonActionPropertySetToNone" success="false"/>
+      <xit:testcase name="ButtonActionPropertyUnset" success="false"/>
+    </xit:testsuite>
+    <xit:testsuite name="WacomToolProximityTest">
+      <xit:testcase name="ToolMovesOnProximity/0" success="true"/>
+      <xit:testcase name="ToolMovesOnProximity/1" success="true"/>
+      <xit:testcase name="ToolMovesOnProximity/2" success="true"/>
+      <xit:testcase name="ToolMovesOnProximity/3" success="true"/>
+      <xit:testcase name="ToolMovesOnProximity/4" success="true"/>
+      <xit:testcase name="ToolMovesOnProximity/5" success="true"/>
+      <xit:testcase name="ToolMovesOnProximity/6" success="true"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="libXi">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="libXiTest">
+      <xit:testcase name="DisplayNotGarbage" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="libXiTouchTest">
+      <xit:testcase name="CopyRawTouchEvent" success="true"/>
+    </xit:testsuite>
+  </xit:registry>
+  <xit:registry name="video-module-load">
+    <xit:meta>
+      <xit:date>2013-02-05</xit:date>
+    </xit:meta>
+    <xit:testsuite name="VideoModuleLoadTest">
+      <xit:testcase name="CheckForLoadFailure/0" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/1" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/10" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/11" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/12" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/13" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/14" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/15" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/16" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/17" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/18" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/19" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/2" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/20" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/3" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/4" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/5" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/6" success="true"/>
+      <xit:testcase name="CheckForLoadFailure/7" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/8" success="false"/>
+      <xit:testcase name="CheckForLoadFailure/9" success="false"/>
     </xit:testsuite>
   </xit:registry>
 </xit:registries>
