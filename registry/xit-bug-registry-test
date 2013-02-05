@@ -341,7 +341,8 @@ class TestXITTestRegistryCLI(unittest.TestCase):
         shutil.copyfile(REGISTRY_SOURCE_FILE, REGISTRY_FILENAME)
 
         self.cli = xit.XITTestRegistryCLI()
-        self.registry = self.cli.load_registry_from_file(REGISTRY_FILENAME)
+        # FIXME: for now only work on the first one
+        self.registry = self.cli.load_registry_from_file(REGISTRY_FILENAME)[0]
 
         # default args
         self.args = ["-f", REGISTRY_FILENAME]

@@ -567,16 +567,18 @@ class JUnitTestFailure:
 class XITTestRegistryCLI:
     def list_tests(self, args):
         """List all tests, showing test name and expected status"""
-        registry = self.load_registry(args)
-        all_tests = registry.listTestNames()
-        all_tests.insert(0, ("TestSuite", "TestCase", "Success"))
-        all_tests.insert(1, ("---------", "--------", "-------"))
-        for suite, test, status in all_tests:
-            print "{:<50}{:<50}{:>10}".format(suite, test, str(status))
+        registries = self.load_registries(args)
+        for r in registries:
+            print ":" * 20 + " {:<30} ".format(r.name) + ":" * 58
+            all_tests = r.listTestNames()
+            all_tests.insert(0, ("TestSuite", "TestCase", "Success"))
+            all_tests.insert(1, ("---------", "--------", "-------"))
+            for suite, test, status in all_tests:
+                print "{:<50}{:<50}{:>10}".format(suite, test, str(status))
 
     def show_test_info(self, args):
         """Show all information about a given XIT registry test case"""
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         test = registry.getTest(args.testsuite[0], args.testcase[0])
         if test != None:
             print str(test)
@@ -618,7 +620,7 @@ class XITTestRegistryCLI:
 
     def verify_results(self, args):
         """Verify a JUnit test result against the XIT test registry"""
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         results = JUnitTestResult.fromXML(args.results)
 
         sname_len = 0
@@ -832,7 +834,7 @@ class XITTestRegistryCLI:
         self.registry_from_string(args, r1.toXML(regs1))
 
     def add_bug(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
@@ -843,7 +845,7 @@ class XITTestRegistryCLI:
         self.registry_from_string(args, registry.toXML())
 
     def rm_bug(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
@@ -854,7 +856,7 @@ class XITTestRegistryCLI:
         self.registry_from_string(args, registry.toXML())
 
     def add_fix(self, args, type, text, extra_args = {}):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
@@ -875,7 +877,7 @@ class XITTestRegistryCLI:
         self.add_fix(args, "rpm", args.rpm)
 
     def rm_fix(self, args, type, text):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
@@ -892,7 +894,7 @@ class XITTestRegistryCLI:
         self.rm_fix(args, "rpm", args.rpm)
 
     def set_status(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
@@ -913,7 +915,7 @@ class XITTestRegistryCLI:
         self.registry_from_string(args, registry.toXML())
 
     def set_date(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         date = args.date
         if date != None:
             date = time.strptime(date, "%Y-%m-%d")
@@ -924,7 +926,7 @@ class XITTestRegistryCLI:
         self.registry_from_string(args, registry.toXML())
 
     def set_modversion(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         name = args.name
         version = args.version
         type = args.type if args.type else "git"
@@ -1023,29 +1025,45 @@ class XITTestRegistryCLI:
 
         return parser
 
-    def load_registry(self, args):
+    def load_one_registry(self, args):
+        """Load and return a single registry from args.file. If args.name is
+           set, search for a named registry, otherwise return the first"""
         if args.file == None:
             logging.error("Reading from stdin")
             args.file = sys.stdin
-            regname = None
-        return self.load_registry_from_file(args.file, args.regname)
 
-    def load_registry_from_file(self, path, regname = None):
+        registries = self.load_registry_from_file(args.file)
+        if args.regname != None:
+            for r in registries:
+                if r.name == args.regname:
+                    return r
+            logging.error("Failed to find requested registry %s." % args.regname)
+            sys.exit(1)
+        else:
+            logging.warning("Multiple registries found, but no name given. Using first.")
+            return registries[0]
+
+
+    def load_registries(self, args):
+        """Load and return all registries from args.file. If args.name is
+           set, search for a named registry and return only that."""
+        if args.file == None:
+            logging.error("Reading from stdin")
+            args.file = sys.stdin
+
+        if args.regname:
+            return [self.load_one_registry(args)]
+        else:
+            return self.load_registry_from_file(args.file)
+
+    def load_registry_from_file(self, path):
+        """Load and return a registry list from the given path."""
         registries = XITTestRegistry.fromXML(path)
-        if len(registries) > 1:
-            if regname != None:
-                for r in registries:
-                    if r.name == regname:
-                        return r
-                logging.error("Failed to find requested registry %s." % regname)
-                sys.exit(1)
-            else:
-                logging.warning("Multiple registries found, but no name given. Using first.")
-        elif len(registries) == 0:
+        if len(registries) == 0:
             logging.error("Failed to parse input file.")
             sys.exit(1)
 
-        return registries[0]
+        return registries
 
     def write_to_registry(self, f, msg):
         print >> f, msg
