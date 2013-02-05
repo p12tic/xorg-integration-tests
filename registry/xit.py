@@ -574,7 +574,11 @@ class XITTestRegistryCLI:
             all_tests.insert(0, ("TestSuite", "TestCase", "Success"))
             all_tests.insert(1, ("---------", "--------", "-------"))
             for suite, test, status in all_tests:
-                print "{:<50}{:<50}{:>10}".format(suite, test, str(status))
+                if not status:
+                    color = termcolors.RED
+                else:
+                    color = termcolors.DEFAULT
+                print color + "{:<50}{:<50}{:>10}".format(suite, test, str(status)) + termcolors.DEFAULT
 
     def show_test_info(self, args):
         """Show all information about a given XIT registry test case"""
