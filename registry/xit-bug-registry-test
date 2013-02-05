@@ -452,7 +452,7 @@ class TestXITTestRegistryCLI(unittest.TestCase):
         self.cli.run(args + ["--name", "somename", self.RESULTS_FILE])
         self.cli.run(args + ["--auto-modversion", "rpm", self.RESULTS_FILE])
 
-    def test_create(self):
+    def test_verify(self):
         args = self.args
         args.append("verify")
 
