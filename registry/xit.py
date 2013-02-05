@@ -739,9 +739,18 @@ class XITTestRegistryCLI:
             self.verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test), format_str)
 
 
-    def create_registry(self, args):
+    def create_registries(self, args):
+        regs = []
+        for r in args.results:
+            regs.append(self.create_registry(r, args))
+
+        r = self.open_new_registry(args)
+        self.write_to_registry(r, regs[0].toXML(regs))
+        self.sync_registry(args, r)
+
+    def create_registry(self, path, args):
         """Create a new registry XML file based on the test cases in the JUnit file"""
-        results_list = JUnitTestResult.fromXML(args.results)
+        results_list = JUnitTestResult.fromXML(path)
 
         results_dict = {}
         for r in results_list:
@@ -752,7 +761,7 @@ class XITTestRegistryCLI:
         if args.name:
             reg_name = args.name[0]
         else:
-            reg_name = os.path.basename(args.results).split(".xml")[0]
+            reg_name = os.path.basename(path).split(".xml")[0]
 
         registry = XITTestRegistry(reg_name);
         registry.date = time.localtime()
@@ -766,9 +775,7 @@ class XITTestRegistryCLI:
                 testcase = XITTest(suite, r.name, str(r.status).lower())
                 registry.addTest(testcase);
 
-        r = self.open_new_registry(args)
-        self.write_to_registry(r, registry.toXML())
-        self.sync_registry(args, r)
+        return registry
 
     def merge_registries(self, args):
         """Merge two registries together"""
@@ -948,10 +955,10 @@ class XITTestRegistryCLI:
         compare_subparser.set_defaults(func = self.compare_registries)
 
         create_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
-        create_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
+        create_subparser.add_argument("results", metavar="results.xml", nargs="+", help="The XML file(s) containing test results")
         create_subparser.add_argument("--name", nargs=1, help="Human-readable name for registry (default: the filename)")
         create_subparser.add_argument("--auto-modversion", metavar="TYPE", nargs=1, help="Try to automatically get module versions for selected modules (default: rpm)")
-        create_subparser.set_defaults(func = self.create_registry)
+        create_subparser.set_defaults(func = self.create_registries)
 
         merge_subparser = subparsers.add_parser("merge", help="Merge two registries together")
         merge_subparser.add_argument("reg1", metavar="registry1.xml", help="Registry file no 1")
