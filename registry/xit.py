@@ -871,11 +871,11 @@ class XITTestRegistryCLI:
         compare_subparser.add_argument("reg2", metavar="registry2.xml", nargs=1, help="Registry file no 2")
         compare_subparser.set_defaults(func = self.compare_registries)
 
-        import_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
-        import_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
-        import_subparser.add_argument("--name", nargs=1, help="Human-readable name for registry (default: the filename)")
-        import_subparser.add_argument("--auto-modversion", metavar="TYPE", nargs=1, help="Try to automatically get module versions for selected modules (default: rpm)")
-        import_subparser.set_defaults(func = self.create_registry)
+        create_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
+        create_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
+        create_subparser.add_argument("--name", nargs=1, help="Human-readable name for registry (default: the filename)")
+        create_subparser.add_argument("--auto-modversion", metavar="TYPE", nargs=1, help="Try to automatically get module versions for selected modules (default: rpm)")
+        create_subparser.set_defaults(func = self.create_registry)
 
         merge_subparser = subparsers.add_parser("merge", help="Merge two registries together")
         merge_subparser.add_argument("reg1", metavar="registry1.xml", nargs=1, help="Registry file no 1")
