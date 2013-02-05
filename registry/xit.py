@@ -583,7 +583,7 @@ class XITTestRegistryCLI:
     def show_test_info(self, args):
         """Show all information about a given XIT registry test case"""
         registry = self.load_one_registry(args)
-        test = registry.getTest(args.testsuite[0], args.testcase[0])
+        test = registry.getTest(args.testsuite, args.testcase)
         if test != None:
             print str(test)
 
@@ -954,8 +954,8 @@ class XITTestRegistryCLI:
         list_subparser.set_defaults(func = self.list_tests)
 
         info_subparser = subparsers.add_parser("info", help="Print info about a specific test case")
-        info_subparser.add_argument("testsuite", nargs=1, default=None, help="Test Suite name")
-        info_subparser.add_argument("testcase", nargs=1, default=None, help="Test Case name")
+        info_subparser.add_argument("testsuite", default=None, help="Test Suite name")
+        info_subparser.add_argument("testcase", default=None, help="Test Case name")
         info_subparser.set_defaults(func = self.show_test_info)
 
         verify_subparser = subparsers.add_parser("verify", help="Compare JUnit test results against the registry")
