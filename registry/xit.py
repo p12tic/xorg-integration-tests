@@ -233,6 +233,8 @@ class XITTestRegistry:
             self.tests[test.suite] = {}
         self.tests[test.suite][test.name] = test
 
+    def __cmp__(self, other):
+        return cmp(self.name, other)
 
 class XITTestCase:
     """Represents one single test case, comprised of test suite name and test case name.
