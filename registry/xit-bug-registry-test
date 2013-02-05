@@ -9,6 +9,9 @@ import time
 import os
 import shutil
 
+REGISTRY_SOURCE_FILE = "server-registry.xml"
+REGISTRY_FILENAME = "/tmp/tmp.registry.xml"
+
 class TestXITBug(unittest.TestCase):
 
     def test_defaults(self):
@@ -265,6 +268,20 @@ class TestXITTestRegistry(unittest.TestCase):
 
         return reg2
 
+    def to_from_xml_multiple(self, reg):
+        xml = reg.toXML()
+
+        f = tempfile.TemporaryFile()
+        f.write(xml)
+        f.seek(0)
+
+        reg2 = xit.XITTestRegistry.fromXML(f)
+        xml2 = reg2[0].toXML(reg2)
+
+        self.assertEqual(xml, xml2)
+
+        return reg2
+
     def test_to_from_xml(self):
         reg = xit.XITTestRegistry()
         self.to_from_xml(reg);
@@ -288,28 +305,46 @@ class TestXITTestRegistry(unittest.TestCase):
         for mod, mod2 in zip(reg.moduleversions, reg2.moduleversions):
             self.assertEqual(mod, mod2)
 
+    def test_multiple_registries(self):
+        regs = xit.XITTestRegistry.fromXML(REGISTRY_SOURCE_FILE)
+        self.assertGreater(len(regs), 1)
+        for r in regs:
+            self.assertGreater(len(r.name), 0)
+            self.assertGreater(len(r.tests), 0)
+
+    def test_multiple_registries_write_load(self):
+        regs = xit.XITTestRegistry.fromXML(REGISTRY_SOURCE_FILE)
+        xml = regs[0].toXML(regs)
+
+        f = tempfile.TemporaryFile()
+        f.write(xml)
+        f.seek(0)
+
+        regs2 = xit.XITTestRegistry.fromXML(f)
+        self.assertEqual(len(regs), len(regs2))
+        xml2 = regs2[0].toXML(regs2)
+
+        self.assertEqual(xml, xml2)
 
 class TestXITTestRegistryCLI(unittest.TestCase):
     EXIT_GENERAL_FAILURE = 1
     EXIT_TOO_FEW_ARGS_ERROR_CODE = 2
-    REGISTRY_SOURCE_FILE = "server-registry.xml"
-    REGISTRY_FILENAME = "/tmp/tmp.registry.xml"
     RESULTS_FILE = "../server-results.xml"
 
 
     def setUp(self):
         """Make sure server-registry.xml is present, which it should be in
         this directory"""
-        self.assertTrue(os.path.exists(self.REGISTRY_SOURCE_FILE))
+        self.assertTrue(os.path.exists(REGISTRY_SOURCE_FILE))
         self.assertTrue(os.path.exists(self.RESULTS_FILE))
 
-        shutil.copyfile(self.REGISTRY_SOURCE_FILE, self.REGISTRY_FILENAME)
+        shutil.copyfile(REGISTRY_SOURCE_FILE, REGISTRY_FILENAME)
 
         self.cli = xit.XITTestRegistryCLI()
-        self.registry = self.cli.load_registry_from_file(self.REGISTRY_FILENAME)
+        self.registry = self.cli.load_registry_from_file(REGISTRY_FILENAME)
 
         # default args
-        self.args = ["-f", self.REGISTRY_FILENAME]
+        self.args = ["-f", REGISTRY_FILENAME]
 
     def test_load_registry(self):
         noargs = ""
@@ -360,17 +395,17 @@ class TestXITTestRegistryCLI(unittest.TestCase):
             self.cli.run(args + [suite] + [test])
 
     def test_compare(self):
-        self.cli.run(self.args + ["compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
-        self.cli.run(self.args + ["-r", "server", "compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
+        self.cli.run(self.args + ["compare", REGISTRY_FILENAME, REGISTRY_FILENAME])
+        self.cli.run(self.args + ["-r", "server", "compare", REGISTRY_FILENAME, REGISTRY_FILENAME])
 
         with self.assertRaises(SystemExit) as e:
-            self.cli.run(self.args + ["-r", "doesnotexist", "compare", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
+            self.cli.run(self.args + ["-r", "doesnotexist", "compare", REGISTRY_FILENAME, REGISTRY_FILENAME])
         self.assertEquals(e.exception.code, self.EXIT_GENERAL_FAILURE);
 
     def test_merge(self):
 
-        self.cli.run(self.args + ["-r", "server", "merge", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
-        self.cli.run(self.args + ["merge", self.REGISTRY_FILENAME, self.REGISTRY_FILENAME])
+        self.cli.run(self.args + ["-r", "server", "merge", REGISTRY_FILENAME, REGISTRY_FILENAME])
+        self.cli.run(self.args + ["merge", REGISTRY_FILENAME, REGISTRY_FILENAME])
 
     def test_edit(self):
         args = self.args
