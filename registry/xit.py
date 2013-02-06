@@ -86,12 +86,13 @@ class termcolors:
 class XITTestRegistry:
     """Central class keeping a set of test cases and their results"""
 
-    def __init__(self, name="", test_cases = []):
+    def __init__(self, name="", test_cases = [], path="stdin"):
         """Initialise with a registry name and a list of """
         self.tests = self._from_list(test_cases)
         self.name = name
         self.date = time.localtime()
         self.moduleversions = []
+        self.path = path
 
     @classmethod
     def fromXML(self, filename):
@@ -99,7 +100,7 @@ class XITTestRegistry:
         registries = objectify.parse(filename).getroot()
         regs = []
         for registry in registries.iterchildren(tag=xmlns_tag("registry")):
-            reg = XITTestRegistry(name=registry.attrib["name"])
+            reg = XITTestRegistry(name=registry.attrib["name"], path=filename)
 
             for meta in registry.iterchildren(tag=xmlns_tag("meta")):
                 date = meta.find(xmlns_tag("date"))
@@ -686,8 +687,8 @@ class XITTestRegistryCLI:
         print color + format_str.format(name, v1, v2) + termcolors.DEFAULT
 
     def compare_meta(self, reg1, reg2):
-        self.print_modversions("Module name", reg1.name, reg2.name, False)
-        self.print_modversions("-----------", "----------", "----------", False)
+        self.print_modversions("Module name", reg1.path, reg2.path, False)
+        self.print_modversions("-----------", "-" * len(reg1.path), "-" * len(reg2.path), False)
 
 
         r1_iter = iter(sorted(reg1.moduleversions))
@@ -769,6 +770,7 @@ class XITTestRegistryCLI:
         return r[0] if len(r) > 0 else None
 
     def compare_registry(self, reg1, reg2):
+        print ":" * 20 + " {:<30} ".format(reg1.name) + ":" * 58
         self.compare_meta(reg1, reg2)
 
         sname_len = 0
@@ -777,9 +779,9 @@ class XITTestRegistryCLI:
         sname_len = max([ len(x[0]) for x in reg1.listTestNames() ]) + 1
         tname_len = max([ len(x[1]) for x in reg1.listTestNames() ]) + 1
 
-        format_str = "{0:<4}{1:<%d}{2:<%d}{3:>%d}{4:>%d}" % (sname_len, tname_len, len(reg1.name), len(reg2.name))
+        format_str = "{0:<4}{1:<%d}{2:<%d}{3:>%d} {4:>%d}" % (sname_len, tname_len, len(reg1.name), len(reg2.name))
 
-        print format_str.format("Code", "TestSuite", "TestCase", reg1.name, reg2.name)
+        print format_str.format("Code", "TestSuite", "TestCase", reg1.path, reg2.path)
         print format_str.format("----", "---------", "--------", "-" * len(reg1.name), "-" * len(reg2.name))
 
         for suite, test, status in sorted(reg1.listTestNames()):
