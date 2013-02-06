@@ -598,7 +598,10 @@ class XITTestRegistryCLI:
 
         color = termcolors.DEFAULT
 
-        if test != None:
+        if test != None and result != None:
+            suite = test.suite
+            name = test.name
+            status = str(result.status).lower()
             expected_status = str(test.status).lower()
             if str(test.status).lower() != str(result.status).lower():
                 status_match = "XX"
@@ -608,12 +611,22 @@ class XITTestRegistryCLI:
                     color = termcolors.RED
             else:
                 status_match = "++" if test.status else "--"
+        elif test != None and result == None:
+            suite = test.suite
+            name = test.name
+            status_match = "??"
+            expected_status = str(test.status).lower()
+            status = ""
+            color = termcolors.BLUE
         else:
+            suite = result.suite
+            name = result.name
+            status = str(result.status).lower()
             expected_status = ""
             status_match = "??"
             color = termcolors.BLUE
 
-        print color + format_str.format(status_match, result.suite, result.name, str(result.status).lower(), expected_status) + termcolors.DEFAULT
+        print color + format_str.format(status_match, suite, name, status, expected_status) + termcolors.DEFAULT
 
 
     def check_installed_rpms(self, registry):
