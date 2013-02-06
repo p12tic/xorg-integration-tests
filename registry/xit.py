@@ -565,6 +565,8 @@ class JUnitTestFailure:
 
 
 class XITTestRegistryCLI:
+    """Command-line interface to the registry"""
+
     def list_tests(self, args):
         """List all tests, showing test name and expected status"""
         registries = self.load_registries(args)
@@ -586,6 +588,8 @@ class XITTestRegistryCLI:
         test = registry.getTest(args.testsuite, args.testcase)
         if test != None:
             print str(test)
+        else:
+            logging.error("Unable to find test %s.%s\n", args.testsuite, args.testcase)
 
     def verify_one_result(self, test, result, format_str):
         """Verify the test result given against the registry. Prints a status
