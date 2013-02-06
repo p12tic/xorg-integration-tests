@@ -54,6 +54,12 @@ DEFAULT_MODULES = ["xorg-x11-server-Xorg",
                    "xorg-x11-drv-mouse",
                    "xorg-x11-drv-keyboard"]
 
+class Colors:
+        DEFAULT = 0
+        RED = 1
+        GREEN = 2
+        BLUE = 3
+
 XMLNS = "http://www.x.org/xorg-integration-testing"
 def xmlns_tag(tag, ns=XMLNS):
     """Helper function to create a namespaced tag from the tag. Needed for
@@ -75,6 +81,14 @@ class termcolors:
     RED = '\033[1;31m'
     GREEN = '\033[1;32m'
     BLUE = '\033[1;34m'
+
+    @classmethod
+    def color(self, color):
+        colors = { Colors.DEFAULT : termcolors.DEFAULT,
+                   Colors.RED : termcolors.RED,
+                   Colors.GREEN : termcolors.GREEN,
+                   Colors.BLUE : termcolors.BLUE }
+        return colors[color]
 
     @classmethod
     def disable(self):
@@ -565,6 +579,109 @@ class JUnitTestFailure:
         return self.message
 
 
+class XITCLIPrinter:
+    def __init__(self):
+        pass
+
+    def separator(self, text):
+        print ":" * 20 + " {:<30} ".format(text) + ":" * 58
+
+    def print_values(self, headers, values, colors = None, section=None):
+
+        if len(headers) != len(values[0]):
+            logging.error("Mismatched header/values tuples. Refusing to print")
+            return
+
+        if section != None:
+            self.separator(section)
+
+        cw = [] # column width
+        separators = []
+        for header in headers:
+            cw.append(len(header))
+            separators.append("-" * len(header))
+
+        for val in values:
+            for i in range(len(val)):
+                cw[i] = max(cw[i], len(str(val[i])))
+
+        format_str = ""
+        for idx, w in zip(range(len(cw)), cw):
+            format_str += "{%d:<%d}" % (idx, w + 1)
+
+        print format_str.format(*headers)
+        print format_str.format(*separators)
+
+        if not colors:
+            colors = [termcolors.DEFAULT] * len(values)
+
+        for color, val in zip(colors, values):
+            print termcolors.color(color) + format_str.format(*val) + termcolors.DEFAULT
+
+
+class XITPrinterPicker(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values == "html":
+            printer = XITHTMLPrinter()
+        else:
+            printer = XITCLIPrinter()
+
+        setattr(namespace, "printer", printer)
+
+
+class XITHTMLPrinter:
+    def __init__(self):
+        self.print_html_header()
+
+    def __del__(self):
+        self.print_html_footer()
+
+    def print_html_header(self):
+        print """<html> <head>
+        <style>
+        body{font-family:sans-serif;}
+        .values {border-collapse:collapse;font-size:80%;}
+        .values td, th {padding:0.5em 1em; border:1px solid #ccc; text-align:left;} values {background-color:#eee;text-align:left; font-size:80%;}
+        .red { background-color:#ee0000; text: #000000; }
+        </style>
+        </head><body>
+              """
+
+    def print_html_footer(self):
+        print """</body></html>
+              """
+
+    def print_table_header(self):
+        print """<table class=\"values\">"""
+
+    def print_table_footer(self):
+        print """</table>"""
+
+    def print_values(self, headers, values, colors = None, section = None):
+        if section:
+            print "<h2>%s</h2>" % section
+        self.print_table_header()
+
+        format_str = "<tr>"
+        format_str += "<th>{}</th>" * len(headers)
+        format_str += "</tr>"
+        print format_str.format(*headers)
+
+        if not colors:
+            colors = [Colors.DEFAULT] * len(values)
+
+        for color, val in zip(colors, values):
+            if color == Colors.RED:
+                format_str = "<tr class=\"red\">"
+            else:
+                format_str = "<tr>"
+
+            format_str += "<td>{}</td>" * len(val)
+            format_str += "</tr>"
+            print format_str.format(*val)
+
+        self.print_table_footer()
+
 class XITTestRegistryCLI:
     """Command-line interface to the registry"""
 
@@ -572,16 +689,13 @@ class XITTestRegistryCLI:
         """List all tests, showing test name and expected status"""
         registries = self.load_registries(args)
         for r in registries:
-            print ":" * 20 + " {:<30} ".format(r.name) + ":" * 58
             all_tests = r.listTestNames()
-            all_tests.insert(0, ("TestSuite", "TestCase", "Success"))
-            all_tests.insert(1, ("---------", "--------", "-------"))
-            for suite, test, status in all_tests:
-                if not status:
-                    color = termcolors.RED
-                else:
-                    color = termcolors.DEFAULT
-                print color + "{:<50}{:<50}{:>10}".format(suite, test, str(status)) + termcolors.DEFAULT
+
+            headers = ("TestSuite", "TestCase", "Success")
+            values = [(suite, test, str(status)) for suite, test, status in all_tests]
+            colors = [Colors.RED if not status else Colors.DEFAULT for (suite, test, status) in all_tests]
+
+            args.printer.print_values(headers, values, colors = colors, section = r.name)
 
     def show_test_info(self, args):
         """Show all information about a given XIT registry test case"""
@@ -983,6 +1097,8 @@ class XITTestRegistryCLI:
                 "successes/failures.\n")
         parser.add_argument("-f", "--file", help="file containing XIT test registry, modified in-place (default: stdin/stdout) ", action="store", required=False)
         parser.add_argument("-r", "--regname", metavar="registry-name", default=None, help="Work on the named test registry (defaults to first if not given) ", action="store", required=False)
+        parser.add_argument("--output-format", dest="printer", default=XITCLIPrinter(), required=False,
+                            action=XITPrinterPicker, help="Pick output format (html, text ,default: text)")
         subparsers = parser.add_subparsers(title="Actions", help=None)
 
         list_subparser = subparsers.add_parser("list", help="List all test cases")
