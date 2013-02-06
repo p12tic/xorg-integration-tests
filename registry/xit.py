@@ -623,8 +623,24 @@ class XITTestRegistryCLI:
 
 
     def verify_results(self, args):
-        """Verify a JUnit test result against the XIT test registry"""
-        registry = self.load_one_registry(args)
+        """Verify a JUnit test result against the XIT test registry.
+           If a registry name is given, compare to that. If none is given
+           and there is more than one registry, search for one named the
+           same as the results file. Otherwise, bail out."""
+        registry = None
+        registries = self.load_registries(args)
+        if not args.regname:
+            regname = os.path.basename(args.results).split(".xml")[0]
+            for r in registries:
+                if r.name == regname:
+                    registry = r
+                    break
+            if registry == None:
+                logging.error("Failed to match %s with a registry." % args.results)
+                sys.exit(1)
+        else:
+            registry = registries[0]
+
         results = JUnitTestResult.fromXML(args.results)
 
         sname_len = 0

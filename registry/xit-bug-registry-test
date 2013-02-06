@@ -329,7 +329,7 @@ class TestXITTestRegistry(unittest.TestCase):
 class TestXITTestRegistryCLI(unittest.TestCase):
     EXIT_GENERAL_FAILURE = 1
     EXIT_TOO_FEW_ARGS_ERROR_CODE = 2
-    RESULTS_FILE = "../server-results.xml"
+    RESULTS_FILE = "../server.xml"
 
 
     def setUp(self):
@@ -453,11 +453,12 @@ class TestXITTestRegistryCLI(unittest.TestCase):
         self.cli.run(args + ["--auto-modversion", "rpm", self.RESULTS_FILE])
 
     def test_verify(self):
-        args = self.args
-        args.append("verify")
+        self.cli.run(self.args + ["verify", self.RESULTS_FILE])
+        self.cli.run(self.args + ["verify", "--check-all", self.RESULTS_FILE])
 
-        self.cli.run(args + [self.RESULTS_FILE])
-        self.cli.run(args + ["--check-all", self.RESULTS_FILE])
+        with self.assertRaises(SystemExit) as e:
+            self.cli.run(self.args + ["-r", "evdev", "verify", "--check-all", self.RESULTS_FILE])
+        self.assertEquals(e.exception.code, self.EXIT_GENERAL_FAILURE);
 
 if __name__ == '__main__':
     unittest.main()
