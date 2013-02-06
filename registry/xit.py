@@ -587,7 +587,6 @@ class XITCLIPrinter:
         print ":" * 20 + " {:<30} ".format(text) + ":" * 58
 
     def print_values(self, headers, values, colors = None, section=None):
-
         if len(headers) != len(values[0]):
             logging.error("Mismatched header/values tuples. Refusing to print")
             return
@@ -613,7 +612,7 @@ class XITCLIPrinter:
         print format_str.format(*separators)
 
         if not colors:
-            colors = [termcolors.DEFAULT] * len(values)
+            colors = [Colors.DEFAULT] * len(values)
 
         for color, val in zip(colors, values):
             print termcolors.color(color) + format_str.format(*val) + termcolors.DEFAULT
@@ -706,12 +705,13 @@ class XITTestRegistryCLI:
         else:
             logging.error("Unable to find test %s.%s\n", args.testsuite, args.testcase)
 
-    def verify_one_result(self, test, result, format_str):
+    def verify_one_result(self, test, result):
         """Verify the test result given against the registry. Prints a status
            message comprising full test name, expected outcome, actual outcome
            and a grep-able bit to indicate which way the outcome differs"""
 
-        color = termcolors.DEFAULT
+
+        color = Colors.DEFAULT
 
         if test != None and result != None:
             suite = test.suite
@@ -721,9 +721,9 @@ class XITTestRegistryCLI:
             if str(test.status).lower() != str(result.status).lower():
                 status_match = "XX"
                 if result.status == True:
-                    color = termcolors.GREEN
+                    color = Colors.GREEN
                 else:
-                    color = termcolors.RED
+                    color = Colors.RED
             else:
                 status_match = "++" if test.status else "--"
         elif test != None and result == None:
@@ -732,16 +732,16 @@ class XITTestRegistryCLI:
             status_match = "??"
             expected_status = str(test.status).lower()
             status = ""
-            color = termcolors.BLUE
+            color = Colors.BLUE
         else:
             suite = result.suite
             name = result.name
             status = str(result.status).lower()
             expected_status = ""
             status_match = "??"
-            color = termcolors.BLUE
+            color = Colors.BLUE
 
-        print color + format_str.format(status_match, suite, name, status, expected_status) + termcolors.DEFAULT
+        return (color, (status_match, suite, name, status, expected_status))
 
 
     def check_installed_rpms(self, registry):
@@ -775,22 +775,18 @@ class XITTestRegistryCLI:
 
         results = JUnitTestResult.fromXML(args.results)
 
-        sname_len = 0
-        tname_len = 0
-
-        sname_len = max([ len(x.suite) for x in results ]) + 1
-        tname_len = max([ len(x.name) for x in results ]) + 1
-
         if args.check_all:
             self.check_installed_rpms(registry)
 
-        format_str = "{0:<5}{1:<%d}{2:<%d}{3:>10}{4:>10}" % (sname_len, tname_len)
-        print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
-        print format_str.format("----", "---------", "--------", "------", "--------")
-
+        headers = ("Code", "TestSuite", "TestCase", "Result", "Expected")
+        values = []
+        colors = []
         for result in sorted(results):
-            self.verify_one_result(registry.getTest(result.suite, result.name), result, format_str)
+            c, v = self.verify_one_result(registry.getTest(result.suite, result.name), result)
+            colors.append(c)
+            values.append(v)
 
+        args.printer.print_values(headers, values, colors = colors, section = registry.name)
 
     def print_modversions(self, name, v1, v2, use_colors=True):
         if use_colors and v1 != v2:
@@ -800,46 +796,17 @@ class XITTestRegistryCLI:
         format_str = "{0:<30} {1:<50} {2:<50}"
         print color + format_str.format(name, v1, v2) + termcolors.DEFAULT
 
-    def compare_meta(self, reg1, reg2):
-        self.print_modversions("Module name", reg1.path, reg2.path, False)
-        self.print_modversions("-----------", "-" * len(reg1.path), "-" * len(reg2.path), False)
+    def get_meta_comparison(self, reg1, reg2):
+        modules = [ r.module for r in reg1.moduleversions]
+        modules.extend(r.module for r in reg2.moduleversions if r.name not in modules)
 
+        ret = []
+        for m in modules:
+            r1 = "".join([ mr1.version for mr1 in reg1.moduleversions if mr1.module == m ])
+            r2 = "".join([ mr2.version for mr2 in reg2.moduleversions if mr2.module == m ])
+            ret.append((m, r1, r2))
 
-        r1_iter = iter(sorted(reg1.moduleversions))
-        r2_iter = iter(sorted(reg2.moduleversions))
-
-        try:
-            r1_modversion = r1_iter.next()
-            r2_modversion = r2_iter.next()
-            while True:
-                rc = cmp(r1_modversion, r2_modversion)
-                if rc == 0:
-                    self.print_modversions(r1_modversion.module, r1_modversion.version, r2_modversion.version)
-                    r1_modversion = r1_iter.next()
-                    r2_modversion = r2_iter.next()
-                elif rc > 0:
-                    self.print_modversions(r2_modversion.module, "???", r2_modversion.version)
-                    r2_modversion = r2_iter.next()
-                elif rc < 0:
-                    self.print_modversions(r1_modversion.module, r1_modversion.version, "???")
-                    r1_modversion = r1_iter.next()
-        except StopIteration:
-            pass
-
-        try:
-            while True:
-                r1_modversion = r1_iter.next()
-                self.print_modversions(r1_modversion.module, r1_modversion.version, "???")
-        except StopIteration:
-            pass
-        try:
-            while True:
-                r2_modversion = r2_iter.next()
-                self.print_modversions(r2_modversion.module, "???", r2_modversion.version)
-        except StopIteration:
-            pass
-
-        print
+        return ret
 
     def compare_registries(self, args):
         regs1 = XITTestRegistry.fromXML(args.reg1)
@@ -859,7 +826,7 @@ class XITTestRegistryCLI:
             if reg2 == None:
                 logging.error("Failed to find '%s' in second registry" % regname)
                 sys.exit(1)
-            self.compare_registry(reg1, reg2);
+            self.compare_registry(reg1, reg2, args.printer);
         else:
             failed_regs = []
             done_regs = []
@@ -868,7 +835,7 @@ class XITTestRegistryCLI:
                 if r2 == None:
                     failed_regs.append(r1.name)
                 else:
-                    self.compare_registry(r1, r2)
+                    self.compare_registry(r1, r2, args.printer)
                     done_regs.append(r1.name)
             for r2 in regs2:
                 if r2.name in done_regs:
@@ -883,24 +850,23 @@ class XITTestRegistryCLI:
         r = [r for r in reglist if r.name == name]
         return r[0] if len(r) > 0 else None
 
-    def compare_registry(self, reg1, reg2):
-        print ":" * 20 + " {:<30} ".format(reg1.name) + ":" * 58
-        self.compare_meta(reg1, reg2)
+    def compare_registry(self, reg1, reg2, printer):
+        headers = ("Module name", reg1.path, reg2.path)
+        values = self.get_meta_comparison(reg1, reg2)
+        colors = [ Colors.RED if m[1] != m[2] else Colors.DEFAULT for m in values ]
 
-        sname_len = 0
-        tname_len = 0
+        if len(values):
+            printer.print_values(headers, values, colors = colors, section = reg1.name)
 
-        sname_len = max([ len(x[0]) for x in reg1.listTestNames() ]) + 1
-        tname_len = max([ len(x[1]) for x in reg1.listTestNames() ]) + 1
-
-        format_str = "{0:<4}{1:<%d}{2:<%d}{3:>%d} {4:>%d}" % (sname_len, tname_len, len(reg1.name), len(reg2.name))
-
-        print format_str.format("Code", "TestSuite", "TestCase", reg1.path, reg2.path)
-        print format_str.format("----", "---------", "--------", "-" * len(reg1.name), "-" * len(reg2.name))
-
+        headers = ("Code", "TestSuite", "TestCase", reg1.path, reg2.path)
+        values = []
+        colors = []
         for suite, test, status in sorted(reg1.listTestNames()):
-            self.verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test), format_str)
+            c, v = self.verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test))
+            colors.append(c)
+            values.append(v)
 
+        printer.print_values(headers, values, colors = colors)
 
     def create_registries(self, args):
         regs = []
