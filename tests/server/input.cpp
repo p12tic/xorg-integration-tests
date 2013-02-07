@@ -31,6 +31,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "xit-server-input-test.h"
+#include "xit-event.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -63,6 +64,49 @@ public:
         config.WriteConfig();
     }
 };
+
+class PointerButtonMotionMaskTest : public PointerMotionTest,
+                                    public ::testing::WithParamInterface<int>
+{
+};
+
+TEST_P(PointerButtonMotionMaskTest, ButtonXMotionMask)
+{
+    XORG_TESTCASE("Select for ButtonXMotionMask\n"
+                  "Move pointer\n"
+                  "Verify no events received\n"
+                  "Press button and move\n"
+                  "Verify events received\n");
+    int button = GetParam();
+
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), Button1MotionMask << (button - 1));
+    XSync(dpy, False);
+
+    dev->PlayOne(EV_REL, REL_X, 10, true);
+    XSync(dpy, False);
+    ASSERT_EQ(XPending(dpy), 0);
+
+    int devbutton;
+    switch(button) {
+        case 1: devbutton = BTN_LEFT; break;
+        case 2: devbutton = BTN_MIDDLE; break;
+        case 3: devbutton = BTN_RIGHT; break;
+        default: FAIL();
+    }
+
+    dev->PlayOne(EV_KEY, devbutton, 1, true);
+    dev->PlayOne(EV_REL, REL_X, 10, true);
+    dev->PlayOne(EV_KEY, devbutton, 0, true);
+
+    ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+    ASSERT_TRUE(motion->xmotion.state & (Button1Mask << (button -1)));
+
+    XSync(dpy, False);
+    ASSERT_EQ(XPending(dpy), 0);
+}
+
+INSTANTIATE_TEST_CASE_P(, PointerButtonMotionMaskTest, ::testing::Range(1, 4));
 
 class PointerSubpixelTest : public PointerMotionTest {
     /**
