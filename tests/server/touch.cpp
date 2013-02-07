@@ -32,6 +32,7 @@
 #include "helpers.h"
 #include "device-interface.h"
 #include "xit-server-input-test.h"
+#include "xit-event.h"
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -257,19 +258,17 @@ TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)
                   "Create a pointer-emulating touch event.\n"
                   "Expect a motion event with the button mask 1.\n")
 
-    XSelectInput(Display(), DefaultRootWindow(Display()), Button1MotionMask);
-    XSync(Display(), False);
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | Button1MotionMask);
+    XSync(dpy, False);
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
-                                                           MotionNotify,
-                                                           -1, -1));
-    XEvent ev;
-    XNextEvent(Display(), &ev);
-    ASSERT_EQ(ev.type, MotionNotify);
-    EXPECT_EQ(ev.xmotion.state, (unsigned int)Button1Mask);
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+    EXPECT_EQ(motion->xmotion.state, (unsigned int)Button1Mask);
 }
 
 TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndXI2)
