@@ -476,6 +476,18 @@
       <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/1" success="true"/>
       <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/2" success="true"/>
       <xit:testcase name="EmulatedButtonMaskOnTouchBeginEndXI2/3" success="true"/>
+      <xit:testcase name="NoEmulatedButton1MotionWithoutButtonPress/0" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=60394</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="NoEmulatedButton1MotionWithoutButtonPress/1" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=60394</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="NoEmulatedButton1MotionWithoutButtonPress/2" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=60394</xit:bug>
+      </xit:testcase>
+      <xit:testcase name="NoEmulatedButton1MotionWithoutButtonPress/3" success="false">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=60394</xit:bug>
+      </xit:testcase>
       <xit:testcase name="XIQueryPointerTouchscreen/0" success="true"/>
       <xit:testcase name="XIQueryPointerTouchscreen/1" success="true"/>
       <xit:testcase name="XIQueryPointerTouchscreen/2" success="true"/>

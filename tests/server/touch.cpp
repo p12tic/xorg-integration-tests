@@ -252,6 +252,25 @@ TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndCore)
     EXPECT_EQ(ev.xbutton.button, 1U) << "ButtonRelease must have button 1 mask down";
 }
 
+TEST_P(TouchTestXI2Version, NoEmulatedButton1MotionWithoutButtonPress)
+{
+    XORG_TESTCASE("Select for core Pointer1Motion mask on the root window.\n"
+                  "Create a pointer-emulating touch event.\n"
+                  "No motion event expected\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=60394");
+
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), Button1MotionMask);
+    XSync(dpy, False);
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XSync(dpy, False);
+    ASSERT_EQ(XPending(dpy), 0);
+}
+
 TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)
 {
     XORG_TESTCASE("Select for core Pointer1Motion mask on the root window.\n"
