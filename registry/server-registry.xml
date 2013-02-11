@@ -2,7 +2,7 @@
   <xit:registry name="xorg-upstream">
     <xit:meta>
       <xit:date>2013-01-21</xit:date>
-      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">069d8ed3eb659c48dd2b0f8b7b8c11f092fdb362</xit:moduleversion>
+      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">c1602d1c17967bdd4db9db19b3a9c0dfca6a58aa</xit:moduleversion>
     </xit:meta>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
@@ -167,6 +167,11 @@
     </xit:testsuite>
     <xit:testsuite name="MiscServerTest">
       <xit:testcase name="DoubleSegfault" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="PointerButtonMotionMaskTest">
+      <xit:testcase name="ButtonXMotionMask/0" success="true"/>
+      <xit:testcase name="ButtonXMotionMask/1" success="true"/>
+      <xit:testcase name="ButtonXMotionMask/2" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="PointerGrabTest">
       <xit:testcase name="DestroyClientDuringImplicitGrab" success="true"/>
@@ -549,6 +554,16 @@
       </xit:testcase>
       <xit:testcase name="ScreenCrossingButtons/0" success="true"/>
       <xit:testcase name="ScreenCrossingButtons/1" success="true"/>
+      <xit:testcase name="ScreenCrossingXTestAbsolute/0" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=60001</xit:bug>
+        <xit:fix type="git">8571c648a79444bcee9a0fe6e395129116372f49</xit:fix>
+        <xit:fix type="git">9fd6cb89539fde44a41ae5183c89ef9c8831c8dd</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="ScreenCrossingXTestAbsolute/1" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=60001</xit:bug>
+        <xit:fix type="git">8571c648a79444bcee9a0fe6e395129116372f49</xit:fix>
+        <xit:fix type="git">9fd6cb89539fde44a41ae5183c89ef9c8831c8dd</xit:fix>
+      </xit:testcase>
     </xit:testsuite>
     <xit:testsuite name="ZaphodTouchDeviceChangeTest">
       <xit:testcase name="NoCursorJumpsOnTouchToPointerSwitch" success="true">
