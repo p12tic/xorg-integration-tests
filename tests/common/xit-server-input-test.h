@@ -42,13 +42,20 @@
  */
 class XITServerInputTest : public XITServerTest {
 protected:
+    XITServerInputTest();
+
     /**
-     * Register for the given XI2 extension. Default is 2.0, will ASSERT if
-     * the server does not support XI2.
+     * Require and register for the given XI2 extension. Default is 2.0,
+     * will ASSERT if the server supports a version smaller than the given
+     * one.
      *
-     * @return the minor version number returned by the server.
+     * @param major The major version to register for
+     * @param minor The minor version to register for
+     * @param major_return The server-supported major version (if non-NULL)
+     * @param minor_return The server-supported minor version (if non-NULL)
      */
-    virtual int RegisterXI2(int major = 2, int minor = 0);
+    virtual void RequireXI2(int major, int minor,
+                            int *major_return = NULL, int *minor_return = NULL);
 
     /**
      * Starts the server and registers for XI2.
@@ -69,6 +76,16 @@ protected:
      * Error base for XI events
      */
     int xi_error_base;
+
+    /**
+     * Minimum XI2 major version.
+     */
+    int xi2_major_minimum;
+
+    /**
+     * Minimum XI2 major version.
+     */
+    int xi2_minor_minimum;
 };
 
 /**

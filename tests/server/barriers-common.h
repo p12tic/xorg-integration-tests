@@ -104,9 +104,13 @@ public:
 
     virtual void SetUp() {
         SetUpDevices();
-        BarrierBaseTest::SetUp();
-        RegisterXI2(2, 3);
 
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 3;
+
+
+        BarrierBaseTest::SetUp();
         ConfigureDevices();
     }
 

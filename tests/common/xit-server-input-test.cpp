@@ -33,30 +33,37 @@
 
 #include "xit-server-input-test.h"
 
-int XITServerInputTest::RegisterXI2(int major, int minor)
+XITServerInputTest::XITServerInputTest() : xi2_major_minimum(2), xi2_minor_minimum(0) {
+}
+
+void XITServerInputTest::RequireXI2(int major, int minor, int *major_return, int *minor_return)
 {
     int event_start;
     int error_start;
 
-    if (!XQueryExtension(Display(), "XInputExtension", &xi2_opcode,
-                         &event_start, &error_start))
-        ADD_FAILURE() << "XQueryExtension returned FALSE";
-    else {
-        xi_event_base = event_start;
-        xi_error_base = error_start;
+    ASSERT_TRUE(XQueryExtension(Display(), "XInputExtension", &xi2_opcode,
+                         &event_start, &error_start));
+
+    xi_event_base = event_start;
+    xi_error_base = error_start;
+
+    XExtensionVersion *version = XGetExtensionVersion(Display(), INAME);
+    ASSERT_TRUE(version->present);
+    ASSERT_LE(major * 100 + minor, version->major_version * 100 + version->minor_version);
+
+    if (major_return || minor_return) {
+        if (major_return)
+            *major_return = version->major_version;
+        if (minor_return)
+            *minor_return = version->minor_version;
     }
 
-    int major_return = major;
-    int minor_return = minor;
-    if (XIQueryVersion(Display(), &major_return, &minor_return) != Success)
-        ADD_FAILURE() << "XIQueryVersion failed";
-    if (major_return != major)
-       ADD_FAILURE() << "XIQueryVersion returned invalid major";
+    XFree(version);
 
-    return minor_return;
+    ASSERT_EQ(XIQueryVersion(Display(), &major, &minor), Success);
 }
 
 void XITServerInputTest::StartServer() {
     XITServerTest::StartServer();
-    RegisterXI2();
+    RequireXI2(xi2_major_minimum, xi2_minor_minimum);
 }

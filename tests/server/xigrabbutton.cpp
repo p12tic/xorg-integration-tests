@@ -127,8 +127,6 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
                  "and maps a fullscreen override redirect window and expects\n"
                  "events to arrive in the root window and not the regular window");
 
-    ASSERT_GE(RegisterXI2(), 0) << "This test requires XI2" << std::endl;
-
     ::Display *dpy1 = XOpenDisplay (server.GetDisplayString().c_str());
     ::Display *dpy2 = XOpenDisplay (server.GetDisplayString().c_str());
 

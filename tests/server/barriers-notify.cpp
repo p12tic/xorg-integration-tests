@@ -104,6 +104,10 @@ public:
 
     virtual void SetUp(){
         SetUpDevices();
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 3;
+
         XITServerInputTest::SetUp();
 
         switch(GetParam()) {
@@ -1008,7 +1012,8 @@ INSTANTIATE_TEST_CASE_P(, BarrierNotify, ::testing::Values(NO_DEVICE_SPECIFICS,
                                                            LATE_SECOND_MD_VCP,
                                                            LATE_SECOND_MD_POINTER2));
 
-class BarrierMPXTest : public BarrierDevices {};
+class BarrierMPXTest : public BarrierDevices {
+};
 
 TEST_F(BarrierMPXTest, BarrierLeaveOnMDDestroyWhenInsideHitbox)
 {

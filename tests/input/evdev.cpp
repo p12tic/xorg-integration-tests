@@ -306,6 +306,10 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 1;
+
         XITServerInputTest::SetUp();
     }
 
@@ -324,11 +328,6 @@ public:
         config.AddInputSection("kbd", "keyboard-device",
                                "Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig();
-    }
-
-    virtual int RegisterXI2(int major, int minor)
-    {
-        return XITServerInputTest::RegisterXI2(2, 1);
     }
 };
 
@@ -368,8 +367,6 @@ TEST_F(EvdevMouseTest, BtnReleaseMaskOnly)
 #ifdef HAVE_XI22
 TEST_F(EvdevMouseTest, SmoothScrollingAvailable)
 {
-    ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
-
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
 
@@ -418,8 +415,6 @@ TEST_F(EvdevMouseTest, SmoothScrollingAvailable)
 
 TEST_F(EvdevMouseTest, SmoothScrolling)
 {
-    ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
-
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_Motion);
@@ -866,6 +861,10 @@ class EvdevTouchTest : public XITServerInputTest,
 protected:
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 2;
+
         XITServerInputTest::SetUp();
     }
 
@@ -876,11 +875,6 @@ protected:
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"\n"
                                "Option \"GrabDevice\" \"on\"");
         config.WriteConfig();
-    }
-
-    virtual int RegisterXI2(int major, int minor)
-    {
-        return XITServerInputTest::RegisterXI2(2, 2);
     }
 
     virtual void TouchBegin(int x, int y) {

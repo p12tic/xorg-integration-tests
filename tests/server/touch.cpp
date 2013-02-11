@@ -44,6 +44,10 @@ class TouchTest : public XITServerInputTest,
 protected:
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 2;
+
         XITServerInputTest::SetUp();
     }
 
@@ -53,11 +57,6 @@ protected:
                              "Option \"GrabDevice\" \"on\"");
         config.SetAutoAddDevices(true);
         config.WriteConfig();
-    }
-
-    virtual int RegisterXI2(int major, int minor)
-    {
-        return XITServerInputTest::RegisterXI2(2, 2);
     }
 
     virtual void TouchBegin(int x, int y) {
@@ -92,9 +91,9 @@ protected:
 class TouchTestXI2Version : public TouchTest,
                             public ::testing::WithParamInterface<int> {
 protected:
-    virtual int RegisterXI2(int major, int minor)
+    virtual void RequireXI2(int major, int minor, int *maj_ret, int *min_ret)
     {
-        return XITServerInputTest::RegisterXI2(2, GetParam());
+        XITServerInputTest::RequireXI2(2, GetParam());
     }
 };
 
@@ -488,11 +487,6 @@ TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
 class XISelectEventsTouchTest : public TouchTest,
                                 public ::testing::WithParamInterface<std::tr1::tuple<int, int> >
 {
-protected:
-    virtual int RegisterXI2(int major, int minor)
-    {
-        return XITServerInputTest::RegisterXI2(2, 2);
-    }
 };
 
 TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)

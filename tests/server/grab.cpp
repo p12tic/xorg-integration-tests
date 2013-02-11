@@ -53,6 +53,10 @@ public:
      */
     virtual void SetUp() {
         SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 1;
+
         XITServerInputTest::SetUp();
     }
 
@@ -72,13 +76,6 @@ public:
                                "Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig();
     }
-
-
-    virtual int RegisterXI2(int major, int minor)
-    {
-        return XITServerInputTest::RegisterXI2(2, 1);
-    }
-
 };
 
 TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
@@ -87,8 +84,6 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
                   "window and expects raw events to arrive while the \n"
                   "implicit grab is active.\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=53897");
-
-    ASSERT_GE(RegisterXI2(2, 1), 1) << "This test requires XI 2.1+";
 
     ::Display *dpy = Display();
 
@@ -461,6 +456,10 @@ public:
      */
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 2;
+
         XITServerInputTest::SetUp();
     }
 
@@ -479,13 +478,6 @@ public:
                                "Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig();
     }
-
-
-    virtual int RegisterXI2(int major, int minor)
-    {
-        return XITServerInputTest::RegisterXI2(2, 2);
-    }
-
 };
 
 class TouchGrabTestMultipleModes : public TouchGrabTest,

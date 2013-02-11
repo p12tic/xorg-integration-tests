@@ -58,6 +58,10 @@ public:
      */
     virtual void SetUp() {
         SetDevice("touchpads/SynPS2-Synaptics-TouchPad.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 1;
+
         XITServerInputTest::SetUp();
     }
 
@@ -78,11 +82,6 @@ public:
                                "Option \"VertTwoFingerScroll\" \"1\"\n"
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
         config.WriteConfig();
-    }
-
-    virtual int RegisterXI2(int major, int minor)
-    {
-        return XITServerInputTest::RegisterXI2(2, 1);
     }
 };
 
@@ -109,8 +108,6 @@ TEST_F(SynapticsTest, DevicePresent)
 #ifdef HAVE_XI22
 TEST_F(SynapticsTest, SmoothScrollingAvailable)
 {
-    ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
-
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
 
@@ -194,8 +191,6 @@ class SynapticsSmoothScrollTest : public SynapticsTest,
 
 TEST_P(SynapticsSmoothScrollTest, ScrollDelta)
 {
-    ASSERT_GE(RegisterXI2(2, 1), 1) << "Smooth scrolling requires XI 2.1+";
-
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1) << "Failed to find device.";
 
