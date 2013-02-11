@@ -214,6 +214,83 @@
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=58255</xit:bug>
       </xit:testcase>
     </xit:testsuite>
+    <xit:testsuite name="PointerRelativeRotationMatrixTest">
+      <xit:testcase name="RotationTest/0" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/1" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/10" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/11" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/12" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/13" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/14" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/15" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/16" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/17" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/18" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/19" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/2" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/20" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/21" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/22" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/23" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/3" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/4" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/5" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/6" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/7" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/8" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+      <xit:testcase name="RotationTest/9" success="true">
+        <xit:fix type="git">b58221f9da8c549d979215271359c6cd88b5568a</xit:fix>
+      </xit:testcase>
+    </xit:testsuite>
+    <xit:testsuite name="PointerRelativeTransformationMatrixTest">
+      <xit:testcase name="IgnoreTranslationComponent" success="true"/>
+    </xit:testsuite>
     <xit:testsuite name="PointerSubpixelTest">
       <xit:testcase name="NoSubpixelCoreEvents" success="false">
         <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=57383</xit:bug>
