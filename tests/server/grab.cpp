@@ -572,6 +572,62 @@ public:
     }
 };
 
+TEST_F(TouchGrabTest, TouchGrabPassedToCoreGrab)
+{
+    XORG_TESTCASE("Client 1: Register for passive touch grab on root window\n"
+                  "Client 2: Register for passive button grab on client window\n"
+                  "Trigger touch begin/end\n"
+                  "Client 1: reject after TouchEnd\n"
+                  "Client 2: verify button event is received\n"
+                  "Repeat 10 times\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy2, True);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    XGrabButton(dpy2, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+
+    for (int i = 0; i < 10; i++) {
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+        ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+
+        ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
+        ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
+        ASSERT_TRUE(NoEventPending(dpy2));
+        ASSERT_TRUE(NoEventPending(dpy1));
+
+        Window r, c;
+        int rx, ry, wx, wy;
+        unsigned int state;
+
+        XQueryPointer(dpy2, root, &r, &c, &rx, &ry, &wx, &wy, &state);
+        ASSERT_FALSE(state & Button1Mask);
+    }
+}
+
 class TouchGrabTestMultipleModes : public TouchGrabTest,
                                    public ::testing::WithParamInterface<int>
 {
