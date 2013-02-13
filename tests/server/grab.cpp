@@ -577,6 +577,55 @@ class TouchGrabTestMultipleModes : public TouchGrabTest,
 {
 };
 
+TEST_P(TouchGrabTestMultipleModes, SingleTouchGrabListenerAcceptRejectBeforeTouchEnd)
+{
+    int mode = GetParam();
+    std::string strmode = (mode == XIAcceptTouch) ? "XIAcceptTouch" : "XIRejectTouch";
+
+    XORG_TESTCASE("Register for a touch grab.\n"
+                  "Begin touch\n"
+                  "Verify begin event is received.\n"
+                  "Call XIAllowTouchEvents(i" + strmode + ")\n"
+                  "End touch\n"
+                  "Verify end event is received at the right time.\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    XIAllowTouchEvents(dpy, tbegin->deviceid, tbegin->detail, root, mode);
+
+    if (mode == XIAcceptTouch)
+        ASSERT_TRUE(NoEventPending(dpy));
+    else {
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    }
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    if (mode == XIAcceptTouch) {
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
 TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
 {
     int mode = GetParam();
