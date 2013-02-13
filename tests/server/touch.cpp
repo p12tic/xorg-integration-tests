@@ -84,6 +84,143 @@ protected:
     }
 };
 
+TEST_F(TouchTest, TouchEventFlags)
+{
+    XORG_TESTCASE("Register for touch events on root window.\n"
+                  "Trigger touch end/receive\n"
+                  "Verify only touch flags are set on touch event\n");
+
+    ::Display *dpy = Display();
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+    XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
+    delete[] mask.mask;
+
+    TouchBegin(100, 100);
+    TouchEnd();
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+
+    ASSERT_TRUE(tbegin->flags & XITouchEmulatingPointer);
+    ASSERT_TRUE(tend->flags & XITouchEmulatingPointer);
+
+    ASSERT_EQ(0, tbegin->flags & ~XITouchEmulatingPointer);
+    ASSERT_EQ(0, tend->flags & ~XITouchEmulatingPointer);
+}
+
+TEST_F(TouchTest, SingleGrabListenerAcceptAfterTouchEnd)
+{
+    XORG_TESTCASE("Register for a touch grab.\n"
+                  "Begin/end touch\n"
+                  "Verify both events are received.\n"
+                  "Call XIAllowTouchEvents\n"
+                  "Verify no more events waiting.\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    TouchBegin(100, 100);
+    TouchEnd();
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    XIAllowTouchEvents(dpy, tbegin->deviceid, tbegin->detail, root, XIAcceptTouch);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+TEST_F(TouchTest, SingleGrabListenerAcceptBeforeTouchEnd)
+{
+    XORG_TESTCASE("Register for a touch grab.\n"
+                  "Begin touch\n"
+                  "Verify begin event is received.\n"
+                  "Call XIAllowTouchEvents(Accept)\n"
+                  "Verify end event is received.\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    TouchBegin(100, 100);
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    XIAllowTouchEvents(dpy, tbegin->deviceid, tbegin->detail, root, XIAcceptTouch);
+
+    TouchEnd();
+
+    ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+TEST_F(TouchTest, SingleGrabListenerRejectBeforeTouchEnd)
+{
+    XORG_TESTCASE("Register for a touch grab.\n"
+                  "Begin touch\n"
+                  "Verify begin event is received.\n"
+                  "Call XIAllowTouchEvents(Reject)\n"
+                  "Verify end event is received.\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    TouchBegin(100, 100);
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    XIAllowTouchEvents(dpy, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+    ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+
+    TouchEnd();
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
 /**
  * A test fixture for testing touch across XInput 2.x extension versions.
  *
