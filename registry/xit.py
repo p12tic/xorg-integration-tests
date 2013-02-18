@@ -858,7 +858,7 @@ class XITTestRegistryCLI:
         if len(values):
             printer.print_values(headers, values, colors = colors, section = reg1.name)
 
-        headers = ("Code", "TestSuite", "TestCase", reg1.path, reg2.path)
+        headers = ("Code", "TestSuite", "TestCase", reg2.path, reg1.path)
         values = []
         colors = []
         for suite, test, status in sorted(reg1.listTestNames()):
