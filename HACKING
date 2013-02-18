@@ -222,19 +222,26 @@ track of which tests fail, which is what the bug registry addresses.
 Often, what really matters is if there are any tests that changed after a
 fix in the server. To use the bug registry for this task run the following
 commands. On the __original__ server, run
-   # Run the grab tests, printing to a JUnit test xml file
-   ./test/server/grab --gtest_output="xml:grab.xml"
-   # Create a registry based on the test results
-   xit-bug-registry create grab.xml > grab-results.xml
-   # fix server bug
-   # Re-run grab tests on new server
-   ./test/server/grab --gtest_output="xml:grab.xml"
-   # Compare previous results with new results
-   xit-bug-registry verify grab.xml < grab-results.xml
+   # Run all tests. Use -k to ensure all tests are run, even after some have
+   # failed.
+   make -k check
+   # Results end up in $top_builddir/results/latest
+   # Create a registry based on that.
+   xit-bug-registry create results/latest/*.xml > before.xml
 
+   # fix bug
+   # Re-run on new code
+   make -k check
+   # Compare previous results with new results
+   xit-bug-registry create results/latest/*.xml > after.xml
+   xit-bug-registry compare before.xml after.xml
 
 The output will print the test names and the expected vs real outcome plus a
-status code to grep for the unexpected.
+status code to grep for the unexpected. This will take a while since it runs
+all tests. The shortcut is:
+   # Re-run only the server test
+   ./server --gtest_output="xml:after.xml"
+   xit-bug-registry -f before.xml verify after.xml
 
 Note that especially test failures need to be treated with caution. An
 unrelated fix may alter the outcome of a already failing tests (e.g. the

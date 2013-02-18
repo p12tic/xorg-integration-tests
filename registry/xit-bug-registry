@@ -38,6 +38,9 @@
 #
 
 import xit
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 cli = xit.XITTestRegistryCLI()
 cli.run()

@@ -45,6 +45,7 @@ from lxml import objectify
 import lxml.etree
 import shutil
 import subprocess
+import logging
 
 DEFAULT_MODULES = ["xorg-x11-server-Xorg",
                    "xorg-x11-drv-evdev",
@@ -53,8 +54,11 @@ DEFAULT_MODULES = ["xorg-x11-server-Xorg",
                    "xorg-x11-drv-mouse",
                    "xorg-x11-drv-keyboard"]
 
-def debug(msg):
-    print >> sys.stderr, msg
+class Colors:
+        DEFAULT = 0
+        RED = 1
+        GREEN = 2
+        BLUE = 3
 
 XMLNS = "http://www.x.org/xorg-integration-testing"
 def xmlns_tag(tag, ns=XMLNS):
@@ -79,6 +83,14 @@ class termcolors:
     BLUE = '\033[1;34m'
 
     @classmethod
+    def color(self, color):
+        colors = { Colors.DEFAULT : termcolors.DEFAULT,
+                   Colors.RED : termcolors.RED,
+                   Colors.GREEN : termcolors.GREEN,
+                   Colors.BLUE : termcolors.BLUE }
+        return colors[color]
+
+    @classmethod
     def disable(self):
         self.DEFAULT = ''
         self.RED = ''
@@ -88,12 +100,13 @@ class termcolors:
 class XITTestRegistry:
     """Central class keeping a set of test cases and their results"""
 
-    def __init__(self, name="", test_cases = []):
+    def __init__(self, name="", test_cases = [], path="stdin"):
         """Initialise with a registry name and a list of """
         self.tests = self._from_list(test_cases)
         self.name = name
         self.date = time.localtime()
         self.moduleversions = []
+        self.path = path
 
     @classmethod
     def fromXML(self, filename):
@@ -101,7 +114,7 @@ class XITTestRegistry:
         registries = objectify.parse(filename).getroot()
         regs = []
         for registry in registries.iterchildren(tag=xmlns_tag("registry")):
-            reg = XITTestRegistry(name=registry.attrib["name"])
+            reg = XITTestRegistry(name=registry.attrib["name"], path=filename)
 
             for meta in registry.iterchildren(tag=xmlns_tag("meta")):
                 date = meta.find(xmlns_tag("date"))
@@ -113,7 +126,11 @@ class XITTestRegistry:
                         type = modversion.attrib["type"]
                     except KeyError:
                         type = "git"
-                    mv = XITModuleVersion(modversion.attrib["name"], modversion.text, type)
+                    try:
+                        repo = modversion.attrib["repo"]
+                    except KeyError:
+                        repo = None
+                    mv = XITModuleVersion(modversion.attrib["name"], modversion.text, type, repo)
                     reg.moduleversions.append(mv)
 
             for suite in registry.iterchildren(tag=xmlns_tag("testsuite")):
@@ -143,56 +160,67 @@ class XITTestRegistry:
             regs.append(reg)
         return regs
 
-    def toXML(self):
-        """Generate XML output from this registry and return it"""
+    def toXML(self, others=[]):
+        """Generate XML output from this registry and return it. If others
+           is a list, the resulting XML file contains all of the registries
+           provided including self. Otherwise, only self is written out."""
         NSMAP = { "xit" : "http://www.x.org/xorg-integration-testing" }
         E = objectify.ElementMaker(annotate = False,
                                    namespace = NSMAP['xit'],
                                    nsmap = NSMAP)
+
         xit_registries = E.registries()
-        xit_registry = E.registry()
-        xit_registry.set("name", self.name)
-        xit_registries.append(xit_registry)
 
-        xit_meta = E.meta()
-        xit_registry.append(xit_meta)
+        if len(others) == 0:
+            others = [self] # yikes
 
-        xit_date = E.date(time.strftime("%Y-%m-%d", self.date))
-        xit_meta.append(xit_date)
+        for r in others:
+            xit_registry = E.registry()
+            xit_registry.set("name", r.name)
+            xit_registries.append(xit_registry)
 
-        for modversion in sorted(self.moduleversions):
-            xit_modversion = E.moduleversion(modversion.version)
-            xit_modversion.set("name", modversion.module)
-            xit_modversion.set("type", modversion.type)
-            xit_meta.append(xit_modversion)
+            xit_meta = E.meta()
+            xit_registry.append(xit_meta)
 
-        for suite_name, suite in sorted(self.tests.iteritems()):
-            xit_suite = E.testsuite()
-            xit_suite.set("name", suite_name)
-            for name, test in sorted(suite.iteritems()):
-                xit_testcase = E.testcase()
-                xit_testcase.set("name", test.name)
-                xit_testcase.set("success", str(test.status).lower())
+            xit_date = E.date(time.strftime("%Y-%m-%d", r.date))
+            xit_meta.append(xit_date)
 
-                for bug in test.getBugs():
-                    xit_bug = E.bug(bug.url)
-                    xit_bug.set("type", bug.type)
-                    xit_testcase.append(xit_bug)
+            for modversion in sorted(r.moduleversions):
+                xit_modversion = E.moduleversion(modversion.version)
+                xit_modversion.set("name", modversion.module)
+                xit_modversion.set("type", modversion.type)
+                if modversion.repo:
+                    xit_modversion.set("repo", modversion.repo)
 
-                for fix in test.getFixes():
-                    xit_fix = E.fix(fix.text)
-                    xit_fix.set("type", fix.type);
-                    for arg, value in fix.extra_args.iteritems():
-                        xit_fix.set(arg, value)
-                    xit_testcase.append(xit_fix)
+                xit_meta.append(xit_modversion)
 
-                for info in test.getInfo():
-                    xit_info = E.testinfo(info.text)
-                    xit_info.set("type", info.type)
-                    xit_testcase.append(xit_info)
+            for suite_name, suite in sorted(r.tests.iteritems()):
+                xit_suite = E.testsuite()
+                xit_suite.set("name", suite_name)
+                for name, test in sorted(suite.iteritems()):
+                    xit_testcase = E.testcase()
+                    xit_testcase.set("name", test.name)
+                    xit_testcase.set("success", str(test.status).lower())
 
-                xit_suite.append(xit_testcase)
-            xit_registry.append(xit_suite)
+                    for bug in test.getBugs():
+                        xit_bug = E.bug(bug.url)
+                        xit_bug.set("type", bug.type)
+                        xit_testcase.append(xit_bug)
+
+                    for fix in test.getFixes():
+                        xit_fix = E.fix(fix.text)
+                        xit_fix.set("type", fix.type);
+                        for arg, value in fix.extra_args.iteritems():
+                            xit_fix.set(arg, value)
+                        xit_testcase.append(xit_fix)
+
+                    for info in test.getInfo():
+                        xit_info = E.testinfo(info.text)
+                        xit_info.set("type", info.type)
+                        xit_testcase.append(xit_info)
+
+                    xit_suite.append(xit_testcase)
+                xit_registry.append(xit_suite)
 
         lxml.etree.cleanup_namespaces(xit_registries)
         return lxml.etree.tostring(xit_registries, pretty_print=True)
@@ -227,6 +255,8 @@ class XITTestRegistry:
             self.tests[test.suite] = {}
         self.tests[test.suite][test.name] = test
 
+    def __cmp__(self, other):
+        return cmp(self.name, other)
 
 class XITTestCase:
     """Represents one single test case, comprised of test suite name and test case name.
@@ -462,9 +492,10 @@ class XITInfoURL(XITInfo):
 
 class XITModuleVersion:
     """Represents a module version of a particular component."""
-    def __init__(self, module, version, type = "git"):
+    def __init__(self, module, version, type = "git", repo=None):
         self.module = module
         self.version = version
+        self.repo = repo
         self.type = type
 
     def __str__(self):
@@ -548,46 +579,169 @@ class JUnitTestFailure:
         return self.message
 
 
+class XITCLIPrinter:
+    def __init__(self):
+        pass
+
+    def separator(self, text):
+        print ":" * 20 + " {:<30} ".format(text) + ":" * 58
+
+    def print_values(self, headers, values, colors = None, section=None):
+        if len(headers) != len(values[0]):
+            logging.error("Mismatched header/values tuples. Refusing to print")
+            return
+
+        if section != None:
+            self.separator(section)
+
+        cw = [] # column width
+        separators = []
+        for header in headers:
+            cw.append(len(header))
+            separators.append("-" * len(header))
+
+        for val in values:
+            for i in range(len(val)):
+                cw[i] = max(cw[i], len(str(val[i])))
+
+        format_str = ""
+        for idx, w in zip(range(len(cw)), cw):
+            format_str += "{%d:<%d}" % (idx, w + 1)
+
+        print format_str.format(*headers)
+        print format_str.format(*separators)
+
+        if not colors:
+            colors = [Colors.DEFAULT] * len(values)
+
+        for color, val in zip(colors, values):
+            print termcolors.color(color) + format_str.format(*val) + termcolors.DEFAULT
+
+
+class XITPrinterPicker(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values == "html":
+            printer = XITHTMLPrinter()
+        else:
+            printer = XITCLIPrinter()
+
+        setattr(namespace, "printer", printer)
+
+
+class XITHTMLPrinter:
+    def __init__(self):
+        self.print_html_header()
+
+    def __del__(self):
+        self.print_html_footer()
+
+    def print_html_header(self):
+        print """<html> <head>
+        <style>
+        body{font-family:sans-serif;}
+        .values {border-collapse:collapse;font-size:80%;}
+        .values td, th {padding:0.5em 1em; border:1px solid #ccc; text-align:left;} values {background-color:#eee;text-align:left; font-size:80%;}
+        .red { background-color:#ee0000; text: #000000; }
+        </style>
+        </head><body>
+              """
+
+    def print_html_footer(self):
+        print """</body></html>
+              """
+
+    def print_table_header(self):
+        print """<table class=\"values\">"""
+
+    def print_table_footer(self):
+        print """</table>"""
+
+    def print_values(self, headers, values, colors = None, section = None):
+        if section:
+            print "<h2>%s</h2>" % section
+        self.print_table_header()
+
+        format_str = "<tr>"
+        format_str += "<th>{}</th>" * len(headers)
+        format_str += "</tr>"
+        print format_str.format(*headers)
+
+        if not colors:
+            colors = [Colors.DEFAULT] * len(values)
+
+        for color, val in zip(colors, values):
+            if color == Colors.RED:
+                format_str = "<tr class=\"red\">"
+            else:
+                format_str = "<tr>"
+
+            format_str += "<td>{}</td>" * len(val)
+            format_str += "</tr>"
+            print format_str.format(*val)
+
+        self.print_table_footer()
+
 class XITTestRegistryCLI:
+    """Command-line interface to the registry"""
+
     def list_tests(self, args):
         """List all tests, showing test name and expected status"""
-        registry = self.load_registry(args)
-        all_tests = registry.listTestNames()
-        all_tests.insert(0, ("TestSuite", "TestCase", "Success"))
-        all_tests.insert(1, ("---------", "--------", "-------"))
-        for suite, test, status in all_tests:
-            print "{:<50}{:<50}{:>10}".format(suite, test, str(status))
+        registries = self.load_registries(args)
+        for r in registries:
+            all_tests = r.listTestNames()
+
+            headers = ("TestSuite", "TestCase", "Success")
+            values = [(suite, test, str(status)) for suite, test, status in all_tests]
+            colors = [Colors.RED if not status else Colors.DEFAULT for (suite, test, status) in all_tests]
+
+            args.printer.print_values(headers, values, colors = colors, section = r.name)
 
     def show_test_info(self, args):
         """Show all information about a given XIT registry test case"""
-        registry = self.load_registry(args)
-        test = registry.getTest(args.testsuite[0], args.testcase[0])
+        registry = self.load_one_registry(args)
+        test = registry.getTest(args.testsuite, args.testcase)
         if test != None:
             print str(test)
+        else:
+            logging.error("Unable to find test %s.%s\n", args.testsuite, args.testcase)
 
-    def verify_one_result(self, test, result, format_str):
+    def verify_one_result(self, test, result):
         """Verify the test result given against the registry. Prints a status
            message comprising full test name, expected outcome, actual outcome
            and a grep-able bit to indicate which way the outcome differs"""
 
-        color = termcolors.DEFAULT
 
-        if test != None:
+        color = Colors.DEFAULT
+
+        if test != None and result != None:
+            suite = test.suite
+            name = test.name
+            status = str(result.status).lower()
             expected_status = str(test.status).lower()
             if str(test.status).lower() != str(result.status).lower():
                 status_match = "XX"
                 if result.status == True:
-                    color = termcolors.GREEN
+                    color = Colors.GREEN
                 else:
-                    color = termcolors.RED
+                    color = Colors.RED
             else:
                 status_match = "++" if test.status else "--"
+        elif test != None and result == None:
+            suite = test.suite
+            name = test.name
+            status_match = "??"
+            expected_status = str(test.status).lower()
+            status = ""
+            color = Colors.BLUE
         else:
+            suite = result.suite
+            name = result.name
+            status = str(result.status).lower()
             expected_status = ""
             status_match = "??"
-            color = termcolors.BLUE
+            color = Colors.BLUE
 
-        print color + format_str.format(status_match, result.suite, result.name, str(result.status).lower(), expected_status) + termcolors.DEFAULT
+        return (color, (status_match, suite, name, status, expected_status))
 
 
     def check_installed_rpms(self, registry):
@@ -601,26 +755,38 @@ class XITTestRegistryCLI:
 
 
     def verify_results(self, args):
-        """Verify a JUnit test result against the XIT test registry"""
-        registry = self.load_registry(args)
+        """Verify a JUnit test result against the XIT test registry.
+           If a registry name is given, compare to that. If none is given
+           and there is more than one registry, search for one named the
+           same as the results file. Otherwise, bail out."""
+        registry = None
+        registries = self.load_registries(args)
+        if not args.regname:
+            regname = os.path.basename(args.results).split(".xml")[0]
+            for r in registries:
+                if r.name == regname:
+                    registry = r
+                    break
+            if registry == None:
+                logging.error("Failed to match %s with a registry." % args.results)
+                sys.exit(1)
+        else:
+            registry = registries[0]
+
         results = JUnitTestResult.fromXML(args.results)
-
-        sname_len = 0
-        tname_len = 0
-
-        sname_len = max([ len(x.suite) for x in results ]) + 1
-        tname_len = max([ len(x.name) for x in results ]) + 1
 
         if args.check_all:
             self.check_installed_rpms(registry)
 
-        format_str = "{0:<5}{1:<%d}{2:<%d}{3:>10}{4:>10}" % (sname_len, tname_len)
-        print format_str.format("Code", "TestSuite", "TestCase", "Result", "Expected")
-        print format_str.format("----", "---------", "--------", "------", "--------")
-
+        headers = ("Code", "TestSuite", "TestCase", "Result", "Expected")
+        values = []
+        colors = []
         for result in sorted(results):
-            self.verify_one_result(registry.getTest(result.suite, result.name), result, format_str)
+            c, v = self.verify_one_result(registry.getTest(result.suite, result.name), result)
+            colors.append(c)
+            values.append(v)
 
+        args.printer.print_values(headers, values, colors = colors, section = registry.name)
 
     def print_modversions(self, name, v1, v2, use_colors=True):
         if use_colors and v1 != v2:
@@ -630,71 +796,90 @@ class XITTestRegistryCLI:
         format_str = "{0:<30} {1:<50} {2:<50}"
         print color + format_str.format(name, v1, v2) + termcolors.DEFAULT
 
-    def compare_meta(self, reg1, reg2):
-        self.print_modversions("Module name", reg1.name, reg2.name, False)
-        self.print_modversions("-----------", "----------", "----------", False)
+    def get_meta_comparison(self, reg1, reg2):
+        modules = [ r.module for r in reg1.moduleversions]
+        modules.extend(r.module for r in reg2.moduleversions if r.name not in modules)
 
+        ret = []
+        for m in modules:
+            r1 = "".join([ mr1.version for mr1 in reg1.moduleversions if mr1.module == m ])
+            r2 = "".join([ mr2.version for mr2 in reg2.moduleversions if mr2.module == m ])
+            ret.append((m, r1, r2))
 
-        r1_iter = iter(sorted(reg1.moduleversions))
-        r2_iter = iter(sorted(reg2.moduleversions))
-
-        try:
-            r1_modversion = r1_iter.next()
-            r2_modversion = r2_iter.next()
-            while True:
-                rc = cmp(r1_modversion, r2_modversion)
-                if rc == 0:
-                    self.print_modversions(r1_modversion.module, r1_modversion.version, r2_modversion.version)
-                    r1_modversion = r1_iter.next()
-                    r2_modversion = r2_iter.next()
-                elif rc > 0:
-                    self.print_modversions(r2_modversion.module, "???", r2_modversion.version)
-                    r2_modversion = r2_iter.next()
-                elif rc < 0:
-                    self.print_modversions(r1_modversion.module, r1_modversion.version, "???")
-                    r1_modversion = r1_iter.next()
-        except StopIteration:
-            pass
-
-        try:
-            while True:
-                r1_modversion = r1_iter.next()
-                self.print_modversions(r1_modversion.module, r1_modversion.version, "???")
-        except StopIteration:
-            pass
-        try:
-            while True:
-                r2_modversion = r2_iter.next()
-                self.print_modversions(r2_modversion.module, "???", r2_modversion.version)
-        except StopIteration:
-            pass
-
-        print
+        return ret
 
     def compare_registries(self, args):
-        reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
-        reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
+        regs1 = XITTestRegistry.fromXML(args.reg1)
+        regs2 = XITTestRegistry.fromXML(args.reg2)
 
-        self.compare_meta(reg1, reg2)
+        # sort them so searching is simpler
+        regs1.sort()
+        regs2.sort()
 
-        sname_len = 0
-        tname_len = 0
+        regname = args.regname
+        if regname != None:
+            reg1 = self.find_reg(regname, regs1)
+            if reg1 == None:
+                logging.error("Failed to find '%s' in first registry" % regname)
+                sys.exit(1)
+            reg2 = self.find_reg(regname, regs2)
+            if reg2 == None:
+                logging.error("Failed to find '%s' in second registry" % regname)
+                sys.exit(1)
+            self.compare_registry(reg1, reg2, args.printer);
+        else:
+            failed_regs = []
+            done_regs = []
+            for r1 in regs1:
+                r2 = self.find_reg(r1.name, regs2)
+                if r2 == None:
+                    failed_regs.append(r1.name)
+                else:
+                    self.compare_registry(r1, r2, args.printer)
+                    done_regs.append(r1.name)
+            for r2 in regs2:
+                if r2.name in done_regs:
+                    continue
+                failed_regs.append(r2.name)
 
-        sname_len = max([ len(x[0]) for x in reg1.listTestNames() ]) + 1
-        tname_len = max([ len(x[1]) for x in reg1.listTestNames() ]) + 1
+            for f in failed_regs:
+                logging.error("Failed to compare '%s'" % f)
 
-        format_str = "{0:<4}{1:<%d}{2:<%d}{3:>%d}{4:>%d}" % (sname_len, tname_len, len(reg1.name), len(reg2.name))
 
-        print format_str.format("Code", "TestSuite", "TestCase", reg1.name, reg2.name)
-        print format_str.format("----", "---------", "--------", "-" * len(reg1.name), "-" * len(reg2.name))
+    def find_reg(self, name, reglist):
+        r = [r for r in reglist if r.name == name]
+        return r[0] if len(r) > 0 else None
 
+    def compare_registry(self, reg1, reg2, printer):
+        headers = ("Module name", reg1.path, reg2.path)
+        values = self.get_meta_comparison(reg1, reg2)
+        colors = [ Colors.RED if m[1] != m[2] else Colors.DEFAULT for m in values ]
+
+        if len(values):
+            printer.print_values(headers, values, colors = colors, section = reg1.name)
+
+        headers = ("Code", "TestSuite", "TestCase", reg2.path, reg1.path)
+        values = []
+        colors = []
         for suite, test, status in sorted(reg1.listTestNames()):
-            self.verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test), format_str)
+            c, v = self.verify_one_result(reg1.getTest(suite, test), reg2.getTest(suite, test))
+            colors.append(c)
+            values.append(v)
 
+        printer.print_values(headers, values, colors = colors)
 
-    def create_registry(self, args):
+    def create_registries(self, args):
+        regs = []
+        for r in args.results:
+            regs.append(self.create_registry(r, args))
+
+        r = self.open_new_registry(args)
+        self.write_to_registry(r, regs[0].toXML(regs))
+        self.sync_registry(args, r)
+
+    def create_registry(self, path, args):
         """Create a new registry XML file based on the test cases in the JUnit file"""
-        results_list = JUnitTestResult.fromXML(args.results)
+        results_list = JUnitTestResult.fromXML(path)
 
         results_dict = {}
         for r in results_list:
@@ -705,7 +890,7 @@ class XITTestRegistryCLI:
         if args.name:
             reg_name = args.name[0]
         else:
-            reg_name = os.path.basename(args.results).split(".xml")[0]
+            reg_name = os.path.basename(path).split(".xml")[0]
 
         registry = XITTestRegistry(reg_name);
         registry.date = time.localtime()
@@ -719,56 +904,82 @@ class XITTestRegistryCLI:
                 testcase = XITTest(suite, r.name, str(r.status).lower())
                 registry.addTest(testcase);
 
-        r = self.open_new_registry(args)
-        self.write_to_registry(r, registry.toXML())
-        self.sync_registry(args, r)
+        return registry
 
     def merge_registries(self, args):
         """Merge two registries together"""
         if args.add:
             self.merge_add_registries(args)
 
-    def merge_add_registries(self, args):
-        """Merge registry args.reg2 into regs.arg1, leaving all existing information in reg1 untouched"""
-        reg1 = XITTestRegistry.fromXML(args.reg1[0])[0]
-        reg2 = XITTestRegistry.fromXML(args.reg2[0])[0]
-
-        # merge 2 into 1
+    def merge_registry(self, reg1, reg2):
         tests2 = reg2.listTestNames()
         for suite, name, status in tests2:
             if reg1.getTest(suite, name) == None:
                 reg1.addTest(reg2.getTest(suite, name))
 
-        self.registry_from_string(args, reg1.toXML());
+
+    def merge_add_registries(self, args):
+        """Merge registry args.reg2 into regs.arg1, leaving all existing information in reg1 untouched"""
+        regs1 = XITTestRegistry.fromXML(args.reg1)
+        regs2 = XITTestRegistry.fromXML(args.reg2)
+
+        if args.regname != None:
+            r1 = self.find_reg(args.regname, regs1)
+            r2 = self.find_reg(args.regname, regs2)
+            if r1 == None and r2 == None:
+                logging.error("Invalid registrys name '%s'" % (args.regname))
+                sys.exit(1)
+
+            if r2 == None:
+                pass # do nothing
+            elif r1 == None:
+                regs1.append(r2)
+            else:
+                self.merge_registry(r1, r2)
+        else:
+            succeeded = []
+            for r1 in regs1:
+                r2 = self.find_reg(r1.name, regs2)
+                if r2 == None:
+                    continue
+                self.merge_registry(r1, r2)
+                succeeded.append(r1.name)
+
+            for r2 in regs2:
+                if r2.name in succeeded:
+                    continue
+                regs1.append(r2)
+
+        self.registry_from_string(args, r1.toXML(regs1))
 
     def add_bug(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.addBug(XITBug("bugzilla", args.url))
         self.registry_from_string(args, registry.toXML())
 
     def rm_bug(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.removeBug(XITBug("bugzilla", args.url))
         self.registry_from_string(args, registry.toXML())
 
     def add_fix(self, args, type, text, extra_args = {}):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.addFix(XITFix.createFromType(type, text, extra_args))
@@ -785,11 +996,11 @@ class XITTestRegistryCLI:
         self.add_fix(args, "rpm", args.rpm)
 
     def rm_fix(self, args, type, text):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         testcase.removeFix(XITFix.createFromType(type, text))
@@ -802,11 +1013,11 @@ class XITTestRegistryCLI:
         self.rm_fix(args, "rpm", args.rpm)
 
     def set_status(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         testcase = registry.getTest(args.testsuite, args.testcase)
 
         if testcase == None:
-            print >> sys.stderr, "Invalid test name '%s %s'" % (args.testsuite, args.testcase)
+            logging.error("Invalid test name '%s %s'" % (args.testsuite, args.testcase))
             sys.exit(1)
 
         status = { "true" : True,
@@ -817,13 +1028,13 @@ class XITTestRegistryCLI:
         try:
             testcase.status = status[args.status]
         except KeyError:
-            print >> sys.stderr, "Invalid status code, allowed are %s" % ",".join(status.keys())
+            logging.error("Invalid status code, allowed are %s" % ",".join(status.keys()))
             sys.exit(1)
 
         self.registry_from_string(args, registry.toXML())
 
     def set_date(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         date = args.date
         if date != None:
             date = time.strptime(date, "%Y-%m-%d")
@@ -834,7 +1045,7 @@ class XITTestRegistryCLI:
         self.registry_from_string(args, registry.toXML())
 
     def set_modversion(self, args):
-        registry = self.load_registry(args)
+        registry = self.load_one_registry(args)
         name = args.name
         version = args.version
         type = args.type if args.type else "git"
@@ -851,14 +1062,17 @@ class XITTestRegistryCLI:
                 "compare the test result with the registry of known test "
                 "successes/failures.\n")
         parser.add_argument("-f", "--file", help="file containing XIT test registry, modified in-place (default: stdin/stdout) ", action="store", required=False)
+        parser.add_argument("-r", "--regname", metavar="registry-name", default=None, help="Work on the named test registry (defaults to first if not given) ", action="store", required=False)
+        parser.add_argument("--output-format", dest="printer", default=XITCLIPrinter(), required=False,
+                            action=XITPrinterPicker, help="Pick output format (html, text ,default: text)")
         subparsers = parser.add_subparsers(title="Actions", help=None)
 
         list_subparser = subparsers.add_parser("list", help="List all test cases")
         list_subparser.set_defaults(func = self.list_tests)
 
         info_subparser = subparsers.add_parser("info", help="Print info about a specific test case")
-        info_subparser.add_argument("testsuite", nargs=1, default=None, help="Test Suite name")
-        info_subparser.add_argument("testcase", nargs=1, default=None, help="Test Case name")
+        info_subparser.add_argument("testsuite", default=None, help="Test Suite name")
+        info_subparser.add_argument("testcase", default=None, help="Test Case name")
         info_subparser.set_defaults(func = self.show_test_info)
 
         verify_subparser = subparsers.add_parser("verify", help="Compare JUnit test results against the registry")
@@ -867,19 +1081,19 @@ class XITTestRegistryCLI:
         verify_subparser.set_defaults(func = self.verify_results)
 
         compare_subparser = subparsers.add_parser("compare", help="Compare two test registries")
-        compare_subparser.add_argument("reg1", metavar="registry1.xml", nargs=1, help="Registry file no 1")
-        compare_subparser.add_argument("reg2", metavar="registry2.xml", nargs=1, help="Registry file no 2")
+        compare_subparser.add_argument("reg1", metavar="registry1.xml", help="Registry file no 1")
+        compare_subparser.add_argument("reg2", metavar="registry2.xml", help="Registry file no 2")
         compare_subparser.set_defaults(func = self.compare_registries)
 
-        import_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
-        import_subparser.add_argument("results", metavar="results.xml", help="The XML file containing test results")
-        import_subparser.add_argument("--name", nargs=1, help="Human-readable name for registry (default: the filename)")
-        import_subparser.add_argument("--auto-modversion", metavar="TYPE", nargs=1, help="Try to automatically get module versions for selected modules (default: rpm)")
-        import_subparser.set_defaults(func = self.create_registry)
+        create_subparser = subparsers.add_parser("create", help="Create new XIT registry from JUnit test results")
+        create_subparser.add_argument("results", metavar="results.xml", nargs="+", help="The XML file(s) containing test results")
+        create_subparser.add_argument("--name", nargs=1, help="Human-readable name for registry (default: the filename)")
+        create_subparser.add_argument("--auto-modversion", metavar="TYPE", nargs=1, help="Try to automatically get module versions for selected modules (default: rpm)")
+        create_subparser.set_defaults(func = self.create_registries)
 
         merge_subparser = subparsers.add_parser("merge", help="Merge two registries together")
-        merge_subparser.add_argument("reg1", metavar="registry1.xml", nargs=1, help="Registry file no 1")
-        merge_subparser.add_argument("reg2", metavar="registry2.xml", nargs=1, help="Registry file no 2")
+        merge_subparser.add_argument("reg1", metavar="registry1.xml", help="Registry file no 1")
+        merge_subparser.add_argument("reg2", metavar="registry2.xml", help="Registry file no 2")
         merge_subparser.add_argument("--add", default=True, action="store_true", help="Merge new test cases from registry 2 into registry 1, leaving existing test cases unmodified")
         merge_subparser.set_defaults(func = self.merge_registries)
 
@@ -932,22 +1146,45 @@ class XITTestRegistryCLI:
 
         return parser
 
-    def load_registry(self, args):
+    def load_one_registry(self, args):
+        """Load and return a single registry from args.file. If args.name is
+           set, search for a named registry, otherwise return the first"""
         if args.file == None:
-            print >> sys.stderr, "Reading from stdin"
+            logging.error("Reading from stdin")
             args.file = sys.stdin
-        return self.load_registry_from_file(args.file)
 
+        registries = self.load_registry_from_file(args.file)
+        if args.regname != None:
+            for r in registries:
+                if r.name == args.regname:
+                    return r
+            logging.error("Failed to find requested registry %s." % args.regname)
+            sys.exit(1)
+        else:
+            logging.warning("Multiple registries found, but no name given. Using first.")
+            return registries[0]
+
+
+    def load_registries(self, args):
+        """Load and return all registries from args.file. If args.name is
+           set, search for a named registry and return only that."""
+        if args.file == None:
+            logging.error("Reading from stdin")
+            args.file = sys.stdin
+
+        if args.regname:
+            return [self.load_one_registry(args)]
+        else:
+            return self.load_registry_from_file(args.file)
 
     def load_registry_from_file(self, path):
+        """Load and return a registry list from the given path."""
         registries = XITTestRegistry.fromXML(path)
-        if len(registries) > 1:
-            print >> sys.stderr, "More than one registry found in input file, this is not supported yet. Using first one only."
-        elif len(registries) == 0:
-            print >> sys.stderr, "Failed to parse input file."
+        if len(registries) == 0:
+            logging.error("Failed to parse input file.")
             sys.exit(1)
 
-        return registries[0]
+        return registries
 
     def write_to_registry(self, f, msg):
         print >> f, msg
