@@ -628,6 +628,83 @@ TEST_F(TouchGrabTest, TouchGrabPassedToCoreGrab)
     }
 }
 
+TEST_F(TouchGrabTest, TouchGrabPassedToPassivePassedToRegular)
+{
+    XORG_TESTCASE("Client 1: register for touch grabs with ownership on root window.\n"
+                  "Client 2: register for sync passive core pointer grab on root window.\n"
+                  "Client 3: register for core pointer events on root window.\n"
+                  "Touch begin/end, repeat\n"
+                  "Client 1: reject touch\n"
+                  "Client 2: ReplayPointer\n"
+                  "Client 3: consume events.\n"
+                  "Repeat\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=56578");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    ::Display *dpy3 = XOpenDisplay(server.GetDisplayString().c_str());
+
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+    XSynchronize(dpy3, True);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchOwnership);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchOwnership);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    XGrabButton(dpy2, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeSync, GrabModeAsync, None, None);
+
+    XSelectInput(dpy3, win, ButtonPressMask|ButtonReleaseMask);
+
+    for (int i = 0; i < 2; i++) {
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    }
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, towner, dpy1, GenericEvent, xi2_opcode, XI_TouchOwnership);
+        ASSERT_EVENT(XIDeviceEvent, tupdate, dpy1, GenericEvent, xi2_opcode, XI_TouchUpdate);
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+
+        /* FIXME: this is the stuck bit here. on the second loop, we don't
+           get this event because dev->touch->touches[1] is stuck in
+           active|pending_finish with a POINTER_GRAB and a POINTER_REGULAR
+           listener, both AWAITING_BEGIN.
+         */
+        ASSERT_EVENT(XEvent, grab_press, dpy2, ButtonPress);
+        XAllowEvents(dpy2, ReplayPointer, CurrentTime);
+
+        ASSERT_EVENT(XEvent, press, dpy3, ButtonPress);
+        ASSERT_EVENT(XEvent, release, dpy3, ButtonRelease);
+
+        Window r, c;
+        int rx, ry, wx, wy;
+        unsigned int state;
+
+        XQueryPointer(dpy2, root, &r, &c, &rx, &ry, &wx, &wy, &state);
+        ASSERT_FALSE(state & Button1Mask);
+    }
+}
+
 class TouchGrabTestMultipleModes : public TouchGrabTest,
                                    public ::testing::WithParamInterface<int>
 {
