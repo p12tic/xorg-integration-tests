@@ -339,6 +339,62 @@ TEST_F(PointerGrabTest, ImplicitGrabToActiveGrabDeactivated)
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
 
+/**
+ * @tparam AsyncPointer, SyncPointer, ReplayPointer
+ */
+class PointerGrabTestAllowEvents : public PointerGrabTest,
+                                        public ::testing::WithParamInterface<int> {
+};
+
+TEST_P(PointerGrabTestAllowEvents, AllowEventsDoubleClick)
+{
+    int mode = GetParam();
+    std::string strmode;
+    switch(mode) {
+        case ReplayPointer:     strmode = "ReplayPointer"; break;
+        case AsyncPointer:      strmode = "AsyncPointer"; break;
+        case SyncPointer:       strmode = "SyncPointer"; break;
+    }
+    XORG_TESTCASE("Client 2 creates window with button mask.\n"
+                  "Client 1 sync passive button grab on that window.\n"
+                  "Double-click.\n"
+                  "Client1: AllowEvents(" + strmode + ")\n"
+                  "Client2: events for Replay, not for Sync/Async\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+
+    Window win = CreateWindow(dpy2, None);
+    XSelectInput(dpy2, win, ButtonPressMask|ButtonReleaseMask);
+
+    XGrabButton(dpy1, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeSync, GrabModeAsync, None, None);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XEvent, press, dpy1, ButtonPress);
+        XAllowEvents(dpy1, mode, CurrentTime);
+        if (mode == ReplayPointer) {
+            ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
+            ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
+        } else {
+            ASSERT_EVENT(XEvent, release, dpy1, ButtonRelease);
+        }
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy1));
+    ASSERT_TRUE(NoEventPending(dpy2));
+}
+
+INSTANTIATE_TEST_CASE_P(, PointerGrabTestAllowEvents,
+                        ::testing::Values(AsyncPointer, SyncPointer, ReplayPointer));
 
 enum GrabType {
     GRABTYPE_CORE,
@@ -698,28 +754,17 @@ TEST_P(TouchGrabTestAllowSome, TouchGrabPassedToPassivePassedToRegular)
         else
             ASSERT_TRUE(NoEventPending(dpy1));
 
-        /* FIXME: this is the stuck bit here. on the second loop, we don't
-           get this event because dev->touch->touches[1] is stuck in
-           active|pending_finish with a POINTER_GRAB and a POINTER_REGULAR
-           listener, both AWAITING_BEGIN.
-         */
         ASSERT_EVENT(XEvent, grab_press, dpy2, ButtonPress);
         XAllowEvents(dpy2, mode, CurrentTime);
-        ASSERT_TRUE(NoEventPending(dpy2));
 
         if (mode == ReplayPointer) {
             ASSERT_EVENT(XEvent, press, dpy3, ButtonPress);
             ASSERT_EVENT(XEvent, release, dpy3, ButtonRelease);
+            ASSERT_TRUE(NoEventPending(dpy2));
         } else {
+            ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
             ASSERT_TRUE(NoEventPending(dpy3));
         }
-
-        Window r, c;
-        int rx, ry, wx, wy;
-        unsigned int state;
-
-        XQueryPointer(dpy2, root, &r, &c, &rx, &ry, &wx, &wy, &state);
-        ASSERT_FALSE(state & Button1Mask);
     }
 }
 
