@@ -618,24 +618,32 @@ TEST_F(TouchGrabTest, TouchGrabPassedToCoreGrab)
         ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
         ASSERT_TRUE(NoEventPending(dpy2));
         ASSERT_TRUE(NoEventPending(dpy1));
-
-        Window r, c;
-        int rx, ry, wx, wy;
-        unsigned int state;
-
-        XQueryPointer(dpy2, root, &r, &c, &rx, &ry, &wx, &wy, &state);
-        ASSERT_FALSE(state & Button1Mask);
     }
 }
 
-TEST_F(TouchGrabTest, TouchGrabPassedToPassivePassedToRegular)
+/**
+ * @tparam AsyncPointer, SyncPointer, ReplayPointer
+ */
+class TouchGrabTestAllowSome : public TouchGrabTest,
+                               public ::testing::WithParamInterface<int> {
+};
+
+TEST_P(TouchGrabTestAllowSome, TouchGrabPassedToPassivePassedToRegular)
 {
+    int mode = GetParam();
+    std::string strmode;
+    switch(mode) {
+        case ReplayPointer:     strmode = "ReplayPointer"; break;
+        case AsyncPointer:      strmode = "AsyncPointer"; break;
+        case SyncPointer:       strmode = "SyncPointer"; break;
+    }
+
     XORG_TESTCASE("Client 1: register for touch grabs with ownership on root window.\n"
                   "Client 2: register for sync passive core pointer grab on root window.\n"
                   "Client 3: register for core pointer events on root window.\n"
                   "Touch begin/end, repeat\n"
                   "Client 1: reject touch\n"
-                  "Client 2: ReplayPointer\n"
+                  "Client 2: AllowSome(" + strmode + ")\n"
                   "Client 3: consume events.\n"
                   "Repeat\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=56578");
@@ -684,6 +692,11 @@ TEST_F(TouchGrabTest, TouchGrabPassedToPassivePassedToRegular)
         ASSERT_EVENT(XIDeviceEvent, tupdate, dpy1, GenericEvent, xi2_opcode, XI_TouchUpdate);
         ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
         XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+        if (i == 0)
+            ASSERT_EQ(XPending(dpy1), 4); /* begin, owner, update, end of
+                                             second touch */
+        else
+            ASSERT_TRUE(NoEventPending(dpy1));
 
         /* FIXME: this is the stuck bit here. on the second loop, we don't
            get this event because dev->touch->touches[1] is stuck in
@@ -691,10 +704,15 @@ TEST_F(TouchGrabTest, TouchGrabPassedToPassivePassedToRegular)
            listener, both AWAITING_BEGIN.
          */
         ASSERT_EVENT(XEvent, grab_press, dpy2, ButtonPress);
-        XAllowEvents(dpy2, ReplayPointer, CurrentTime);
+        XAllowEvents(dpy2, mode, CurrentTime);
+        ASSERT_TRUE(NoEventPending(dpy2));
 
-        ASSERT_EVENT(XEvent, press, dpy3, ButtonPress);
-        ASSERT_EVENT(XEvent, release, dpy3, ButtonRelease);
+        if (mode == ReplayPointer) {
+            ASSERT_EVENT(XEvent, press, dpy3, ButtonPress);
+            ASSERT_EVENT(XEvent, release, dpy3, ButtonRelease);
+        } else {
+            ASSERT_TRUE(NoEventPending(dpy3));
+        }
 
         Window r, c;
         int rx, ry, wx, wy;
@@ -704,6 +722,10 @@ TEST_F(TouchGrabTest, TouchGrabPassedToPassivePassedToRegular)
         ASSERT_FALSE(state & Button1Mask);
     }
 }
+
+INSTANTIATE_TEST_CASE_P(, TouchGrabTestAllowSome,
+                        ::testing::Values(AsyncPointer, SyncPointer, ReplayPointer));
+
 
 class TouchGrabTestMultipleModes : public TouchGrabTest,
                                    public ::testing::WithParamInterface<int>
