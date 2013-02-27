@@ -677,6 +677,55 @@ TEST_F(TouchGrabTest, TouchGrabPassedToCoreGrab)
     }
 }
 
+TEST_F(TouchGrabTest, TouchGrabPassedToTouch)
+{
+    XORG_TESTCASE("Client C1 has touch grab on root window.\n"
+                  "Client c2 has touch grab on window.\n"
+                  "Touch begin/end\n"
+                  "Reject from C1\n"
+                  "Verify C2 gets all events\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy2, True);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy2, VIRTUAL_CORE_POINTER_ID,
+                                        win, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    for (int i = 0; i < 10; i++) {
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+        ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+        ASSERT_TRUE(NoEventPending(dpy1));
+
+        ASSERT_EVENT(XIDeviceEvent, tbegin2, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+        ASSERT_TRUE(NoEventPending(dpy2));
+    }
+
+}
+
+
+
 /**
  * @tparam AsyncPointer, SyncPointer, ReplayPointer
  */
