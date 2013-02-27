@@ -724,6 +724,84 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouch)
 
 }
 
+TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
+{
+    XORG_TESTCASE("Client C1 has touch grab on root window.\n"
+                  "Client C2 has touch grab with ownership on window.\n"
+                  "Client C3 has touch grab with ownership on window.\n"
+                  "Touch begin\n"
+                  "Accept touch from C2.\n"
+                  "Expect TouchEnd for C3.\n"
+                  "Reject from C1\n"
+                  "Expect TouchEnd for C1\n"
+                  "Expect TouchOwnerhip for C2\n"
+                  "Touch end\n"
+                  "Expect TouchEnd for C2\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    ::Display *dpy3 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+    XSynchronize(dpy3, True);
+
+    int major = 2, minor = 3;
+    XIQueryVersion(dpy2, &major, &minor);
+    XIQueryVersion(dpy3, &major, &minor);
+
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy3, None);
+    Window subwin = CreateWindow(dpy3, win);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+
+    XISetMask(mask.mask, XI_TouchOwnership);
+
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy2, VIRTUAL_CORE_POINTER_ID,
+                                        win, False, &mask, 1, &mods));
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy3, VIRTUAL_CORE_POINTER_ID,
+                                        subwin, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    /* C1 is owner, but all three get begin event */
+    ASSERT_EVENT(XIDeviceEvent, tbegin1, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tbegin2, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tbegin3, dpy3, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(NoEventPending(dpy1));
+    ASSERT_TRUE(NoEventPending(dpy2));
+    ASSERT_TRUE(NoEventPending(dpy3));
+
+    /* Accept from C2, changes nothing on the wire yet */
+    XIAllowTouchEvents(dpy2, tbegin2->deviceid, tbegin2->detail, win, XIAcceptTouch);
+
+    /* Reject from C1, finishes for C1, owner is C2 */
+    XIAllowTouchEvents(dpy1, tbegin1->deviceid, tbegin1->detail, root, XIRejectTouch);
+    ASSERT_EVENT(XIDeviceEvent, tend1, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EVENT(XIDeviceEvent, towner2, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
+
+    /* Physicall end touch */
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    ASSERT_EVENT(XIDeviceEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(NoEventPending(dpy2));
+
+    ASSERT_EVENT(XIDeviceEvent, tend3, dpy3, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(NoEventPending(dpy3));
+}
+
 
 
 /**
