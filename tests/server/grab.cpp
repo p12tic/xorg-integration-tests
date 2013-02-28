@@ -339,6 +339,52 @@ TEST_F(PointerGrabTest, ImplicitGrabToActiveGrabDeactivated)
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
 
+TEST_F(PointerGrabTest, AsyncPassiveGrabPressRelease)
+{
+    XORG_TESTCASE("Client 2 creates window with button mask.\n"
+                  "Client 1 async passive button grab on that window.\n"
+                  "Double-click.\n"
+                  "Client 1 should get press/release\n"
+                  "Client 2 gets nothing\n"
+                  "Ungrab button, replay, now C2 gets the events\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+
+    Window win = CreateWindow(dpy2, None);
+    XSelectInput(dpy2, win, ButtonPressMask|ButtonReleaseMask);
+
+    XGrabButton(dpy1, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XEvent, press, dpy1, ButtonPress);
+        ASSERT_EVENT(XEvent, release, dpy1, ButtonRelease);
+    }
+
+    XUngrabButton(dpy1, AnyButton, XIAnyModifier, win);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
+        ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy1));
+    ASSERT_TRUE(NoEventPending(dpy2));
+}
+
 /**
  * @tparam AsyncPointer, SyncPointer, ReplayPointer
  */
