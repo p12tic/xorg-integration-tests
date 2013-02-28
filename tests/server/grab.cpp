@@ -1105,6 +1105,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     mask.mask_len = XIMaskLen(XI_ButtonRelease);
     mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_ButtonRelease);
 
     XIGrabModifiers mods;
     mods.modifiers = XIAnyModifier;
@@ -1135,9 +1136,10 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     while (XPending(dpy1)) {
         event_count++;
 
-        ASSERT_EVENT(XIDeviceEvent, ev, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
+        ASSERT_EVENT(XIDeviceEvent, press, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
         if (mode == GrabModeSync)
-            XIAllowEvents(dpy1, ev->deviceid, XISyncDevice, CurrentTime);
+            XIAllowEvents(dpy1, press->deviceid, XISyncDevice, CurrentTime);
+        ASSERT_EVENT(XIDeviceEvent, release, dpy1, GenericEvent, xi2_opcode, XI_ButtonRelease);
     }
 
     ASSERT_EQ(event_count, repeats); // ButtonPress event
