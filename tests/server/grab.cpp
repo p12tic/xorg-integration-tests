@@ -1131,7 +1131,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     XSync(dpy1, False);
     XSync(dpy2, False);
 
-    ASSERT_TRUE(XPending(dpy1));
+    ASSERT_GT(XPending(dpy1), 0);
     int event_count = 0;
     while (XPending(dpy1)) {
         event_count++;
