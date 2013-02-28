@@ -1576,7 +1576,6 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     ASSERT_EQ(A_end->detail, touchid);
 
     /* Now we expect TouchOwnership on B */
-    ASSERT_EQ(XPending(dpy2), 1);
     ASSERT_EVENT(XITouchOwnershipEvent, oe, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
     ASSERT_EQ(oe->touchid, (unsigned int)touchid);
 
