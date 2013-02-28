@@ -297,8 +297,7 @@ TEST_P(TouchTestXI2Version, NoEmulatedButton1MotionWithoutButtonPress)
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XSync(dpy, False);
-    ASSERT_EQ(XPending(dpy), 0);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)
