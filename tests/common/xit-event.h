@@ -91,16 +91,23 @@ XITEvent<EventType>::XITEvent(::Display *dpy, int type, int opcode, int evtype)
 
     XNextEvent(dpy, &e);
 
-    if (e.type != type)
+    if (e.type != type) {
         ADD_FAILURE() << "Mismatching type: " << e.type << " (expected " << type << ")";
+        ev = NULL;
+        return;
+    }
 
     if (type != GenericEvent)
         ev = reinterpret_cast<EventType*>(&e);
     else {
         XGetEventData(dpy, &e.xcookie);
-        if (e.xcookie.evtype != evtype)
+        if (e.xcookie.evtype != evtype) {
             ADD_FAILURE() << "Mismatching XGE evtypes: " <<
                 e.xcookie.evtype << " (expected " << evtype << ")";
+            XFreeEventData(dpy, &e.xcookie);
+            ev = NULL;
+            return;
+        }
         ev = reinterpret_cast<EventType*>(e.xcookie.data);
     }
 }
