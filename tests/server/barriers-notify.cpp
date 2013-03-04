@@ -294,6 +294,12 @@ TEST_P(BarrierNotify, CorrectEventIDs)
         ASSERT_EQ(1U, event.ev->eventid);
         ASSERT_EQ(event.ev->deviceid, deviceid);
         ASSERT_EQ(event.ev->sourceid, sourceid);
+        if (i == 0)
+            ASSERT_EQ(event.ev->dtime, 0);
+        else
+            ASSERT_GT(event.ev->dtime, 0);
+
+        usleep(2000);
     }
 
     /* Move outside the hitbox, and ensure that we
@@ -312,6 +318,11 @@ TEST_P(BarrierNotify, CorrectEventIDs)
         ASSERT_EQ(2U, event.ev->eventid);
         ASSERT_EQ(event.ev->deviceid, deviceid);
         ASSERT_EQ(event.ev->sourceid, sourceid);
+        if (i == 0)
+            ASSERT_EQ(event.ev->dtime, 0);
+        else
+            ASSERT_GT(event.ev->dtime, 0);
+        usleep(2000);
     }
 
     /* Ensure that we're still inside the hit box. Event ID
@@ -326,6 +337,8 @@ TEST_P(BarrierNotify, CorrectEventIDs)
         ASSERT_EQ(2U, event.ev->eventid);
         ASSERT_EQ(event.ev->deviceid, deviceid);
         ASSERT_EQ(event.ev->sourceid, sourceid);
+        ASSERT_GT(event.ev->dtime, 0);
+        usleep(2000);
     }
 
     XFixesDestroyPointerBarrier(dpy, barrier);
