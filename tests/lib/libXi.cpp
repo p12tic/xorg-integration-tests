@@ -110,6 +110,7 @@ TEST_F(libXiTest, DisplayNotGarbage)
     XFreeEventData(dpy, &ev.xcookie);
 }
 
+#if HAVE_XI22
 class libXiTouchTest : public libXiTest {
 public:
     /**
@@ -180,3 +181,4 @@ int main(int argc, char **argv) {
     return RUN_ALL_TESTS();
 }
 
+#endif
