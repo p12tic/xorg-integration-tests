@@ -467,7 +467,10 @@ TEST_P(PointerRelativeRotationMatrixTest, RotationTest)
     int i = 0;
     while(coords[i][0] && coords[i][1]) {
         double dx = coords[i][0], dy = coords[i][1];
-        struct pixman_f_vector p = { .v = {dx, dy, 1} };
+        struct pixman_f_vector p;
+        p.v[0] = dx;
+        p.v[1] = dy;
+        p.v[2] = 1;
 
         ASSERT_TRUE(pixman_f_transform_point(&m, &p));
 
