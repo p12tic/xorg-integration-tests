@@ -36,6 +36,8 @@
 #include "barriers-common.h"
 #include "helpers.h"
 
+#if HAVE_FIXES5
+
 class BarrierConstrained : public BarrierTest {};
 
 #define ASSERT_PTR_POS(x, y)                            \
@@ -424,3 +426,5 @@ TEST_F(BarrierConstrained, HorizontalBarrierBothDirectionsYBlocksNoMotion)
 
     XFixesDestroyPointerBarrier (dpy, barrier);
 }
+
+#endif /* HAVE_FIXES5 */

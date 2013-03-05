@@ -38,6 +38,8 @@
 #include "barriers-common.h"
 #include "helpers.h"
 
+#if HAVE_FIXES5
+
 class BarrierSimpleTest : public BarrierTest {};
 
 TEST_F(BarrierSimpleTest, CreateAndDestroyBarrier)
@@ -260,3 +262,4 @@ TEST_P(BarrierConflictingDirections, InvalidConflictingDirectionsBarrier)
 }
 INSTANTIATE_TEST_CASE_P(, BarrierConflictingDirections, INVALID_DIRECTIONS);
 
+#endif /* HAVE_FIXES5 */

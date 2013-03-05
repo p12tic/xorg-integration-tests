@@ -53,6 +53,9 @@ PKG_CHECK_MODULES(XI23, [inputproto >= 2.2.99] [xi >= 1.6.99],
                   [noop=noop])
 PKG_CHECK_MODULES(XTEST, [xtst])
 PKG_CHECK_MODULES(XFIXES, [xfixes])
+PKG_CHECK_MODULES(XFIXES5, [xfixes >= 5.0],
+                  AC_DEFINE(HAVE_FIXES5, 1, [XFIXES 5 (Pointer barriers) available]),
+                  [noop=noop])
 PKG_CHECK_MODULES(XSCREENSAVER, [xscrnsaver])
 PKG_CHECK_MODULES(DGA, [xxf86dga])
 PKG_CHECK_MODULES(PIXMAN, [pixman-1])

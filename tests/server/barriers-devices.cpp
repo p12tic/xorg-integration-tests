@@ -36,6 +36,8 @@
 #include "barriers-common.h"
 #include "helpers.h"
 
+#if HAVE_FIXES5
+
 using namespace xorg::testing::evemu;
 
 static Bool
@@ -98,3 +100,4 @@ TEST_F(BarrierDevices, BarrierBlocksCorrectDevices)
 
     XFixesDestroyPointerBarrier (dpy, barrier);
 }
+#endif /* HAVE_FIXES5 */
