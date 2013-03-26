@@ -491,3 +491,140 @@ TEST_P(PointerRelativeRotationMatrixTest, RotationTest)
 }
 
 INSTANTIATE_TEST_CASE_P(, PointerRelativeRotationMatrixTest, ::testing::Range(0, 360, 15));
+
+class DeviceChangedTest : public XITServerInputTest {
+public:
+    virtual void SetUp() {
+        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+                new xorg::testing::evemu::Device(
+                    RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
+                );
+
+        touchpad = std::auto_ptr<xorg::testing::evemu::Device>(
+                new xorg::testing::evemu::Device(
+                    RECORDINGS_DIR "/touchpads/SynPS2-Synaptics-TouchPad.desc")
+                );
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 2;
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--mouse--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + mouse->GetDeviceNode() + "\"");
+        config.AddInputSection("synaptics", "--touchpad--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + touchpad->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+
+    std::auto_ptr<xorg::testing::evemu::Device> mouse;
+    std::auto_ptr<xorg::testing::evemu::Device> touchpad;
+};
+
+
+#ifdef HAVE_XI22
+TEST_F(DeviceChangedTest, DeviceChangedEvent)
+{
+    XORG_TESTCASE("Create touchpad and mouse.\n"
+                  "Scroll down (smooth scrolling) on touchpad\n"
+                  "Move mouse\n"
+                  "Move touchpad\n"
+                  "DeviceChangedEvent from touchpad must have last smooth scroll valuators set\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=62321");
+
+    ::Display *dpy = Display();
+
+    int ndevices;
+    XIDeviceInfo *info = XIQueryDevice(dpy, XIAllDevices, &ndevices);
+    ASSERT_EQ(ndevices, 7); /* VCP, VCK, xtest * 2, touchpad, mouse, kbd */
+
+    int vscroll_axis = -1;
+    int deviceid = -1;
+
+    for (int i = 0; deviceid == -1 && i < ndevices; i++) {
+        if (strcmp(info[i].name, "--touchpad--"))
+            continue;
+
+        deviceid = info[i].deviceid;
+        XIDeviceInfo *di = &info[i];
+        for (int j = 0; j < di->num_classes; j++) {
+            if (di->classes[j]->type != XIScrollClass)
+                continue;
+
+            XIScrollClassInfo *scroll = reinterpret_cast<XIScrollClassInfo*>(di->classes[j]);
+            if (scroll->scroll_type == XIScrollTypeVertical) {
+                vscroll_axis = scroll->number;
+                break;
+            }
+        }
+    }
+    XIFreeDeviceInfo(info);
+
+    ASSERT_GT(vscroll_axis, -1);
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_Motion);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_Motion);
+    XISetMask(mask.mask, XI_DeviceChanged);
+    XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
+
+    touchpad->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-two-finger-scroll-down.events");
+
+    XSync(dpy, False);
+    while(XPending(dpy) > 1) {
+        XEvent ev;
+        XNextEvent(dpy, &ev);
+        XSync(dpy, False);
+    }
+
+    ASSERT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_GT(motion->valuators.mask_len, 0);
+    ASSERT_TRUE(XIMaskIsSet(motion->valuators.mask, vscroll_axis));
+
+    double last_value;
+    double *valuators = motion->valuators.values;
+
+    for (int i = 0; i < vscroll_axis; i++) {
+        if (XIMaskIsSet(motion->valuators.mask, i))
+            valuators++;
+    }
+
+    last_value = *valuators;
+    ASSERT_GT(last_value, 0);
+
+    mouse->PlayOne(EV_REL, REL_X, 1, true);
+
+    XSync(dpy, True); /* discard DCE from mouse */
+
+    touchpad->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-two-finger-scroll-down.events");
+
+    ASSERT_EVENT(XIDeviceChangedEvent, dce, dpy, GenericEvent, xi2_opcode, XI_DeviceChanged);
+    ASSERT_EQ(dce->sourceid, deviceid);
+    ASSERT_EQ(dce->reason, XISlaveSwitch);
+
+    ASSERT_GT(dce->num_classes, 1);
+
+    for (int i = 0; i < dce->num_classes; i++) {
+        if (dce->classes[i]->type != XIValuatorClass)
+            continue;
+
+        XIValuatorClassInfo *v = reinterpret_cast<XIValuatorClassInfo*>(dce->classes[i]);
+        if (v->number != vscroll_axis)
+            continue;
+        ASSERT_EQ(v->value, last_value);
+        return;
+    }
+
+    FAIL() << "Failed to find vscroll axis in DCE";
+}
+#endif
