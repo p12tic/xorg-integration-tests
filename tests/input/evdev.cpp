@@ -837,6 +837,47 @@ INSTANTIATE_TEST_CASE_P(, EvdevInvalidButtonMappingTest,
                         ::testing::Values(" ", "a", "64", "1 2 ", "-1",
                                           "1 a", "1 55", "1 -2"));
 
+class EvdevTrackballTest : public EvdevMouseTest {
+    virtual void SetUp() {
+        SetDevice("mice/Logitech-USB-Trackball.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "Logitech USB Trackball",
+                               "Option \"Floating\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
+                               "Option \"TypeName\" \"TRACKBALL\""
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(EvdevTrackballTest, TypeIsXI_TRACKBALL)
+{
+    XORG_TESTCASE("A trackball should be of type XI_TRACKBALL.\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=55867");
+
+    ::Display *dpy = Display();
+
+    Atom trackball_prop = XInternAtom(dpy, XI_TRACKBALL, True);
+    ASSERT_NE(trackball_prop, (Atom)None);
+
+    int ndevices;
+    XDeviceInfo *info = XListInputDevices(dpy, &ndevices);
+
+    for (int i = 0; i < ndevices; i++) {
+        XDeviceInfo *di = &info[i];
+        if (strcmp(di->name, "Logitech USB Trackball") == 0) {
+            ASSERT_EQ(di->type, trackball_prop);
+            return;
+        }
+    }
+
+    FAIL() << "Failed to find device";
+}
+
 class EvdevJoystickTest : public EvdevMouseTest {
     virtual void SetUp() {
         SetDevice("joysticks/Sony-PLAYSTATION(R)3-Controller.desc");
