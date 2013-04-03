@@ -275,10 +275,6 @@ TEST_F(WacomMatrixTest, InputMatrix)
     XInternAtom(Display(), "foo", True);
     XFlush(Display());
 
-    int major = 2;
-    int minor = 0;
-    ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
-
     EXPECT_TRUE(InitRandRSupport(Display(), &xrandr_event, &xrandr_error));
 
     int monitor_x, monitor_y, monitor_width, monitor_height;
