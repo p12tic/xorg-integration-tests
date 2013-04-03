@@ -54,9 +54,6 @@
 #include "helpers.h"
 
 #define NUM_ELEMS_MATRIX 9
-// Intuos5 maxX=44704 maxY=27940 maxZ=2047 resX=200000 resY=200000  tilt=enabled
-#define MAX_X 44704
-#define MAX_Y 27940
 
 typedef struct Matrix {
     float elem[NUM_ELEMS_MATRIX];
@@ -244,10 +241,16 @@ void test_area (Display *dpy, xorg::testing::evemu::Device *dev,
         XNextEvent(dpy, &ev);
 
     // Simulate stylus movement for the entire tablet resolution
-    move_stylus (dev, 0, 0, MAX_X, ABS_X);
-    move_stylus (dev, MAX_X, 0, MAX_Y, ABS_Y);
-    move_stylus (dev, 0, 0, MAX_Y, ABS_Y);
-    move_stylus (dev, 0, MAX_Y, MAX_X, ABS_X);
+    int minx, maxx;
+    int miny, maxy;
+
+    dev->GetAbsData(ABS_X, &minx, &maxx);
+    dev->GetAbsData(ABS_Y, &miny, &maxy);
+
+    move_stylus (dev, 0, 0, maxx, ABS_X);
+    move_stylus (dev, maxx, 0, maxy, ABS_Y);
+    move_stylus (dev, 0, 0, maxy, ABS_Y);
+    move_stylus (dev, 0, maxy, maxx, ABS_X);
 
     XSync (dpy, False);
     EXPECT_NE(XPending(dpy), 0) << "No event received??" << std::endl;
