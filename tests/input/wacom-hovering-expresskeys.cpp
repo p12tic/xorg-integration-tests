@@ -98,7 +98,10 @@ public:
     }
 };
 
-TEST_F(WacomHoveringTest, HoveringTest)
+/**
+ * FIXME: look at this test - is it still useful?
+ */
+TEST_F(WacomHoveringTest, DISABLED_HoveringTest)
 {
     XORG_TESTCASE("Test that hovering the Expresskeys pad while "
                   "using the stylus does not generate spurious "
