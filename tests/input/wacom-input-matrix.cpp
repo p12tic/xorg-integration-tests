@@ -236,9 +236,7 @@ void test_area (Display *dpy, xorg::testing::evemu::Device *dev,
     compute_input_matrix (dpy, x, y, width, height, &matrix);
     ASSERT_TRUE (set_input_matrix (dpy, deviceid, &matrix));
 
-    XSync(dpy, False);
-    while(XPending(dpy))
-        XNextEvent(dpy, &ev);
+    XSync(dpy, True);
 
     // Simulate stylus movement for the entire tablet resolution
     int minx, maxx;
@@ -264,8 +262,7 @@ void test_area (Display *dpy, xorg::testing::evemu::Device *dev,
         EXPECT_LE (ev.xmotion.y_root, y + height);
     }
 
-    while(XPending(dpy))
-        XNextEvent(dpy, &ev);
+    XSync(dpy, True);
 }
 
 TEST_F(WacomMatrixTest, InputMatrix)
