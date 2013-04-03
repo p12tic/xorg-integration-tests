@@ -43,6 +43,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "xit-server-input-test.h"
+#include "xit-property.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -976,6 +977,99 @@ TEST_F(SynapticsClickpadSoftButtonsTest, RightClick)
     ASSERT_EQ(btn.xbutton.button, 3U);
 
     XSync(Display(), True);
+}
+
+enum {
+    RBL = 0,
+    RBR = 1,
+    RBT = 2,
+    RBB = 3,
+    MBL = 4,
+    MBR = 5,
+    MBT = 6,
+    MBB = 7,
+};
+
+TEST_F(SynapticsClickpadSoftButtonsTest, InvalidButtonArea)
+{
+    XORG_TESTCASE("Update soft button area property with ranges of \n"
+                  "left > right or top > bottom\n");
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    XITProperty<int> softbutton_prop(dpy, deviceid, "Synaptics Soft Button Areas");
+
+    softbutton_prop.data[RBL] = 3000;
+    softbutton_prop.data[RBR] = 2000;
+
+    SetErrorTrap(dpy);
+    softbutton_prop.Update();
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadValue);
+
+    softbutton_prop.data[RBT] = 3000;
+    softbutton_prop.data[RBB] = 2000;
+
+    SetErrorTrap(dpy);
+    softbutton_prop.Update();
+    XSync(dpy, True);
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadValue);
+
+    softbutton_prop.data[MBL] = 3000;
+    softbutton_prop.data[MBR] = 2000;
+
+    SetErrorTrap(dpy);
+    softbutton_prop.Update();
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadValue);
+
+    softbutton_prop.data[MBT] = 3000;
+    softbutton_prop.data[MBB] = 2000;
+
+    SetErrorTrap(dpy);
+    softbutton_prop.Update();
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadValue);
+}
+
+TEST_F(SynapticsClickpadSoftButtonsTest, SinglePixelOverlap)
+{
+    XORG_TESTCASE("Overlap of soft button areas by one 1 device unit is permitted");
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    XITProperty<int> softbutton_prop(dpy, deviceid, "Synaptics Soft Button Areas");
+
+    softbutton_prop.data[RBL] = 2000;
+    softbutton_prop.data[RBR] = 3000;
+    softbutton_prop.data[MBL] = 1000;
+    softbutton_prop.data[MBR] = 2000;
+
+    softbutton_prop.data[RBT] = 2000;
+    softbutton_prop.data[MBT] = 2000;
+    softbutton_prop.data[RBB] = 3000;
+    softbutton_prop.data[MBB] = 3000;
+
+    SetErrorTrap(dpy);
+    softbutton_prop.Update();
+    ASSERT_TRUE(ReleaseErrorTrap(dpy) == NULL);
+
+    softbutton_prop.data[RBL] = 2000;
+    softbutton_prop.data[RBR] = 3000;
+    softbutton_prop.data[MBL] = 2000;
+    softbutton_prop.data[MBR] = 3000;
+
+    softbutton_prop.data[RBT] = 2000;
+    softbutton_prop.data[MBT] = 3000;
+    softbutton_prop.data[RBB] = 3000;
+    softbutton_prop.data[MBB] = 4000;
+
+    SetErrorTrap(dpy);
+    softbutton_prop.Update();
+    ASSERT_TRUE(ReleaseErrorTrap(dpy) == NULL);
 }
 
 class SynapticsClickpadSoftButtonsWithAreaTest : public SynapticsClickpadSoftButtonsTest {
