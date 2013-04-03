@@ -121,15 +121,18 @@ XITProperty<DataType>::XITProperty(::Display *dpy, int deviceid, const std::stri
     XIGetProperty(dpy, deviceid, prop, 0, 1000, False,
                   AnyPropertyType, &type, &format, &nitems, &bytes_after, &d);
 
+    if (!d)
+        return;
+
     /* XI2 32-bit properties are actually 32 bit, Atom is > 4, so copy over
      * where needed */
-    if (d && sizeof(DataType) > 4) {
-        data = new DataType[nitems];
+    data = new DataType[nitems];
+    if (sizeof(DataType) > 4) {
         for (unsigned int i = 0; i < nitems; i++)
             data[i] = reinterpret_cast<int32_t*>(d)[i];
-        XFree(d);
     } else
-        data = reinterpret_cast<DataType*>(d);
+        memcpy(data, d, nitems * sizeof(DataType));
+    XFree(d);
 }
 
 template <typename DataType>
@@ -205,7 +208,7 @@ void XITProperty<DataType>::Resize(size_t nitems)
 template <typename DataType>
 XITProperty<DataType>::~XITProperty()
 {
-    XFree(data);
+    delete[] data;
 }
 
 template <typename DataType>
