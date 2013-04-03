@@ -202,28 +202,26 @@ Bool compute_input_matrix (Display *dpy, int x, int y, int width, int height, Ma
 }
 
 /**
- * Moves the stylus from positon (x, y) by n steps in the
- * direction (code) ABS_X or ABS_Y.
+ * Moves the stylus from x1/y1 to x2/y2 in 3 steps
  */
 void move_stylus (xorg::testing::evemu::Device *dev,
-                 int x, int y, int steps, int code)
+                 int x1, int y1, int x2, int y2)
 {
-    int i;
-
-    // Move to device coord (x, y)
-    dev->PlayOne(EV_ABS, ABS_X, x, True);
-    dev->PlayOne(EV_ABS, ABS_Y, y, True);
+    dev->PlayOne(EV_ABS, ABS_X, x1, True);
+    dev->PlayOne(EV_ABS, ABS_Y, y1, True);
     dev->PlayOne(EV_ABS, ABS_DISTANCE, 0, True);
     dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, True);
 
-    for (i = 0; i < steps; i++) {
-        if (code == ABS_X)
-            dev->PlayOne(EV_ABS, ABS_X, x + i, True);
-        else
-            dev->PlayOne(EV_ABS, ABS_Y, y + i, True);
+    dev->PlayOne(EV_ABS, ABS_X, x1 + (x2 - x1)/2, True);
+    dev->PlayOne(EV_ABS, ABS_Y, y1 + (y2 - y1)/2, True);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0, True);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, True);
 
-        dev->PlayOne(EV_ABS, ABS_DISTANCE, i, True);
-    }
+    dev->PlayOne(EV_ABS, ABS_X, x2, True);
+    dev->PlayOne(EV_ABS, ABS_Y, y2, True);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0, True);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, True);
+
     dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 0, True);
 }
 
@@ -245,10 +243,10 @@ void test_area (Display *dpy, xorg::testing::evemu::Device *dev,
     dev->GetAbsData(ABS_X, &minx, &maxx);
     dev->GetAbsData(ABS_Y, &miny, &maxy);
 
-    move_stylus (dev, 0, 0, maxx, ABS_X);
-    move_stylus (dev, maxx, 0, maxy, ABS_Y);
-    move_stylus (dev, 0, 0, maxy, ABS_Y);
-    move_stylus (dev, 0, maxy, maxx, ABS_X);
+    move_stylus (dev, 0, 0, maxx, 0);
+    move_stylus (dev, maxx, 0, maxx, maxy);
+    move_stylus (dev, maxx, maxy, 0, maxy);
+    move_stylus (dev, 0, maxy, 0, 0);
 
     XSync (dpy, False);
     EXPECT_NE(XPending(dpy), 0) << "No event received??" << std::endl;
