@@ -144,7 +144,4 @@ TEST_F(WacomHoveringTest, HoveringTest)
         else if (ev.type == EnterNotify || ev.type == LeaveNotify)
             EXPECT_FALSE (ev.xcrossing.x_root == 0 && ev.xcrossing.y_root == 0);
     }
-
-    while(XPending(Display()))
-        XNextEvent(Display(), &ev);
 }
