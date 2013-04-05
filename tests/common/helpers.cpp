@@ -27,6 +27,8 @@
 #endif
 #include "helpers.h"
 
+#include <math.h>
+
 #include <sstream>
 #include <fstream>
 
@@ -288,4 +290,11 @@ bool SearchFileForString(const std::string &path, const std::string &substring) 
         ADD_FAILURE() << "Failed to open file " + path;
 
     return false;
+}
+
+int double_cmp(double a, double b, int precision)
+{
+    int ai = (int)round(a * pow(10, precision));
+    int bi = (int)round(b * pow(10, precision));
+    return (ai > bi) ? 1 : (ai < bi) ? -1 : 0;
 }

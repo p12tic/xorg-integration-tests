@@ -175,5 +175,12 @@ bool NoEventPending(Display *dpy);
  * false otherwise.
  */
 bool SearchFileForString(const std::string &path, const std::string &substring);
+
+/**
+ * Compare two doubles for equality within the given precision.
+ *
+ * @return 1, 0, -1 if a is larger, equal, or less than b, respectively
+ */
+int double_cmp(double a, double b, int precision = 2);
 #endif
 
