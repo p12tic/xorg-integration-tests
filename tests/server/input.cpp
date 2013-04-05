@@ -628,3 +628,222 @@ TEST_F(DeviceChangedTest, DeviceChangedEvent)
     FAIL() << "Failed to find vscroll axis in DCE";
 }
 #endif
+
+enum MatrixType {
+    IDENTITY,
+    LEFT_HALF,
+    RIGHT_HALF,
+};
+
+class PointerAbsoluteTransformationMatrixTest : public XITServerInputTest,
+                                                public DeviceInterface,
+                                                public ::testing::WithParamInterface<std::tr1::tuple<enum ::MatrixType, int> > {
+public:
+    virtual void SetUp() {
+        SetDevice("tablets/Wacom-Intuos4-6x9.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual std::string EvdevOptions(enum MatrixType which) {
+        std::string matrix;
+        switch(which) {
+            case LEFT_HALF:
+            matrix = "0.5 0 0 0 1 0 0 0 1";
+                break;
+            case RIGHT_HALF:
+                matrix = "0.5 0 0.5 0 1 0 0 0 1";
+                break;
+            case IDENTITY:
+                matrix = "1 0 0 0 1 0 0 0 1";
+                break;
+        }
+
+        return "Option \"CorePointer\" \"on\"\n"
+               "Option \"GrabDevice\" \"on\"\n"
+               "Option \"TransformationMatrix\" \"" + matrix +"\"\n"
+               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"";
+    }
+
+    virtual void SetUpConfigAndLog() {
+        std::tr1::tuple<enum MatrixType, int> t = GetParam();
+        enum MatrixType mtype = std::tr1::get<0>(t);
+        int nscreens = std::tr1::get<1>(t);
+
+        std::string opts = EvdevOptions(mtype);
+
+        switch(nscreens) {
+            case 1: SetUpSingleScreen(opts); break;
+            case 2: SetupDualHead(opts); break;
+            default:
+                    FAIL();
+        }
+    }
+
+    virtual void SetUpSingleScreen(std::string &evdev_options) {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--", evdev_options);
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+
+    virtual void SetupDualHead(std::string &evdev_options) {
+        config.SetAutoAddDevices(true);
+        config.AppendRawConfig(std::string() +
+            "Section \"ServerLayout\"\n"
+            "	Identifier     \"X.org Configured\"\n"
+            "	Screen         0 \"Screen0\"\n"
+            "	Screen         1 \"Screen1\" RightOf \"Screen0\"\n"
+            "	Option         \"Xinerama\" \"off\"\n"
+            "   Option         \"AutoAddDevices\" \"off\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Device\"\n"
+            "	Identifier  \"Card0\"\n"
+            "	Driver      \"dummy\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Device\"\n"
+            "	Identifier  \"Card1\"\n"
+            "	Driver      \"dummy\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Screen\"\n"
+            "	Identifier \"Screen0\"\n"
+            "	Device     \"Card0\"\n"
+            "EndSection\n"
+            "\n"
+            "Section \"Screen\"\n"
+            "	Identifier \"Screen1\"\n"
+            "	Device     \"Card1\"\n"
+            "EndSection");
+        config.AddInputSection("evdev", "--device--", evdev_options, false);
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n",
+                               false);
+        config.WriteConfig();
+    }
+};
+
+
+TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
+{
+    std::tr1::tuple<enum MatrixType, int> t = GetParam();
+    enum MatrixType mtype = std::tr1::get<0>(t);
+    int nscreens = std::tr1::get<1>(t);
+
+    std::string matrix;
+    switch(mtype) {
+        case IDENTITY: matrix = "identity marix"; break;
+        case LEFT_HALF: matrix = "left half"; break;
+        case RIGHT_HALF: matrix = "right half"; break;
+    }
+    std::stringstream screens;
+    screens << nscreens;
+
+    XORG_TESTCASE("Set transformation matrix on absolute tablet\n"
+                  "XI2 valuator data must match input data\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=63098\n");
+    SCOPED_TRACE("Matrix: " + matrix);
+    SCOPED_TRACE("nscreens: " + screens.str());
+
+
+    ::Display *dpy = Display();
+
+    /* Can't register for XIAllDevices, on a dual-head crossing into the new
+       stream will generate an XTest Pointer event */
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    XIEventMask mask;
+    mask.deviceid = deviceid;
+    mask.mask_len = XIMaskLen(XI_Motion);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_Motion);
+    XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_ButtonRelease);
+
+    XISelectEvents(dpy, RootWindow(dpy, 0), &mask, 1);
+    if (nscreens > 1)
+        XISelectEvents(dpy, RootWindow(dpy, 1), &mask, 1);
+    XSync(dpy, False);
+    delete[] mask.mask;
+
+    int w = DisplayWidth(dpy, 0);
+
+    int minx, maxx;
+    dev->GetAbsData(ABS_X, &minx, &maxx);
+
+    dev->PlayOne(EV_ABS, ABS_X, 1000);
+    dev->PlayOne(EV_ABS, ABS_Y, 1000);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, true);
+
+    /* drop first event */
+    ASSERT_EVENT(XIDeviceEvent, m, dpy, GenericEvent, xi2_opcode, XI_Motion);
+
+    dev->PlayOne(EV_ABS, ABS_X, minx, true);
+
+    double expected_minx = minx,
+           expected_maxx = maxx;
+    switch (mtype) {
+        /* no matrix, we expect the device range */
+        case IDENTITY:
+            break;
+        /* left half we expect the device to go min-max/2 on a single-screen
+           setup. dual-screen is per-device range*/
+        case LEFT_HALF:
+            if (nscreens == 1)
+                expected_maxx = maxx/2;
+            break;
+        /* right half we expect the device to go from something smaller than
+           max/2 to max. the device has ~46 units per pixel, if we map to
+           512 on the screen that's not maxx/2, it's something less than
+           that (see the scaling formula) */
+        case RIGHT_HALF:
+            if (nscreens == 1)
+                expected_minx = w/2.0 * maxx/(w-1);
+            else {
+            /*  problem: scale to desktop == 1024
+                re-scale to device == doesn't give us minx because the
+                half-point of the display may not be the exact half-point of
+                the device if the device res is > screen res.
+
+                device range:   [.............|.............]
+                                              ^ device range/2
+                pixels: ...[    ][    ][    ]|[     ][     ][     ]...
+                                             ^ 0/0 on screen2
+                so by scaling from desktop/2 (0/0 on S2) we re-scale into a
+                device range that isn't exactly 0 because that device
+                coordinate would resolve to pixel desktop/2-1.
+
+                so we expect minx to be _less_ than what would be one-pixel
+                on the device.
+             */
+                expected_minx = maxx/(w-1);
+            }
+            break;
+    }
+
+    ASSERT_EVENT(XIDeviceEvent, m1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(m1->deviceid, deviceid);
+    ASSERT_TRUE(XIMaskIsSet(m1->valuators.mask, 0));
+    if (mtype == RIGHT_HALF && nscreens > 1)
+        ASSERT_TRUE(double_cmp(m1->valuators.values[0], expected_minx) <= 0);
+    else
+        ASSERT_TRUE(double_cmp(m1->valuators.values[0], expected_minx) == 0);
+
+    /* y will be scaled in some weird way (depending on proportion of
+       screen:tablet), so we ignore it here */
+
+    dev->PlayOne(EV_ABS, ABS_X, maxx, true);
+
+    ASSERT_EVENT(XIDeviceEvent, m2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(m1->deviceid, deviceid);
+    ASSERT_TRUE(XIMaskIsSet(m2->valuators.mask, 0));
+    ASSERT_TRUE(double_cmp(m2->valuators.values[0], expected_maxx) == 0);
+}
+
+INSTANTIATE_TEST_CASE_P(, PointerAbsoluteTransformationMatrixTest,
+                        ::testing::Combine(::testing::Values(IDENTITY, LEFT_HALF, RIGHT_HALF),
+                                           ::testing::Values(1, 2)));
