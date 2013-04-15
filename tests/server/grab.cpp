@@ -1207,3 +1207,81 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
 
 #endif /* HAVE_XI22 */
 
+class GrabModeTest : public XITServerInputTest,
+                     public ::testing::WithParamInterface<int>
+{
+public:
+    std::auto_ptr<xorg::testing::evemu::Device> ptr;
+    std::auto_ptr<xorg::testing::evemu::Device> kbd;
+
+    virtual void SetUp() {
+        ptr = std::auto_ptr<xorg::testing::evemu::Device>(
+               new xorg::testing::evemu::Device(
+                   RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
+               ));
+        kbd = std::auto_ptr<xorg::testing::evemu::Device>(
+               new xorg::testing::evemu::Device(
+                   RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc"
+               ));
+
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--pointer--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + ptr->GetDeviceNode() + "\"");
+        config.AddInputSection("evdev", "--keyboard--",
+                               "Option \"CoreKeyboard\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + kbd->GetDeviceNode() + "\"");
+        config.WriteConfig();
+    }
+};
+
+TEST_P(GrabModeTest, PointerSyncKeyboardAsync)
+{
+    XORG_TESTCASE("XI2 grab on the device with sync device, async paired device\n"
+                  "play pointer event and keyboard events\n"
+                  "expect only the async device to send events\n")
+
+    ::Display *dpy = Display();
+
+    int deviceid = GetParam();
+
+    XIEventMask mask;
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_ButtonRelease);
+    XISetMask(mask.mask, XI_KeyPress);
+    XISetMask(mask.mask, XI_KeyRelease);
+    XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
+
+    XIGrabDevice(dpy, deviceid, DefaultRootWindow(dpy),
+                 CurrentTime, None, GrabModeSync, GrabModeAsync, False, &mask);
+
+    ptr->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    ptr->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    kbd->PlayOne(EV_KEY, KEY_A, 1, true);
+    kbd->PlayOne(EV_KEY, KEY_A, 0, true);
+
+    /* one device is frozen, we expect no events */
+    if (deviceid == VIRTUAL_CORE_POINTER_ID) {
+        ASSERT_EVENT(XIDeviceEvent, keypress, dpy, GenericEvent, xi2_opcode, XI_KeyPress);
+        ASSERT_EVENT(XIDeviceEvent, keyrelease, dpy, GenericEvent, xi2_opcode, XI_KeyRelease);
+        ASSERT_TRUE(NoEventPending(dpy));
+    } else {
+        ASSERT_EVENT(XIDeviceEvent, btnpress, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+        ASSERT_EVENT(XIDeviceEvent, btnrelease, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+        ASSERT_TRUE(NoEventPending(dpy));
+    }
+
+    delete[] mask.mask;
+}
+
+INSTANTIATE_TEST_CASE_P(, GrabModeTest, ::testing::Values(VIRTUAL_CORE_POINTER_ID, VIRTUAL_CORE_KEYBOARD_ID));
