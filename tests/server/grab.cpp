@@ -104,11 +104,11 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_RawMotion);
     mask.mask = new unsigned char[mask.mask_len];
-    memset(mask.mask, 0, sizeof(mask.mask));
+    memset(mask.mask, 0, mask.mask_len);
     XISetMask(mask.mask, XI_ButtonPress);
     XISelectEvents(dpy, win, &mask, 1);
 
-    memset(mask.mask, 0, sizeof(mask.mask));
+    memset(mask.mask, 0, mask.mask_len);
     XISetMask(mask.mask, XI_RawButtonPress);
     XISetMask(mask.mask, XI_RawMotion);
     XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
