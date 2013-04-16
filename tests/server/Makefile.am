@@ -18,7 +18,7 @@ server_SOURCES = \
                  barriers-devices.cpp \
                  barriers-notify.cpp
 
-server_LDADD = $(XIT_LIBS) $(GTEST_LDADDS) $(XTEST_LIBS) $(XFIXES_LIBS) $(XSCREENSAVER_LIBS) $(XIT_LIBS) $(DGA_LIBS) $(PIXMAN_LIBS)
+server_LDADD = $(XIT_LIBS) $(GTEST_LDADDS) $(XTEST_LIBS) $(XFIXES_LIBS) $(XSCREENSAVER_LIBS) $(XIT_LIBS) $(DGA_LIBS) $(PIXMAN_LIBS) $(XRANDR_LIBS)
 
 server_CPPFLAGS = $(AM_CPPFLAGS) $(PIXMAN_CFLAGS)
 
