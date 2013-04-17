@@ -446,6 +446,7 @@ enum GrabType {
     GRABTYPE_CORE,
     GRABTYPE_XI1,
     GRABTYPE_XI2,
+    GRABTYPE_XI2TOUCH,
 };
 
 static std::string grabtype_enum_to_string(enum GrabType gt) {
@@ -453,6 +454,7 @@ static std::string grabtype_enum_to_string(enum GrabType gt) {
         case GRABTYPE_CORE: return "GRABTYPE_CORE"; break;
         case GRABTYPE_XI1:  return "GRABTYPE_XI1"; break;
         case GRABTYPE_XI2:  return "GRABTYPE_XI2"; break;
+        case GRABTYPE_XI2TOUCH:  return "GRABTYPE_XI2TOUCH"; break;
     }
 
     ADD_FAILURE() << "BUG: shouldn't get here";
@@ -604,6 +606,10 @@ TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
             rc = XGrabDevice(dpy, device, root, False, 0, NULL,
                              GrabModeAsync, GrabModeAsync, CurrentTime);
             break;
+        default:
+            FAIL();
+            break;
+
     }
     ASSERT_EQ(rc, GrabSuccess);
 
@@ -627,6 +633,9 @@ TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
             ASSERT_TRUE(device);
             rc = XGrabDevice(dpy, device, root, False, 0, NULL,
                              GrabModeAsync, GrabModeAsync, CurrentTime);
+            break;
+        default:
+            FAIL();
             break;
     }
 
@@ -770,7 +779,6 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouch)
         XIAllowTouchEvents(dpy2, tend2->deviceid, tend2->detail, win, XIAcceptTouch);
         ASSERT_TRUE(NoEventPending(dpy2));
     }
-
 }
 
 TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
@@ -852,6 +860,156 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
 }
 
 
+class TouchUngrabTest : public TouchGrabTest,
+                        public ::testing::WithParamInterface<enum GrabType>
+{
+    virtual void SetUp() {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        xi2_major_minimum = 2;
+        switch(GetParam()) {
+            case GRABTYPE_XI2TOUCH:
+                xi2_minor_minimum = 2;
+                break;
+            default:
+                xi2_minor_minimum = 0;
+                break;
+        }
+
+        XITServerInputTest::SetUp();
+    }
+};
+
+TEST_P(TouchUngrabTest, UngrabButtonDuringTouch)
+{
+    XORG_TESTCASE("Grab a button\n"
+                  "Trigger pointer-emulated button grab\n"
+                  "Ungrab the button\n"
+                  "Continue with touch events\n");
+    enum GrabType grab_type = GetParam();
+    SCOPED_TRACE("" + grabtype_enum_to_string(grab_type));
+
+    ::Display *dpy = Display();
+
+    XIEventMask mask;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask = new unsigned char[mask.mask_len]();
+    if (grab_type == GRABTYPE_XI2) {
+        XISetMask(mask.mask, XI_ButtonPress);
+        XISetMask(mask.mask, XI_ButtonRelease);
+        XISetMask(mask.mask, XI_Motion);
+    } else if (grab_type == GRABTYPE_XI2TOUCH) {
+        XISetMask(mask.mask, XI_TouchBegin);
+        XISetMask(mask.mask, XI_TouchUpdate);
+        XISetMask(mask.mask, XI_TouchEnd);
+    }
+
+    XIGrabModifiers modifiers = {};
+    modifiers.modifiers = XIAnyModifier;
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            XGrabButton(dpy, AnyButton, XIAnyModifier,
+                        DefaultRootWindow(dpy), False,
+                        ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+                        GrabModeAsync, GrabModeAsync, None, None);
+            break;
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            XIGrabButton(dpy, VIRTUAL_CORE_POINTER_ID,
+                         XIAnyButton, DefaultRootWindow(dpy),
+                         None, GrabModeAsync, GrabModeAsync, False,
+                         &mask, 1, &modifiers);
+            break;
+        case GRABTYPE_XI2TOUCH:
+            XIGrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID,
+                             DefaultRootWindow(dpy), False,
+                             &mask, 1, &modifiers);
+            break;
+    }
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            {
+                ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+                XUngrabButton(dpy, AnyButton, AnyModifier, DefaultRootWindow(dpy));
+                break;
+            }
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            {
+                ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+                XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, XIAnyButton,
+                        DefaultRootWindow(dpy), 1, &modifiers);
+                break;
+            }
+        case GRABTYPE_XI2TOUCH:
+            {
+                ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+                XIUngrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy), 1, &modifiers);
+            }
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            {
+                ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+                break;
+            }
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            {
+                ASSERT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
+                break;
+            }
+        case GRABTYPE_XI2TOUCH:
+            {
+                ASSERT_EVENT(XIDeviceEvent, tupdate, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
+                break;
+            }
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            {
+                ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+                break;
+            }
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            {
+                ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent,
+                             xi2_opcode, XI_ButtonRelease);
+                break;
+            }
+        case GRABTYPE_XI2TOUCH:
+            {
+                ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+                XIAllowTouchEvents(dpy, tend->deviceid, tend->detail,
+                                   DefaultRootWindow(dpy), XIAcceptTouch);
+                break;
+            }
+    }
+
+    delete[] mask.mask;
+
+}
+
+INSTANTIATE_TEST_CASE_P(, TouchUngrabTest,
+                        ::testing::Values(GRABTYPE_CORE, GRABTYPE_XI2, GRABTYPE_XI2TOUCH));
 
 /**
  * @tparam AsyncPointer, SyncPointer, ReplayPointer
