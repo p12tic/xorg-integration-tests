@@ -731,8 +731,10 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouch)
                   "Reject from C1\n"
                   "Verify C2 gets all events\n");
 
+    int major = 2, minor = 2;
     ::Display *dpy1 = Display();
     ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XIQueryVersion(dpy2, &major, &minor);
     XSynchronize(dpy2, True);
 
     Window root = DefaultRootWindow(dpy1);
@@ -765,6 +767,7 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouch)
 
         ASSERT_EVENT(XIDeviceEvent, tbegin2, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
         ASSERT_EVENT(XIDeviceEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy2, tend2->deviceid, tend2->detail, win, XIAcceptTouch);
         ASSERT_TRUE(NoEventPending(dpy2));
     }
 
