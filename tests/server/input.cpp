@@ -33,6 +33,7 @@
 
 #include <X11/Xatom.h>
 #include <X11/extensions/XInput2.h>
+#include <X11/extensions/XInput.h>
 
 #include "xit-server-input-test.h"
 #include "xit-event.h"
@@ -68,6 +69,241 @@ public:
         config.WriteConfig();
     }
 };
+
+#ifdef HAVE_XI22
+enum scoll_direction {
+    VSCROLL_UP = 4,
+    VSCROLL_DOWN = 5,
+    HSCROLL_LEFT = 6,
+    HSCROLL_RIGHT = 7,
+};
+
+class SmoothScrollingTest : public PointerMotionTest,
+                            public ::testing::WithParamInterface<enum scoll_direction> {
+public:
+    virtual int GetScrollIncrement(::Display *dpy, int deviceid, int type) {
+        int increment = 0;
+        int ndevices;
+
+        XIDeviceInfo *info = XIQueryDevice(dpy, deviceid, &ndevices);
+
+        for (int i = 0; i < info->num_classes; i++) {
+            if (info->classes[i]->type != XIScrollClass)
+                continue;
+
+            XIScrollClassInfo *s = reinterpret_cast<XIScrollClassInfo*>(info->classes[i]);
+            if (s->scroll_type == type) {
+                increment = s->increment;
+                break;
+            }
+        }
+
+        XIFreeDeviceInfo(info);
+        return increment;
+    }
+
+    virtual void AssertEmulatedButtonEvent(::Display *dpy, int button) {
+        ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+        ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+        ASSERT_TRUE(press->flags & XIPointerEmulated);
+        ASSERT_TRUE(release->flags & XIPointerEmulated);
+        ASSERT_EQ(press->detail, button);
+        ASSERT_EQ(release->detail, button);
+    }
+
+    virtual void CheckMotionEvent(XIDeviceEvent *motion) {
+        ASSERT_FALSE(motion->flags & XIPointerEmulated);
+        ASSERT_GE(motion->valuators.mask_len, XIMaskLen(3));
+        /* expect x/y to be unset */
+        ASSERT_FALSE(XIMaskIsSet(motion->valuators.mask, 0));
+        ASSERT_FALSE(XIMaskIsSet(motion->valuators.mask, 1));
+    }
+};
+
+TEST_P(SmoothScrollingTest, SmoothScrolling)
+{
+    XORG_TESTCASE("Create a pointer device.\n"
+                  "Generate smooth scroll events.\n"
+                  "Verify button and motion events are sent as expected\n");
+
+    ::Display *dpy = Display();
+
+    int which = GetParam();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    int button;
+    int axis;
+    int direction;
+    int increment;
+
+    switch(which) {
+        case VSCROLL_UP:
+            button = 4;
+            axis = REL_WHEEL;
+            direction = 1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeVertical);
+            break;
+        case VSCROLL_DOWN:
+            button = 5;
+            axis = REL_WHEEL;
+            direction = -1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeVertical);
+            break;
+        case HSCROLL_LEFT:
+            button = 6;
+            axis = REL_HWHEEL;
+            direction = -1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeHorizontal);
+            break;
+        case HSCROLL_RIGHT:
+            button = 7;
+            axis = REL_HWHEEL;
+            direction = 1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeHorizontal);
+            break;
+    }
+
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
+                    XI_ButtonPress, XI_ButtonRelease, XI_Motion, -1);
+
+    dev->PlayOne(EV_REL, axis, direction, true);
+    dev->PlayOne(EV_REL, axis, direction, true);
+
+    ASSERT_EVENT(XIDeviceEvent, motion1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    CheckMotionEvent(motion1);
+    AssertEmulatedButtonEvent(dpy, button);
+
+    ASSERT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    CheckMotionEvent(motion2);
+    AssertEmulatedButtonEvent(dpy, button);
+
+
+    /* expect x/y to be unset */
+    if (button <= 5) {
+        ASSERT_TRUE(XIMaskIsSet(motion1->valuators.mask, 3));
+        ASSERT_TRUE(XIMaskIsSet(motion2->valuators.mask, 3));
+    } else {
+        ASSERT_TRUE(XIMaskIsSet(motion1->valuators.mask, 2));
+        ASSERT_TRUE(XIMaskIsSet(motion2->valuators.mask, 2));
+    }
+
+    int delta = motion2->valuators.values[0] - motion1->valuators.values[0];
+    switch(which) {
+        case VSCROLL_UP:
+        case HSCROLL_LEFT:
+            ASSERT_EQ(delta, -increment);
+            break;
+        case VSCROLL_DOWN:
+        case HSCROLL_RIGHT:
+            ASSERT_EQ(delta, increment);
+            break;
+    }
+}
+
+TEST_P(SmoothScrollingTest, SmoothScrollingButtonInverted)
+{
+    XORG_TESTCASE("Create a pointer device.\n"
+                  "Invert hscroll and vscroll mapping\n"
+                  "Generate smooth scroll events.\n"
+                  "Verify button mapping is reflected in smooth scrolling events\n");
+
+    ::Display *dpy = Display();
+
+    int which = GetParam();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    XDevice *d = XOpenDevice(dpy, deviceid);
+    ASSERT_TRUE(d);
+
+    unsigned char map[32];
+    int nmap = 32;
+    XGetDeviceButtonMapping(dpy, d, map, nmap);
+    map[3] = 5;
+    map[4] = 4;
+    map[5] = 7;
+    map[6] = 6;
+    XSetDeviceButtonMapping(dpy, d, map, nmap);
+    XCloseDevice(dpy, d);
+
+    int button;
+    int axis;
+    int direction;
+    int increment;
+
+    switch(which) {
+        case VSCROLL_UP:
+            button = 5;
+            axis = REL_WHEEL;
+            direction = 1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeVertical);
+            break;
+        case VSCROLL_DOWN:
+            button = 4;
+            axis = REL_WHEEL;
+            direction = -1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeVertical);
+            break;
+        case HSCROLL_LEFT:
+            button = 7;
+            axis = REL_HWHEEL;
+            direction = -1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeHorizontal);
+            break;
+        case HSCROLL_RIGHT:
+            button = 6;
+            axis = REL_HWHEEL;
+            direction = 1;
+            increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeHorizontal);
+            break;
+    }
+
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
+                    XI_ButtonPress, XI_ButtonRelease, XI_Motion, -1);
+
+    dev->PlayOne(EV_REL, axis, direction, true);
+    dev->PlayOne(EV_REL, axis, direction, true);
+
+    ASSERT_EVENT(XIDeviceEvent, motion1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    CheckMotionEvent(motion1);
+    AssertEmulatedButtonEvent(dpy, button);
+
+    ASSERT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    CheckMotionEvent(motion2);
+    AssertEmulatedButtonEvent(dpy, button);
+
+
+    /* expect x/y to be unset */
+    if (button <= 5)
+        ASSERT_TRUE(XIMaskIsSet(motion1->valuators.mask, 3));
+    else
+        ASSERT_TRUE(XIMaskIsSet(motion1->valuators.mask, 2));
+
+    if (button <= 5)
+        ASSERT_TRUE(XIMaskIsSet(motion2->valuators.mask, 3));
+    else
+        ASSERT_TRUE(XIMaskIsSet(motion2->valuators.mask, 2));
+
+    int delta = motion2->valuators.values[0] - motion1->valuators.values[0];
+    switch(which) {
+        case VSCROLL_UP:
+        case HSCROLL_LEFT:
+            ASSERT_EQ(delta, -increment);
+            break;
+        case VSCROLL_DOWN:
+        case HSCROLL_RIGHT:
+            ASSERT_EQ(delta, increment);
+            break;
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(, SmoothScrollingTest,
+                        ::testing::Values(VSCROLL_UP, VSCROLL_DOWN, HSCROLL_LEFT, HSCROLL_RIGHT));
+#endif
+
 
 enum device_type {
     MOUSE, TABLET, TOUCHPAD
