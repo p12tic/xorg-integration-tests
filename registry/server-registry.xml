@@ -2,7 +2,7 @@
   <xit:registry name="server">
     <xit:meta>
       <xit:date>2013-01-21</xit:date>
-      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">c1602d1c17967bdd4db9db19b3a9c0dfca6a58aa</xit:moduleversion>
+      <xit:moduleversion name="xserver" type="git" repo="git://git.freedesktop.org/git/xorg/xserver">7ab98bafc9a3426fd40f8ae693430491333ba4fc</xit:moduleversion>
     </xit:meta>
     <xit:testsuite name="BarrierConflictingDirections">
       <xit:testcase name="InvalidConflictingDirectionsBarrier/0" success="true"/>
@@ -162,8 +162,15 @@
         <xit:fix type="git">c5f2818edbec2f87383baa6c6be5c389b73ca6f9</xit:fix>
       </xit:testcase>
     </xit:testsuite>
+    <xit:testsuite name="DeviceChangedTest">
+      <xit:testcase name="DeviceChangedEvent" success="false"/>
+    </xit:testsuite>
     <xit:testsuite name="EventQueueTest">
       <xit:testcase name="mieqOverflow" success="true"/>
+    </xit:testsuite>
+    <xit:testsuite name="GrabModeTest">
+      <xit:testcase name="PointerSyncKeyboardAsync/0" success="true"/>
+      <xit:testcase name="PointerSyncKeyboardAsync/1" success="true"/>
     </xit:testsuite>
     <xit:testsuite name="MiscServerTest">
       <xit:testcase name="DoubleSegfault" success="true"/>
@@ -177,7 +184,10 @@
       <xit:testcase name="DestroyClientDuringImplicitGrab" success="true"/>
       <xit:testcase name="DestroyWindowDuringImplicitGrab" success="true"/>
       <xit:testcase name="GrabDisabledDevices" success="true"/>
-      <xit:testcase name="ImplicitGrabRawEvents" success="false"/>
+      <xit:testcase name="ImplicitGrabRawEvents" success="true">
+        <xit:bug type="bugzilla">https://bugs.freedesktop.org/show_bug.cgi?id=53897</xit:bug>
+        <xit:fix type="git">4e13dd90144dde47550aceea4db4b4329e531279</xit:fix>
+      </xit:testcase>
       <xit:testcase name="ImplicitGrabToActiveGrab" success="true"/>
       <xit:testcase name="ImplicitGrabToActiveGrabDeactivated" success="true"/>
     </xit:testsuite>
