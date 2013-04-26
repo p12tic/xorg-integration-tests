@@ -31,6 +31,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <stdarg.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -297,4 +298,21 @@ int double_cmp(double a, double b, int precision)
     int ai = (int)round(a * pow(10, precision));
     int bi = (int)round(b * pow(10, precision));
     return (ai > bi) ? 1 : (ai < bi) ? -1 : 0;
+}
+
+void SelectXI2Events(::Display *dpy, int deviceid, Window win, ...)
+{
+    va_list arg;
+    int evtype;
+
+    XIEventMask mask;
+    unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
+    mask.deviceid = deviceid;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.mask = m;
+    va_start(arg, win);
+    while ((evtype = va_arg(arg, int)) != -1)
+        XISetMask(mask.mask, evtype);
+    va_end(arg);
+    XISelectEvents(dpy, win, &mask, 1);
 }

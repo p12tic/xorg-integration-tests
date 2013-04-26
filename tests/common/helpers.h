@@ -182,5 +182,11 @@ bool SearchFileForString(const std::string &path, const std::string &substring);
  * @return 1, 0, -1 if a is larger, equal, or less than b, respectively
  */
 int double_cmp(double a, double b, int precision = 2);
+
+/**
+ * Select for the list of events given in the varargs. Last element must be
+ * -1.
+ */
+void SelectXI2Events(Display *dpy, int deviceid, Window win, ...);
 #endif
 
