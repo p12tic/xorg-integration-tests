@@ -294,15 +294,15 @@ TEST_F(WacomMatrixTest, InputMatrix)
                                                           ButtonMotionMask);
     XSync(Display(), False);
 
-    // Check with upper right quarter
+    // Check with upper left quarter
     test_area (Display(), dev.get(), deviceid, monitor_x, monitor_y, monitor_width / 2, monitor_height / 2);
 
-    // Check with upper left quarter
+    // Check with upper right quarter
     test_area (Display(), dev.get(), deviceid, monitor_x + monitor_width / 2, monitor_y, monitor_width / 2, monitor_height / 2);
 
-    // Check with bottom right quarter
+    // Check with bottom left quarter
     test_area (Display(), dev.get(), deviceid, monitor_x, monitor_y + monitor_height / 2, monitor_width / 2, monitor_height / 2);
 
-    // Check with bottom left quarter
+    // Check with bottom right quarter
     test_area (Display(), dev.get(), deviceid, monitor_x + monitor_width / 2, monitor_y + monitor_height / 2, monitor_width / 2, monitor_height / 2);
 }
