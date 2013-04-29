@@ -1,0 +1,82 @@
+# EVEMU 1.1
+# Input device name: "touch_dev"
+# Input device ID: bus 0000 vendor 0000 product 0000 version 0000
+# Supported events:
+#   Event type 0 (EV_SYN)
+#     Event code 0 (SYN_REPORT)
+#     Event code 3 (SYN_DROPPED)
+#   Event type 3 (EV_ABS)
+#     Event code 47 (ABS_MT_SLOT)
+#       Value      0
+#       Min        0
+#       Max        9
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+#     Event code 48 (ABS_MT_TOUCH_MAJOR)
+#       Value      0
+#       Min        0
+#       Max       15
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+#     Event code 53 (ABS_MT_POSITION_X)
+#       Value      0
+#       Min        0
+#       Max     1535
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+#     Event code 54 (ABS_MT_POSITION_Y)
+#       Value      0
+#       Min        0
+#       Max     2559
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+#     Event code 57 (ABS_MT_TRACKING_ID)
+#       Value      0
+#       Min        0
+#       Max    65535
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+#     Event code 58 (ABS_MT_PRESSURE)
+#       Value      0
+#       Min        0
+#       Max      255
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+# Properties:
+#   Property  type 1 (INPUT_PROP_DIRECT)
+N: touch_dev
+I: 0000 0000 0000 0000
+P: 02 00 00 00 00 00 00 00
+B: 00 09 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 02 00 00 00 00 00 00 00 00
+B: 03 00 00 00 00 00 80 61 06
+B: 04 00 00 00 00 00 00 00 00
+B: 05 00 00 00 00 00 00 00 00
+B: 11 00 00 00 00 00 00 00 00
+B: 12 00 00 00 00 00 00 00 00
+B: 15 00 00 00 00 00 00 00 00
+B: 15 00 00 00 00 00 00 00 00
+A: 2f 0 9 0 0
+A: 30 0 15 0 0
+A: 35 0 1535 0 0
+A: 36 0 2559 0 0
+A: 39 0 65535 0 0
+A: 3a 0 255 0 0

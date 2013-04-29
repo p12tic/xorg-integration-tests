@@ -1449,6 +1449,44 @@ TEST_F(EvdevTouchpadTest, PointerMovement)
     }
 }
 
+class EvdevAbsXMissingTest : public XITServerInputTest,
+                      public DeviceInterface
+{
+public:
+    virtual void SetUp() {
+        SetDevice("tablets/n4.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 2;
+
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "keyboard-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(EvdevAbsXMissingTest, DevicePresent)
+{
+    XORG_TESTCASE("Create device with ABS_MT_POSITION_X but no ABS_X\n"
+                  "Driver must not crash\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=64029");
+
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
+
+    dev->Play(RECORDINGS_DIR "tablets/n4.events");
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
