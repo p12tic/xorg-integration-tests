@@ -312,6 +312,16 @@
         <xit:fix type="git" repo="git://git.freedesktop.org/git/xorg/xserver">2dc6d9228456cbc274a1fcea478258e5ae4dc629</xit:fix>
       </xit:testcase>
     </xit:testsuite>
+    <xit:testsuite name="SmoothScrollingTest">
+      <xit:testcase name="SmoothScrolling/0" success="true"/>
+      <xit:testcase name="SmoothScrolling/1" success="true"/>
+      <xit:testcase name="SmoothScrolling/2" success="true"/>
+      <xit:testcase name="SmoothScrolling/3" success="true"/>
+      <xit:testcase name="SmoothScrollingButtonInverted/0" success="true"/>
+      <xit:testcase name="SmoothScrollingButtonInverted/1" success="true"/>
+      <xit:testcase name="SmoothScrollingButtonInverted/2" success="true"/>
+      <xit:testcase name="SmoothScrollingButtonInverted/3" success="true"/>
+    </xit:testsuite>
     <xit:testsuite name="TouchDeviceChangeTest">
       <xit:testcase name="DeviceChangedEventPointerToTouchSwitch" success="true"/>
       <xit:testcase name="DeviceChangedEventTouchToPointerSwitch" success="true"/>
