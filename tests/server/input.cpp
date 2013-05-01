@@ -970,7 +970,7 @@ TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
 
     std::string matrix;
     switch(mtype) {
-        case IDENTITY: matrix = "identity marix"; break;
+        case IDENTITY: matrix = "identity matrix"; break;
         case LEFT_HALF: matrix = "left half"; break;
         case RIGHT_HALF: matrix = "right half"; break;
     }
