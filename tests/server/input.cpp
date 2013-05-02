@@ -1025,6 +1025,8 @@ TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
     switch (mtype) {
         /* no matrix, we expect the device range */
         case IDENTITY:
+            if (nscreens == 2)
+                expected_maxx = maxx - 1;
             break;
         /* left half we expect the device to go min-max/2 on a single-screen
            setup. dual-screen is per-device range*/
@@ -1038,7 +1040,7 @@ TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
            that (see the scaling formula) */
         case RIGHT_HALF:
             if (nscreens == 1)
-                expected_minx = w/2.0 * maxx/(w-1);
+                expected_minx = w/2.0 * (maxx + 1)/w;
             else {
             /*  problem: scale to desktop == 1024
                 re-scale to device == doesn't give us minx because the
@@ -1057,6 +1059,7 @@ TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
                 on the device.
              */
                 expected_minx = maxx/(w-1);
+                expected_maxx = maxx - 1;
             }
             break;
     }
