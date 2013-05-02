@@ -175,6 +175,14 @@
     <xit:testsuite name="MiscServerTest">
       <xit:testcase name="DoubleSegfault" success="true"/>
     </xit:testsuite>
+    <xit:testsuite name="PointerAbsoluteTransformationMatrixTest">
+      <xit:testcase name="XI2ValuatorData/0" success="false"/>
+      <xit:testcase name="XI2ValuatorData/1" success="false"/>
+      <xit:testcase name="XI2ValuatorData/2" success="false"/>
+      <xit:testcase name="XI2ValuatorData/3" success="false"/>
+      <xit:testcase name="XI2ValuatorData/4" success="false"/>
+      <xit:testcase name="XI2ValuatorData/5" success="false"/>
+    </xit:testsuite>
     <xit:testsuite name="PointerButtonMotionMaskTest">
       <xit:testcase name="ButtonXMotionMask/0" success="true"/>
       <xit:testcase name="ButtonXMotionMask/1" success="true"/>
