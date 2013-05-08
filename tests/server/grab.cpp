@@ -365,7 +365,7 @@ TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
 {
     XORG_TESTCASE("Grab the pointer.\n"
                   "Re-grab the pointer with a different type.\n"
-                  "Expect AlreadyGrabbed for differnt types\n"
+                  "Expect AlreadyGrabbed for different types\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=58255");
 
     std::tr1::tuple<enum GrabType, enum GrabType> t = GetParam();
