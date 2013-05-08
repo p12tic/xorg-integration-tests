@@ -357,6 +357,98 @@ static std::string grabtype_enum_to_string(enum GrabType gt) {
     return NULL;
 }
 
+class PointerSingleGrabTypeTest : public PointerGrabTest,
+                                  public ::testing::WithParamInterface<enum ::GrabType> {};
+
+TEST_P(PointerSingleGrabTypeTest, OverwriteGrab)
+{
+    XORG_TESTCASE("Grab the pointer.\n"
+                  "Re-grab with a different event mask\n");
+
+    enum GrabType grab_type = GetParam();
+    std::stringstream ss;
+    ss << grabtype_enum_to_string(grab_type);
+    SCOPED_TRACE(ss.str());
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+    int rc;
+
+    XIEventMask mask;
+    unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
+    mask.mask_len = sizeof(m);
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask = m;
+    XISetMask(mask.mask, XI_Motion);
+
+
+    int deviceid;
+    FindInputDeviceByName(dpy, "--device--", &deviceid);
+    XDevice *xdev = XOpenDevice(dpy, deviceid);
+    XEventClass cls;
+    int xi_motion;
+    DeviceMotionNotify(xdev, xi_motion, cls);
+
+    switch(grab_type) {
+        case GRABTYPE_CORE:
+            rc = XGrabPointer(dpy, root, False, PointerMotionMask,
+                              GrabModeAsync, GrabModeAsync, None, None,
+                              CurrentTime);
+            ASSERT_EQ(rc, Success);
+            break;
+        case GRABTYPE_XI1:
+            rc = XGrabDevice(dpy, xdev, root, False, 1, &cls, GrabModeAsync,
+                             GrabModeAsync, CurrentTime);
+            break;
+        case GRABTYPE_XI2:
+            rc = XIGrabDevice(Display(), VIRTUAL_CORE_POINTER_ID, root, CurrentTime, None,
+                              GrabModeAsync, GrabModeAsync, False, &mask);
+            break;
+    }
+    ASSERT_EQ(rc, Success);
+
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+
+    switch(grab_type) {
+        case GRABTYPE_CORE:
+            {
+                ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+                ASSERT_TRUE(NoEventPending(dpy));
+                rc = XGrabPointer(dpy, root, False, 0,
+                                  GrabModeAsync, GrabModeAsync, None, None,
+                                  CurrentTime);
+                ASSERT_EQ(rc, Success);
+                break;
+            }
+        case GRABTYPE_XI1:
+            {
+                ASSERT_EVENT(XEvent, xi_motion, dpy, xi_motion);
+                ASSERT_TRUE(NoEventPending(dpy));
+                rc = XGrabDevice(dpy, xdev, root, False, 0, NULL, GrabModeAsync,
+                                 GrabModeAsync, CurrentTime);
+                break;
+            }
+        case GRABTYPE_XI2:
+            {
+                ASSERT_EVENT(XIDeviceEvent, motion, dpy,
+                             GenericEvent, xi2_opcode, XI_Motion);
+                ASSERT_TRUE(NoEventPending(dpy));
+
+                XIClearMask(mask.mask, XI_Motion);
+                rc = XIGrabDevice(Display(), VIRTUAL_CORE_POINTER_ID, root, CurrentTime, None,
+                                  GrabModeAsync, GrabModeAsync, False, &mask);
+                ASSERT_EQ(rc, Success);
+                break;
+            }
+    }
+
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+INSTANTIATE_TEST_CASE_P(, PointerSingleGrabTypeTest, ::testing::Values(GRABTYPE_CORE, GRABTYPE_XI1, GRABTYPE_XI2));
+
 class PointerGrabTypeTest : public PointerGrabTest,
                             public
                             ::testing::WithParamInterface<std::tr1::tuple<enum ::GrabType, enum GrabType> > {};
