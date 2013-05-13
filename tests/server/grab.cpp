@@ -683,6 +683,72 @@ public:
     }
 };
 
+TEST_F(TouchGrabTest, PassiveTouchGrabPassedToTouchClient)
+{
+    XORG_TESTCASE("Client 1: register for passive touch grab on roow window\n"
+                  "Client 2: register for touch events on window\n"
+                  "Trigger touch begin/end\n"
+                  "Client 1: reject after TouchEnd\n"
+                  "Client 2: verify touch event is received\n"
+                  "Verify pointer has no button set\n");
+
+    int major = 2, minor = 2;
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy2, True);
+    XIQueryVersion(dpy2, &major, &minor);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    XISelectEvents(dpy2, win, &mask, 1);
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+    XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+
+    ASSERT_EVENT(XEvent, tbegin2, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(NoEventPending(dpy2));
+    ASSERT_TRUE(NoEventPending(dpy1));
+
+    /* use a third client for checking pointer state, since a XI2.2 client
+     * won't see emulated touch state */
+    ::Display *dpy3 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy3, True);
+    Window child;
+    double win_x, win_y;
+    double root_x, root_y;
+    XIButtonState buttons;
+    XIModifierState modifiers;
+    XIGroupState group;
+    XIQueryPointer(dpy3, VIRTUAL_CORE_POINTER_ID,
+                   root, &root, &child,
+                   &root_x, &root_y,
+                   &win_x, &win_y,
+                   &buttons, &modifiers, &group);
+
+    ASSERT_GE(buttons.mask_len, 1);
+    for (int i = 0; i < buttons.mask_len * 8; i++)
+        ASSERT_FALSE(XIMaskIsSet(buttons.mask, i));
+}
+
 TEST_F(TouchGrabTest, TouchGrabPassedToCoreGrab)
 {
     XORG_TESTCASE("Client 1: Register for passive touch grab on root window\n"
