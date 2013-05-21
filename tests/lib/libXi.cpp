@@ -34,6 +34,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include <xit-server-input-test.h>
+#include <xit-property.h>
 #include <device-interface.h>
 
 #include "helpers.h"
@@ -63,6 +64,7 @@ public:
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
                                "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         /* add default keyboard device to avoid server adding our device again */
         config.AddInputSection("kbd", "keyboard-device",
@@ -108,6 +110,69 @@ TEST_F(libXiTest, DisplayNotGarbage)
     ASSERT_EQ(dev->display, dpy);
 
     XFreeEventData(dpy, &ev.xcookie);
+}
+
+TEST_F(libXiTest, SerialNumberNotGarbage)
+{
+    XORG_TESTCASE("https://bugs.fredesktop.org/id=64687");
+
+    ::Display *dpy = Display();
+
+
+    /* XIDeviceEvent */
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
+                    XI_Motion, -1);
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+
+    ASSERT_EVENT(XIDeviceEvent, motion1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EQ(motion1->serial, motion2->serial);
+
+    XSync(dpy, True);
+
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+    ASSERT_EVENT(XIDeviceEvent, motion3, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_LT(motion2->serial, motion3->serial);
+
+    /* XIRawEvent */
+    XSync(dpy, True);
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
+                    XI_RawMotion, -1);
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+    ASSERT_EVENT(XIDeviceEvent, raw1, dpy, GenericEvent, xi2_opcode, XI_RawMotion);
+    ASSERT_EVENT(XIDeviceEvent, raw2, dpy, GenericEvent, xi2_opcode, XI_RawMotion);
+    EXPECT_GT(raw2->serial, motion3->serial);
+    EXPECT_EQ(raw2->serial, raw2->serial);
+
+    XSync(dpy, True);
+
+    dev->PlayOne(EV_REL, REL_X, -1, true);
+    ASSERT_EVENT(XIDeviceEvent, raw3, dpy, GenericEvent, xi2_opcode, XI_RawMotion);
+    EXPECT_LT(raw2->serial, raw3->serial);
+
+    /* XIPropertyEvent, XIHierarchyEvent */
+    XSync(dpy, True);
+    SelectXI2Events(dpy, XIAllDevices, DefaultRootWindow(dpy),
+                    XI_HierarchyChanged, XI_PropertyEvent, -1);
+
+    int deviceid;
+    FindInputDeviceByName(dpy, "--device--", &deviceid);
+    XITProperty<int> prop(dpy, deviceid, "Device Enabled");
+    prop.data[0] = 0;
+    prop.Update();
+
+    ASSERT_EVENT(XIPropertyEvent, propev, dpy, GenericEvent, xi2_opcode, XI_PropertyEvent);
+    ASSERT_EVENT(XIHierarchyEvent, hierarchy, dpy, GenericEvent, xi2_opcode, XI_HierarchyChanged);
+    EXPECT_GT(propev->serial, raw3->serial);
+    EXPECT_EQ(hierarchy->serial, propev->serial);
+
+    prop.data[0] = 1;
+    prop.Update();
+    XSync(dpy, True);
+
+    /* FIXME: should check other events too */
 }
 
 #if HAVE_XI22
