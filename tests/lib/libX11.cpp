@@ -61,7 +61,7 @@ TEST_F(libX11Test, MakeBigReqBufferOverflow)
     XORG_TESTCASE("Fill dpybuf until there are exactly 12 bytes left.\n"
                   "Request a PolyFillArc BigRequest\n"
                   "Verify that the request does not run outside the buffer"
-                  "https://bugzilla.redhat.com/show_bug.cgi?id=56508");
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=56508");
 
     ::Display *dpy = Display();
     XSynchronize(dpy, False);
