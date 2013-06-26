@@ -364,6 +364,25 @@ TEST_F(EvdevMouseTest, BtnReleaseMaskOnly)
     ASSERT_FALSE(XPending(Display()));
 }
 
+TEST_F(EvdevMouseTest, WheelEmulationZeroIsBadValue)
+{
+    XORG_TESTCASE("Set wheel emulation intertia to 0\n"
+                  "Expect BadValue\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=66125");
+
+    ::Display *dpy = Display();
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(Display(), "--device--", &deviceid));
+
+
+    ASSERT_PROPERTY(short, emulation, dpy, deviceid, "Evdev Wheel Emulation Inertia");
+    emulation.data[0] = 0;
+
+    SetErrorTrap(dpy);
+    emulation.Update();
+    ASSERT_ERROR(ReleaseErrorTrap(dpy), BadValue);
+}
+
 #ifdef HAVE_XI22
 TEST_F(EvdevMouseTest, SmoothScrollingAvailable)
 {
