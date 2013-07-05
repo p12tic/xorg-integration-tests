@@ -570,7 +570,128 @@ public:
                                "Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig();
     }
+
+    virtual Window CreateWindow(::Display *dpy, Window parent)
+    {
+        Window win;
+        win = XCreateSimpleWindow(dpy, parent, 0, 0,
+                                  DisplayWidth(dpy, DefaultScreen(dpy)),
+                                  DisplayHeight(dpy, DefaultScreen(dpy)),
+                                  0, 0, 0);
+        XSelectInput(dpy, win, StructureNotifyMask);
+        XMapWindow(dpy, win);
+        if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
+            XEvent ev;
+            XNextEvent(dpy, &ev);
+        } else {
+            ADD_FAILURE() << "Failed waiting for Exposure";
+        }
+        XSelectInput(dpy, win, 0);
+        XSync(dpy, False);
+        return win;
+    }
+
+    virtual void GrabPointer(::Display *dpy, int deviceid, Window win)
+    {
+        XIEventMask mask;
+        mask.deviceid = deviceid;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_ButtonPress);
+        XISetMask(mask.mask, XI_ButtonRelease);
+        XISetMask(mask.mask, XI_Motion);
+
+        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
+                                        win, CurrentTime, None,
+                                        GrabModeAsync, GrabModeAsync,
+                                        False, &mask));
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+
+    /**
+     * Return a new synchronized client given our default server connection.
+     * Client is initialised for XI 2.2
+     */
+    virtual ::Display* NewClient(void) {
+        ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
+        if (!d)
+            ADD_FAILURE() << "Failed to open display for new client.\n";
+        XSynchronize(d, True);
+        int major = 2, minor = 2;
+        if (XIQueryVersion(d, &major, &minor) != Success)
+            ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
+        return d;
+    }
+
+    virtual void TouchBegin(int x, int y) {
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
+        TouchUpdate(x, y);
+    }
+
+    virtual void TouchUpdate(int x, int y) {
+        dev->PlayOne(EV_ABS, ABS_X, x);
+        dev->PlayOne(EV_ABS, ABS_Y, y);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, x);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_Y, y);
+        /* same values as the recordings file */
+        dev->PlayOne(EV_ABS, ABS_MT_ORIENTATION, 0);
+        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MAJOR, 468);
+        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MINOR, 306);
+        dev->PlayOne(EV_SYN, SYN_MT_REPORT, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
+    virtual void TouchEnd() {
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
 };
+
+TEST_F(TouchGrabTest, ActivePointerGrabOverPointerSelection)
+{
+    XORG_TESTCASE("Client c1 creates window and selects for button press.\n"
+                  "Client c2 has async active grab on the window\n"
+                  "Touch the window\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = NewClient();
+
+    Window win = CreateWindow(dpy1, DefaultRootWindow(dpy1));
+
+    SelectXI2Events(dpy1, XIAllMasterDevices, win,
+                    XI_ButtonPress,
+                    XI_ButtonRelease,
+                    XI_Motion,
+                    -1);
+    GrabPointer(dpy2, VIRTUAL_CORE_POINTER_ID, win);
+
+    TouchBegin(200, 200);
+    TouchUpdate(282, 282);
+    TouchEnd();
+
+    ASSERT_EVENT(XIDeviceEvent, press, dpy2, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_EVENT(XIDeviceEvent, motion, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, release, dpy2, GenericEvent, xi2_opcode, XI_ButtonRelease);
+
+    ASSERT_TRUE(NoEventPending(dpy2));
+
+    TouchBegin(210, 210);
+    TouchUpdate(292, 292);
+    TouchEnd();
+
+    ASSERT_EVENT(XIDeviceEvent, press2, dpy2, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_EVENT(XIDeviceEvent, motion2, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, release2, dpy2, GenericEvent, xi2_opcode, XI_ButtonRelease);
+
+    ASSERT_TRUE(NoEventPending(dpy2));
+    ASSERT_TRUE(NoEventPending(dpy1));
+
+    XCloseDisplay(dpy2);
+}
+
 
 class TouchGrabTestMultipleModes : public TouchGrabTest,
                                    public ::testing::WithParamInterface<int>
@@ -809,27 +930,6 @@ INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleTaps,
 
 class TouchOwnershipTest : public TouchGrabTest {
 public:
-    Window CreateWindow(::Display *dpy, Window parent)
-    {
-        Window win;
-        win = XCreateSimpleWindow(dpy, parent, 0, 0,
-                                  DisplayWidth(dpy, DefaultScreen(dpy)),
-                                  DisplayHeight(dpy, DefaultScreen(dpy)),
-                                  0, 0, 0);
-        XSelectInput(dpy, win, StructureNotifyMask);
-        XMapWindow(dpy, win);
-        if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
-            XEvent ev;
-            XNextEvent(dpy, &ev);
-        } else {
-            ADD_FAILURE() << "Failed waiting for Exposure";
-        }
-        XSelectInput(dpy, win, 0);
-        XSync(dpy, False);
-        return win;
-    }
-
-
     void GrabTouchOnWindow(::Display *dpy, Window win, bool ownership = false)
     {
         XIEventMask mask;
@@ -874,25 +974,6 @@ public:
         XSync(dpy, False);
     }
 
-    void GrabPointer(::Display *dpy, int deviceid, Window win)
-    {
-        XIEventMask mask;
-        mask.deviceid = deviceid;
-        mask.mask_len = XIMaskLen(XI_TouchOwnership);
-        mask.mask = new unsigned char[mask.mask_len]();
-
-        XISetMask(mask.mask, XI_ButtonPress);
-        XISetMask(mask.mask, XI_ButtonRelease);
-        XISetMask(mask.mask, XI_Motion);
-
-        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
-                                        win, CurrentTime, None,
-                                        GrabModeAsync, GrabModeAsync,
-                                        False, &mask));
-        delete[] mask.mask;
-        XSync(dpy, False);
-    }
-
     void SelectTouchOnWindow(::Display *dpy, Window win, bool ownership = false)
     {
         XIEventMask mask;
@@ -912,20 +993,6 @@ public:
         XSync(dpy, False);
     }
 
-    /**
-     * Return a new synchronized client given our default server connection.
-     * Client is initialised for XI 2.2
-     */
-    ::Display* NewClient(void) {
-        ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
-        if (!d)
-            ADD_FAILURE() << "Failed to open display for new client.\n";
-        XSynchronize(d, True);
-        int major = 2, minor = 2;
-        if (XIQueryVersion(d, &major, &minor) != Success)
-            ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
-        return d;
-    }
 };
 
 TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
