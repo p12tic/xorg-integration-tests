@@ -738,6 +738,29 @@ public:
         XSync(dpy, False);
     }
 
+    virtual void TouchBegin(int x, int y) {
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
+        TouchUpdate(x, y);
+    }
+
+    virtual void TouchUpdate(int x, int y) {
+        dev->PlayOne(EV_ABS, ABS_X, x);
+        dev->PlayOne(EV_ABS, ABS_Y, y);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, x);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_Y, y);
+        /* same values as the recordings file */
+        dev->PlayOne(EV_ABS, ABS_MT_ORIENTATION, 0);
+        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MAJOR, 468);
+        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MINOR, 306);
+        dev->PlayOne(EV_SYN, SYN_MT_REPORT, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
+    virtual void TouchEnd() {
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
 };
 
 TEST_F(TouchGrabTest, PassiveTouchGrabPassedToTouchClient)
