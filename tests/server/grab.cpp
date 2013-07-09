@@ -684,14 +684,13 @@ public:
 
     /**
      * Return a new synchronized client given our default server connection.
-     * Client is initialised for XI 2.2
      */
-    virtual ::Display* NewClient(void) {
+    virtual ::Display* NewClient(int maj = 2, int min = 2) {
         ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
         if (!d)
             ADD_FAILURE() << "Failed to open display for new client.\n";
         XSynchronize(d, True);
-        int major = 2, minor = 2;
+        int major = maj, minor = min;
         if (XIQueryVersion(d, &major, &minor) != Success)
             ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
         return d;
