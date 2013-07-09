@@ -1015,6 +1015,55 @@ class TouchGrabTestOnLegacyClient : public TouchGrabTest {
     }
 };
 
+TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabUngrabDuringTouch)
+{
+    XORG_TESTCASE("Create window\n"
+                  "Select for button events on XIAllMasterDevices.\n"
+                  "Touch begin\n"
+                  "Activate async active grab on the window\n"
+                  "Touch end, second touch begin\n"
+                  "Ungrab device\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=66720");
+
+    ::Display *dpy = Display(); /* XI 2.0 client */
+
+    int deviceid;
+    FindInputDeviceByName(dpy, "--device--", &deviceid);
+
+    Window win = CreateWindow(dpy, DefaultRootWindow(dpy));
+
+    SelectXI2Events(dpy, XIAllMasterDevices, win,
+                    XI_ButtonPress,
+                    XI_ButtonRelease,
+                    XI_Enter,
+                    XI_Leave,
+                    XI_Motion,
+                    -1);
+
+    TouchBegin(200, 200);
+    TouchUpdate(202, 202);
+
+    EXPECT_EVENT(XIDeviceEvent, m1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EVENT(XIDeviceEvent, p1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, win);
+    TouchEnd();
+
+    EXPECT_EVENT(XIDeviceEvent, r1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+
+    TouchBegin(200, 200);
+    TouchUpdate(202, 202);
+    EXPECT_EVENT(XIDeviceEvent, m2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EVENT(XIDeviceEvent, p2, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
+
+    TouchEnd();
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+
 TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabOverPointerSelection)
 {
     XORG_TESTCASE("Create window\n"
