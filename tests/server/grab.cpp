@@ -1460,27 +1460,6 @@ INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleTaps,
 
 class TouchOwnershipTest : public TouchGrabTest {
 public:
-    Window CreateWindow(::Display *dpy, Window parent)
-    {
-        Window win;
-        win = XCreateSimpleWindow(dpy, parent, 0, 0,
-                                  DisplayWidth(dpy, DefaultScreen(dpy)),
-                                  DisplayHeight(dpy, DefaultScreen(dpy)),
-                                  0, 0, 0);
-        XSelectInput(dpy, win, StructureNotifyMask);
-        XMapWindow(dpy, win);
-        if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
-            XEvent ev;
-            XNextEvent(dpy, &ev);
-        } else {
-            ADD_FAILURE() << "Failed waiting for Exposure";
-        }
-        XSelectInput(dpy, win, 0);
-        XSync(dpy, False);
-        return win;
-    }
-
-
     void GrabTouchOnWindow(::Display *dpy, Window win, bool ownership = false)
     {
         XIEventMask mask;
