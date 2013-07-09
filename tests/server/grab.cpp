@@ -681,6 +681,63 @@ public:
                                "Option \"CoreKeyboard\" \"on\"\n");
         config.WriteConfig();
     }
+
+    /**
+     * Return a new synchronized client given our default server connection.
+     * Client is initialised for XI 2.2
+     */
+    virtual ::Display* NewClient(void) {
+        ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
+        if (!d)
+            ADD_FAILURE() << "Failed to open display for new client.\n";
+        XSynchronize(d, True);
+        int major = 2, minor = 2;
+        if (XIQueryVersion(d, &major, &minor) != Success)
+            ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
+        return d;
+    }
+
+    virtual void GrabDevice(::Display *dpy, int deviceid, Window win, bool ownership = false)
+    {
+        XIEventMask mask;
+        mask.deviceid = deviceid;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_TouchBegin);
+        XISetMask(mask.mask, XI_TouchEnd);
+        XISetMask(mask.mask, XI_TouchUpdate);
+
+        if (ownership)
+            XISetMask(mask.mask, XI_TouchOwnership);
+
+        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
+                                        win, CurrentTime, None,
+                                        GrabModeAsync, GrabModeAsync,
+                                        False, &mask));
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+
+    virtual void GrabPointer(::Display *dpy, int deviceid, Window win)
+    {
+        XIEventMask mask;
+        mask.deviceid = deviceid;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_ButtonPress);
+        XISetMask(mask.mask, XI_ButtonRelease);
+        XISetMask(mask.mask, XI_Motion);
+
+        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
+                                        win, CurrentTime, None,
+                                        GrabModeAsync, GrabModeAsync,
+                                        False, &mask));
+        delete[] mask.mask;
+        XSync(dpy, False);
+    }
+
 };
 
 TEST_F(TouchGrabTest, PassiveTouchGrabPassedToTouchClient)
@@ -1482,47 +1539,6 @@ public:
         XSync(dpy, False);
     }
 
-    void GrabDevice(::Display *dpy, int deviceid, Window win, bool ownership = false)
-    {
-        XIEventMask mask;
-        mask.deviceid = deviceid;
-        mask.mask_len = XIMaskLen(XI_TouchOwnership);
-        mask.mask = new unsigned char[mask.mask_len]();
-
-        XISetMask(mask.mask, XI_TouchBegin);
-        XISetMask(mask.mask, XI_TouchEnd);
-        XISetMask(mask.mask, XI_TouchUpdate);
-
-        if (ownership)
-            XISetMask(mask.mask, XI_TouchOwnership);
-
-        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
-                                        win, CurrentTime, None,
-                                        GrabModeAsync, GrabModeAsync,
-                                        False, &mask));
-        delete[] mask.mask;
-        XSync(dpy, False);
-    }
-
-    void GrabPointer(::Display *dpy, int deviceid, Window win)
-    {
-        XIEventMask mask;
-        mask.deviceid = deviceid;
-        mask.mask_len = XIMaskLen(XI_TouchOwnership);
-        mask.mask = new unsigned char[mask.mask_len]();
-
-        XISetMask(mask.mask, XI_ButtonPress);
-        XISetMask(mask.mask, XI_ButtonRelease);
-        XISetMask(mask.mask, XI_Motion);
-
-        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
-                                        win, CurrentTime, None,
-                                        GrabModeAsync, GrabModeAsync,
-                                        False, &mask));
-        delete[] mask.mask;
-        XSync(dpy, False);
-    }
-
     void SelectTouchOnWindow(::Display *dpy, Window win, bool ownership = false)
     {
         XIEventMask mask;
@@ -1542,20 +1558,6 @@ public:
         XSync(dpy, False);
     }
 
-    /**
-     * Return a new synchronized client given our default server connection.
-     * Client is initialised for XI 2.2
-     */
-    ::Display* NewClient(void) {
-        ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
-        if (!d)
-            ADD_FAILURE() << "Failed to open display for new client.\n";
-        XSynchronize(d, True);
-        int major = 2, minor = 2;
-        if (XIQueryVersion(d, &major, &minor) != Success)
-            ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
-        return d;
-    }
 };
 
 TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
