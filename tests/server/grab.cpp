@@ -1005,6 +1005,76 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
     ASSERT_TRUE(NoEventPending(dpy3));
 }
 
+class TouchGrabTestOnLegacyClient : public TouchGrabTest {
+    virtual void SetUp() {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 0;
+
+        XITServerInputTest::SetUp();
+    }
+};
+
+TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabOverPointerSelection)
+{
+    XORG_TESTCASE("Create window\n"
+                  "Select for button press on slave device and XIAllMasterDevices.\n"
+                  "Async active grab on the window\n"
+                  "Touch begin/end over the window.\n"
+                  "Expect button events on slave\n"
+                  "Expect button events on master\n");
+
+    ::Display *dpy = Display(); /* XI 2.0 client */
+
+    int deviceid;
+    FindInputDeviceByName(dpy, "--device--", &deviceid);
+
+    Window win = CreateWindow(dpy, DefaultRootWindow(dpy));
+
+    XIEventMask mask[2];
+    mask[0].deviceid = deviceid;
+    mask[0].mask_len = XIMaskLen(XI_TouchOwnership);
+    mask[0].mask = new unsigned char[mask[0].mask_len]();
+
+    XISetMask(mask[0].mask, XI_ButtonPress);
+    XISetMask(mask[0].mask, XI_ButtonRelease);
+    XISetMask(mask[0].mask, XI_Enter);
+    XISetMask(mask[0].mask, XI_Leave);
+    XISetMask(mask[0].mask, XI_Motion);
+
+    mask[1].deviceid = XIAllMasterDevices;
+    mask[1].mask_len = XIMaskLen(XI_TouchOwnership);
+    mask[1].mask = new unsigned char[mask[1].mask_len]();
+
+    XISetMask(mask[1].mask, XI_ButtonPress);
+    XISetMask(mask[1].mask, XI_ButtonRelease);
+    XISetMask(mask[1].mask, XI_Enter);
+    XISetMask(mask[1].mask, XI_Leave);
+    XISetMask(mask[1].mask, XI_Motion);
+
+    XISelectEvents(dpy, win, mask, 2);
+    GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, win);
+
+    TouchBegin(200, 200);
+    TouchUpdate(202, 202);
+    TouchEnd();
+
+    EXPECT_EVENT(XIDeviceEvent, press_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    EXPECT_EQ(press_dev_1->deviceid, deviceid);
+    EXPECT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EQ(motion->deviceid, VIRTUAL_CORE_POINTER_ID);
+
+    EXPECT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    EXPECT_EQ(press->deviceid, VIRTUAL_CORE_POINTER_ID);
+    EXPECT_EVENT(XIDeviceEvent, release_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+    EXPECT_EQ(release_dev_1->deviceid, deviceid);
+    EXPECT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+    EXPECT_EQ(release->deviceid, VIRTUAL_CORE_POINTER_ID);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
 
 class TouchUngrabTest : public TouchGrabTest,
                         public ::testing::WithParamInterface<enum GrabType>
