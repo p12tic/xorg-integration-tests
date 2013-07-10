@@ -2034,8 +2034,7 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
                   "TouchBegin in the window.\n"
                   "Expect ButtonPress to A.\n"
                   "Ungrab pointer.\n"
-                  "Expect TouchBegin and TouchOwnership to B.\n"
-                  "TouchEnd in the window, expect TouchEnd on B.\n");
+                  "TouchEnd to B.\n");
 
     ::Display *dpy = Display();
     XSynchronize(dpy, True);
@@ -2059,14 +2058,14 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
     ASSERT_TRUE(NoEventPending(dpy2));
 
     XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
-
-    ASSERT_EVENT(XITouchOwnershipEvent, B_ownership, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
-
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    ASSERT_TRUE(NoEventPending(dpy));
 
     ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
 
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
     ASSERT_TRUE(NoEventPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy2));
 }
 
 #endif /* HAVE_XI22 */
