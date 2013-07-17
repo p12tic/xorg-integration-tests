@@ -1086,3 +1086,140 @@ TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
 INSTANTIATE_TEST_CASE_P(, PointerAbsoluteTransformationMatrixTest,
                         ::testing::Combine(::testing::Values(IDENTITY, LEFT_HALF, RIGHT_HALF),
                                            ::testing::Values(1, 2)));
+
+class KeyboardTest : public XITServerInputTest,
+                     public DeviceInterface {
+public:
+    /**
+     * Initializes a standard mouse device.
+     */
+    virtual void SetUp() {
+        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    /**
+     * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
+     * the evemu device. The input from GetParam() is used as XkbLayout.
+     */
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CoreKeyboard\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(KeyboardTest, FocusTestAttachedSlave)
+{
+    XORG_TESTCASE("Create window\n"
+                  "Set VCK focus to window\n"
+                  "Select for VCK keyboard events on window\n"
+                  "Press key on slave device\n"
+                  "Assert events received on window\n");
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
+    XISetFocus(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, CurrentTime);
+    SelectXI2Events(dpy, VIRTUAL_CORE_KEYBOARD_ID, win,
+                    XI_KeyPress, XI_KeyRelease, -1);
+
+    dev->PlayOne(EV_KEY, KEY_A, 1, true);
+    dev->PlayOne(EV_KEY, KEY_A, 0, true);
+
+    ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_KeyPress);
+    ASSERT_EQ(press->event, win);
+    ASSERT_EQ(press->deviceid, VIRTUAL_CORE_KEYBOARD_ID);
+    ASSERT_EQ(press->sourceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_KeyRelease);
+    ASSERT_EQ(release->event, win);
+    ASSERT_EQ(release->deviceid, VIRTUAL_CORE_KEYBOARD_ID);
+    ASSERT_EQ(release->sourceid, deviceid);
+}
+
+TEST_F(KeyboardTest, FocusTestAttachedSlaveSeparateFocus)
+{
+    XORG_TESTCASE("Create window\n"
+                  "Set slave focus to window\n"
+                  "Select for slave events on window\n"
+                  "Press key on slave device\n"
+                  "Assert events received on window\n");
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
+    SelectXI2Events(dpy, deviceid, win,
+                    XI_KeyPress, XI_KeyRelease, -1);
+
+    dev->PlayOne(EV_KEY, KEY_A, 1, true);
+    dev->PlayOne(EV_KEY, KEY_A, 0, true);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    XISetFocus(dpy, deviceid, win, CurrentTime);
+    dev->PlayOne(EV_KEY, KEY_A, 1, true);
+    dev->PlayOne(EV_KEY, KEY_A, 0, true);
+
+    ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_KeyPress);
+    ASSERT_EQ(press->event, win);
+    ASSERT_EQ(press->deviceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_KeyRelease);
+    ASSERT_EQ(release->event, win);
+    ASSERT_EQ(release->deviceid, deviceid);
+}
+
+TEST_F(KeyboardTest, FocusTestFloatingSlave)
+{
+    XORG_TESTCASE("Float slave device\n"
+                  "Create window\n"
+                  "Set VCK focus to window\n"
+                  "Select for slave events on window\n"
+                  "Press key on slave device\n"
+                  "Assert no event received\n"
+                  "Set VCK focus to root, slave focus to window\n"
+                  "Press key on slave device\n"
+                  "Assert event received\n");
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    XIAnyHierarchyChangeInfo float_slave;
+    float_slave.detach.type = XIDetachSlave;
+    float_slave.detach.deviceid = deviceid;
+    XIChangeHierarchy(dpy, &float_slave, 1);
+
+    Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
+    XISetFocus(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, CurrentTime);
+    SelectXI2Events(dpy, deviceid, win,
+                    XI_KeyPress, XI_KeyRelease, -1);
+
+    dev->PlayOne(EV_KEY, KEY_A, 1, true);
+    dev->PlayOne(EV_KEY, KEY_A, 0, true);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    XISetFocus(dpy, VIRTUAL_CORE_KEYBOARD_ID, DefaultRootWindow(dpy), CurrentTime);
+    XISetFocus(dpy, deviceid, win, CurrentTime);
+
+    dev->PlayOne(EV_KEY, KEY_A, 1, true);
+    dev->PlayOne(EV_KEY, KEY_A, 0, true);
+
+    ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_KeyPress);
+    ASSERT_EQ(press->event, win);
+    ASSERT_EQ(press->deviceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_KeyRelease);
+    ASSERT_EQ(release->event, win);
+    ASSERT_EQ(release->deviceid, deviceid);
+}
+
