@@ -106,6 +106,7 @@ void XITServerTest::StartServer() {
     }
 
     server.SetOption("-noreset", "");
+    server.SetOption("-logverbose", "12");
     server.Start();
     xorg::testing::Test::SetDisplayString(server.GetDisplayString());
 
