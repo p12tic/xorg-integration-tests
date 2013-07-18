@@ -84,6 +84,36 @@ protected:
     }
 };
 
+TEST_F(TouchTest, TouchEventFlags)
+{
+    XORG_TESTCASE("Register for touch events on root window.\n"
+                  "Trigger touch end/receive\n"
+                  "Verify only touch flags are set on touch event\n");
+
+    ::Display *dpy = Display();
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+    XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
+    delete[] mask.mask;
+
+    TouchBegin(100, 100);
+    TouchEnd();
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+
+    ASSERT_TRUE(tbegin->flags & XITouchEmulatingPointer);
+    ASSERT_TRUE(tend->flags & XITouchEmulatingPointer);
+
+    ASSERT_EQ(0, tbegin->flags & ~XITouchEmulatingPointer);
+    ASSERT_EQ(0, tend->flags & ~XITouchEmulatingPointer);
+}
+
 /**
  * A test fixture for testing touch across XInput 2.x extension versions.
  *
@@ -267,8 +297,7 @@ TEST_P(TouchTestXI2Version, NoEmulatedButton1MotionWithoutButtonPress)
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
 
-    XSync(dpy, False);
-    ASSERT_EQ(XPending(dpy), 0);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)

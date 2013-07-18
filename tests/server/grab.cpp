@@ -339,11 +339,114 @@ TEST_F(PointerGrabTest, ImplicitGrabToActiveGrabDeactivated)
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
 
+TEST_F(PointerGrabTest, AsyncPassiveGrabPressRelease)
+{
+    XORG_TESTCASE("Client 2 creates window with button mask.\n"
+                  "Client 1 async passive button grab on that window.\n"
+                  "Double-click.\n"
+                  "Client 1 should get press/release\n"
+                  "Client 2 gets nothing\n"
+                  "Ungrab button, replay, now C2 gets the events\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+
+    Window win = CreateWindow(dpy2, None);
+    XSelectInput(dpy2, win, ButtonPressMask|ButtonReleaseMask);
+
+    XGrabButton(dpy1, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XEvent, press, dpy1, ButtonPress);
+        ASSERT_EVENT(XEvent, release, dpy1, ButtonRelease);
+    }
+
+    XUngrabButton(dpy1, AnyButton, XIAnyModifier, win);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
+        ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy1));
+    ASSERT_TRUE(NoEventPending(dpy2));
+}
+
+/**
+ * @tparam AsyncPointer, SyncPointer, ReplayPointer
+ */
+class PointerGrabTestAllowEvents : public PointerGrabTest,
+                                        public ::testing::WithParamInterface<int> {
+};
+
+TEST_P(PointerGrabTestAllowEvents, AllowEventsDoubleClick)
+{
+    int mode = GetParam();
+    std::string strmode;
+    switch(mode) {
+        case ReplayPointer:     strmode = "ReplayPointer"; break;
+        case AsyncPointer:      strmode = "AsyncPointer"; break;
+        case SyncPointer:       strmode = "SyncPointer"; break;
+    }
+    XORG_TESTCASE("Client 2 creates window with button mask.\n"
+                  "Client 1 sync passive button grab on that window.\n"
+                  "Double-click.\n"
+                  "Client1: AllowEvents(" + strmode + ")\n"
+                  "Client2: events for Replay, not for Sync/Async\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+
+    Window win = CreateWindow(dpy2, None);
+    XSelectInput(dpy2, win, ButtonPressMask|ButtonReleaseMask);
+
+    XGrabButton(dpy1, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeSync, GrabModeAsync, None, None);
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XEvent, press, dpy1, ButtonPress);
+        XAllowEvents(dpy1, mode, CurrentTime);
+        if (mode == ReplayPointer) {
+            ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
+            ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
+        } else {
+            ASSERT_EVENT(XEvent, release, dpy1, ButtonRelease);
+        }
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy1));
+    ASSERT_TRUE(NoEventPending(dpy2));
+}
+
+INSTANTIATE_TEST_CASE_P(, PointerGrabTestAllowEvents,
+                        ::testing::Values(AsyncPointer, SyncPointer, ReplayPointer));
 
 enum GrabType {
     GRABTYPE_CORE,
     GRABTYPE_XI1,
     GRABTYPE_XI2,
+    GRABTYPE_XI2TOUCH,
 };
 
 static std::string grabtype_enum_to_string(enum GrabType gt) {
@@ -351,6 +454,7 @@ static std::string grabtype_enum_to_string(enum GrabType gt) {
         case GRABTYPE_CORE: return "GRABTYPE_CORE"; break;
         case GRABTYPE_XI1:  return "GRABTYPE_XI1"; break;
         case GRABTYPE_XI2:  return "GRABTYPE_XI2"; break;
+        case GRABTYPE_XI2TOUCH:  return "GRABTYPE_XI2TOUCH"; break;
     }
 
     ADD_FAILURE() << "BUG: shouldn't get here";
@@ -502,6 +606,10 @@ TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
             rc = XGrabDevice(dpy, device, root, False, 0, NULL,
                              GrabModeAsync, GrabModeAsync, CurrentTime);
             break;
+        default:
+            FAIL();
+            break;
+
     }
     ASSERT_EQ(rc, GrabSuccess);
 
@@ -525,6 +633,9 @@ TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
             ASSERT_TRUE(device);
             rc = XGrabDevice(dpy, device, root, False, 0, NULL,
                              GrabModeAsync, GrabModeAsync, CurrentTime);
+            break;
+        default:
+            FAIL();
             break;
     }
 
@@ -571,24 +682,40 @@ public:
         config.WriteConfig();
     }
 
-    virtual Window CreateWindow(::Display *dpy, Window parent)
+    /**
+     * Return a new synchronized client given our default server connection.
+     */
+    virtual ::Display* NewClient(int maj = 2, int min = 2) {
+        ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
+        if (!d)
+            ADD_FAILURE() << "Failed to open display for new client.\n";
+        XSynchronize(d, True);
+        int major = maj, minor = min;
+        if (XIQueryVersion(d, &major, &minor) != Success)
+            ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
+        return d;
+    }
+
+    virtual void GrabDevice(::Display *dpy, int deviceid, Window win, bool ownership = false)
     {
-        Window win;
-        win = XCreateSimpleWindow(dpy, parent, 0, 0,
-                                  DisplayWidth(dpy, DefaultScreen(dpy)),
-                                  DisplayHeight(dpy, DefaultScreen(dpy)),
-                                  0, 0, 0);
-        XSelectInput(dpy, win, StructureNotifyMask);
-        XMapWindow(dpy, win);
-        if (xorg::testing::XServer::WaitForEventOfType(dpy, MapNotify, -1, -1)) {
-            XEvent ev;
-            XNextEvent(dpy, &ev);
-        } else {
-            ADD_FAILURE() << "Failed waiting for Exposure";
-        }
-        XSelectInput(dpy, win, 0);
+        XIEventMask mask;
+        mask.deviceid = deviceid;
+        mask.mask_len = XIMaskLen(XI_TouchOwnership);
+        mask.mask = new unsigned char[mask.mask_len]();
+
+        XISetMask(mask.mask, XI_TouchBegin);
+        XISetMask(mask.mask, XI_TouchEnd);
+        XISetMask(mask.mask, XI_TouchUpdate);
+
+        if (ownership)
+            XISetMask(mask.mask, XI_TouchOwnership);
+
+        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
+                                        win, CurrentTime, None,
+                                        GrabModeAsync, GrabModeAsync,
+                                        False, &mask));
+        delete[] mask.mask;
         XSync(dpy, False);
-        return win;
     }
 
     virtual void GrabPointer(::Display *dpy, int deviceid, Window win)
@@ -608,21 +735,6 @@ public:
                                         False, &mask));
         delete[] mask.mask;
         XSync(dpy, False);
-    }
-
-    /**
-     * Return a new synchronized client given our default server connection.
-     * Client is initialised for XI 2.2
-     */
-    virtual ::Display* NewClient(void) {
-        ::Display *d = XOpenDisplay(server.GetDisplayString().c_str());
-        if (!d)
-            ADD_FAILURE() << "Failed to open display for new client.\n";
-        XSynchronize(d, True);
-        int major = 2, minor = 2;
-        if (XIQueryVersion(d, &major, &minor) != Success)
-            ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
-        return d;
     }
 
     virtual void TouchBegin(int x, int y) {
@@ -692,11 +804,666 @@ TEST_F(TouchGrabTest, ActivePointerGrabOverPointerSelection)
     XCloseDisplay(dpy2);
 }
 
+TEST_F(TouchGrabTest, PassiveTouchGrabPassedToTouchClient)
+{
+    XORG_TESTCASE("Client 1: register for passive touch grab on roow window\n"
+                  "Client 2: register for touch events on window\n"
+                  "Trigger touch begin/end\n"
+                  "Client 1: reject after TouchEnd\n"
+                  "Client 2: verify touch event is received\n"
+                  "Verify pointer has no button set\n");
+
+    int major = 2, minor = 2;
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy2, True);
+    XIQueryVersion(dpy2, &major, &minor);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    XISelectEvents(dpy2, win, &mask, 1);
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+    XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+
+    ASSERT_EVENT(XEvent, tbegin2, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(NoEventPending(dpy2));
+    ASSERT_TRUE(NoEventPending(dpy1));
+
+    /* use a third client for checking pointer state, since a XI2.2 client
+     * won't see emulated touch state */
+    ::Display *dpy3 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy3, True);
+    Window child;
+    double win_x, win_y;
+    double root_x, root_y;
+    XIButtonState buttons;
+    XIModifierState modifiers;
+    XIGroupState group;
+    XIQueryPointer(dpy3, VIRTUAL_CORE_POINTER_ID,
+                   root, &root, &child,
+                   &root_x, &root_y,
+                   &win_x, &win_y,
+                   &buttons, &modifiers, &group);
+
+    ASSERT_GE(buttons.mask_len, 1);
+    for (int i = 0; i < buttons.mask_len * 8; i++)
+        ASSERT_FALSE(XIMaskIsSet(buttons.mask, i));
+}
+
+TEST_F(TouchGrabTest, TouchGrabPassedToCoreGrab)
+{
+    XORG_TESTCASE("Client 1: Register for passive touch grab on root window\n"
+                  "Client 2: Register for passive button grab on client window\n"
+                  "Trigger touch begin/end\n"
+                  "Client 1: reject after TouchEnd\n"
+                  "Client 2: verify button event is received\n"
+                  "Repeat 10 times\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy2, True);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    XGrabButton(dpy2, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+
+    for (int i = 0; i < 10; i++) {
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+        ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+
+        ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
+        ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
+        ASSERT_TRUE(NoEventPending(dpy2));
+        ASSERT_TRUE(NoEventPending(dpy1));
+    }
+}
+
+TEST_F(TouchGrabTest, TouchGrabPassedToTouch)
+{
+    XORG_TESTCASE("Client C1 has touch grab on root window.\n"
+                  "Client c2 has touch grab on window.\n"
+                  "Touch begin/end\n"
+                  "Reject from C1\n"
+                  "Verify C2 gets all events\n");
+
+    int major = 2, minor = 2;
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XIQueryVersion(dpy2, &major, &minor);
+    XSynchronize(dpy2, True);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy2, VIRTUAL_CORE_POINTER_ID,
+                                        win, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    for (int i = 0; i < 10; i++) {
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+        ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+        ASSERT_TRUE(NoEventPending(dpy1));
+
+        ASSERT_EVENT(XIDeviceEvent, tbegin2, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy2, tend2->deviceid, tend2->detail, win, XIAcceptTouch);
+        ASSERT_TRUE(NoEventPending(dpy2));
+    }
+}
+
+TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
+{
+    XORG_TESTCASE("Client C1 has touch grab on root window.\n"
+                  "Client C2 has touch grab with ownership on window.\n"
+                  "Client C3 has touch grab with ownership on window.\n"
+                  "Touch begin\n"
+                  "Accept touch from C2.\n"
+                  "Expect TouchEnd for C3.\n"
+                  "Reject from C1\n"
+                  "Expect TouchEnd for C1\n"
+                  "Expect TouchOwnerhip for C2\n"
+                  "Touch end\n"
+                  "Expect TouchEnd for C2\n");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    ::Display *dpy3 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+    XSynchronize(dpy3, True);
+
+    int major = 2, minor = 3;
+    XIQueryVersion(dpy2, &major, &minor);
+    XIQueryVersion(dpy3, &major, &minor);
+
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy3, None);
+    Window subwin = CreateWindow(dpy3, win);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+
+    XISetMask(mask.mask, XI_TouchOwnership);
+
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy2, VIRTUAL_CORE_POINTER_ID,
+                                        win, False, &mask, 1, &mods));
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy3, VIRTUAL_CORE_POINTER_ID,
+                                        subwin, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    /* C1 is owner, but all three get begin event */
+    ASSERT_EVENT(XIDeviceEvent, tbegin1, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tbegin2, dpy2, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, tbegin3, dpy3, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_TRUE(NoEventPending(dpy1));
+    ASSERT_TRUE(NoEventPending(dpy2));
+    ASSERT_TRUE(NoEventPending(dpy3));
+
+    /* Accept from C2, changes nothing on the wire yet */
+    XIAllowTouchEvents(dpy2, tbegin2->deviceid, tbegin2->detail, win, XIAcceptTouch);
+
+    /* Reject from C1, finishes for C1, owner is C2 */
+    XIAllowTouchEvents(dpy1, tbegin1->deviceid, tbegin1->detail, root, XIRejectTouch);
+    ASSERT_EVENT(XIDeviceEvent, tend1, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_EVENT(XIDeviceEvent, towner2, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
+
+    /* Physicall end touch */
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    ASSERT_EVENT(XIDeviceEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(NoEventPending(dpy2));
+
+    ASSERT_EVENT(XIDeviceEvent, tend3, dpy3, GenericEvent, xi2_opcode, XI_TouchEnd);
+    ASSERT_TRUE(NoEventPending(dpy3));
+}
+
+class TouchGrabTestOnLegacyClient : public TouchGrabTest {
+    virtual void SetUp() {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 0;
+
+        XITServerInputTest::SetUp();
+    }
+};
+
+TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabUngrabDuringTouch)
+{
+    XORG_TESTCASE("Create window\n"
+                  "Select for button events on XIAllMasterDevices.\n"
+                  "Touch begin\n"
+                  "Activate async active grab on the window\n"
+                  "Touch end, second touch begin\n"
+                  "Ungrab device\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=66720");
+
+    ::Display *dpy = Display(); /* XI 2.0 client */
+
+    int deviceid;
+    FindInputDeviceByName(dpy, "--device--", &deviceid);
+
+    Window win = CreateWindow(dpy, DefaultRootWindow(dpy));
+
+    SelectXI2Events(dpy, XIAllMasterDevices, win,
+                    XI_ButtonPress,
+                    XI_ButtonRelease,
+                    XI_Enter,
+                    XI_Leave,
+                    XI_Motion,
+                    -1);
+
+    TouchBegin(200, 200);
+    TouchUpdate(202, 202);
+
+    EXPECT_EVENT(XIDeviceEvent, m1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EVENT(XIDeviceEvent, p1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, win);
+    TouchEnd();
+
+    EXPECT_EVENT(XIDeviceEvent, r1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+
+    TouchBegin(200, 200);
+    TouchUpdate(202, 202);
+    EXPECT_EVENT(XIDeviceEvent, m2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EVENT(XIDeviceEvent, p2, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
+
+    TouchEnd();
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+
+TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabOverPointerSelection)
+{
+    XORG_TESTCASE("Create window\n"
+                  "Select for button press on slave device and XIAllMasterDevices.\n"
+                  "Async active grab on the window\n"
+                  "Touch begin/end over the window.\n"
+                  "Expect button events on slave\n"
+                  "Expect button events on master\n");
+
+    ::Display *dpy = Display(); /* XI 2.0 client */
+
+    int deviceid;
+    FindInputDeviceByName(dpy, "--device--", &deviceid);
+
+    Window win = CreateWindow(dpy, DefaultRootWindow(dpy));
+
+    XIEventMask mask[2];
+    mask[0].deviceid = deviceid;
+    mask[0].mask_len = XIMaskLen(XI_TouchOwnership);
+    mask[0].mask = new unsigned char[mask[0].mask_len]();
+
+    XISetMask(mask[0].mask, XI_ButtonPress);
+    XISetMask(mask[0].mask, XI_ButtonRelease);
+    XISetMask(mask[0].mask, XI_Enter);
+    XISetMask(mask[0].mask, XI_Leave);
+    XISetMask(mask[0].mask, XI_Motion);
+
+    mask[1].deviceid = XIAllMasterDevices;
+    mask[1].mask_len = XIMaskLen(XI_TouchOwnership);
+    mask[1].mask = new unsigned char[mask[1].mask_len]();
+
+    XISetMask(mask[1].mask, XI_ButtonPress);
+    XISetMask(mask[1].mask, XI_ButtonRelease);
+    XISetMask(mask[1].mask, XI_Enter);
+    XISetMask(mask[1].mask, XI_Leave);
+    XISetMask(mask[1].mask, XI_Motion);
+
+    XISelectEvents(dpy, win, mask, 2);
+    GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, win);
+
+    TouchBegin(200, 200);
+    TouchUpdate(202, 202);
+    TouchEnd();
+
+    EXPECT_EVENT(XIDeviceEvent, press_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    EXPECT_EQ(press_dev_1->deviceid, deviceid);
+    EXPECT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EQ(motion->deviceid, VIRTUAL_CORE_POINTER_ID);
+
+    EXPECT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    EXPECT_EQ(press->deviceid, VIRTUAL_CORE_POINTER_ID);
+    EXPECT_EVENT(XIDeviceEvent, release_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+    EXPECT_EQ(release_dev_1->deviceid, deviceid);
+    EXPECT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+    EXPECT_EQ(release->deviceid, VIRTUAL_CORE_POINTER_ID);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+
+class TouchUngrabTest : public TouchGrabTest,
+                        public ::testing::WithParamInterface<enum GrabType>
+{
+    virtual void SetUp() {
+        SetDevice("tablets/N-Trig-MultiTouch.desc");
+
+        xi2_major_minimum = 2;
+        switch(GetParam()) {
+            case GRABTYPE_XI2TOUCH:
+                xi2_minor_minimum = 2;
+                break;
+            default:
+                xi2_minor_minimum = 0;
+                break;
+        }
+
+        XITServerInputTest::SetUp();
+    }
+};
+
+TEST_P(TouchUngrabTest, UngrabButtonDuringTouch)
+{
+    XORG_TESTCASE("Grab a button\n"
+                  "Trigger pointer-emulated button grab\n"
+                  "Ungrab the button\n"
+                  "Continue with touch events\n");
+    enum GrabType grab_type = GetParam();
+    SCOPED_TRACE("" + grabtype_enum_to_string(grab_type));
+
+    ::Display *dpy = Display();
+
+    XIEventMask mask;
+    mask.mask_len = XIMaskLen(XI_LASTEVENT);
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask = new unsigned char[mask.mask_len]();
+    if (grab_type == GRABTYPE_XI2) {
+        XISetMask(mask.mask, XI_ButtonPress);
+        XISetMask(mask.mask, XI_ButtonRelease);
+        XISetMask(mask.mask, XI_Motion);
+    } else if (grab_type == GRABTYPE_XI2TOUCH) {
+        XISetMask(mask.mask, XI_TouchBegin);
+        XISetMask(mask.mask, XI_TouchUpdate);
+        XISetMask(mask.mask, XI_TouchEnd);
+    }
+
+    XIGrabModifiers modifiers = {};
+    modifiers.modifiers = XIAnyModifier;
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            XGrabButton(dpy, AnyButton, XIAnyModifier,
+                        DefaultRootWindow(dpy), False,
+                        ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+                        GrabModeAsync, GrabModeAsync, None, None);
+            break;
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            XIGrabButton(dpy, VIRTUAL_CORE_POINTER_ID,
+                         XIAnyButton, DefaultRootWindow(dpy),
+                         None, GrabModeAsync, GrabModeAsync, False,
+                         &mask, 1, &modifiers);
+            break;
+        case GRABTYPE_XI2TOUCH:
+            XIGrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID,
+                             DefaultRootWindow(dpy), False,
+                             &mask, 1, &modifiers);
+            break;
+    }
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            {
+                ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+                XUngrabButton(dpy, AnyButton, AnyModifier, DefaultRootWindow(dpy));
+                break;
+            }
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            {
+                ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+                XIUngrabButton(dpy, VIRTUAL_CORE_POINTER_ID, XIAnyButton,
+                        DefaultRootWindow(dpy), 1, &modifiers);
+                break;
+            }
+        case GRABTYPE_XI2TOUCH:
+            {
+                ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+                XIUngrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy), 1, &modifiers);
+            }
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            {
+                ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+                break;
+            }
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            {
+                ASSERT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
+                break;
+            }
+        case GRABTYPE_XI2TOUCH:
+            {
+                ASSERT_EVENT(XIDeviceEvent, tupdate, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
+                break;
+            }
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    switch (grab_type) {
+        case GRABTYPE_CORE:
+            {
+                ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+                break;
+            }
+        case GRABTYPE_XI1:
+            break;
+        case GRABTYPE_XI2:
+            {
+                ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent,
+                             xi2_opcode, XI_ButtonRelease);
+                break;
+            }
+        case GRABTYPE_XI2TOUCH:
+            {
+                ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+                XIAllowTouchEvents(dpy, tend->deviceid, tend->detail,
+                                   DefaultRootWindow(dpy), XIAcceptTouch);
+                break;
+            }
+    }
+
+    delete[] mask.mask;
+
+}
+
+INSTANTIATE_TEST_CASE_P(, TouchUngrabTest,
+                        ::testing::Values(GRABTYPE_CORE, GRABTYPE_XI2, GRABTYPE_XI2TOUCH));
+
+/**
+ * @tparam AsyncPointer, SyncPointer, ReplayPointer
+ */
+class TouchGrabTestAllowSome : public TouchGrabTest,
+                               public ::testing::WithParamInterface<int> {
+};
+
+TEST_P(TouchGrabTestAllowSome, TouchGrabPassedToPassivePassedToRegular)
+{
+    int mode = GetParam();
+    std::string strmode;
+    switch(mode) {
+        case ReplayPointer:     strmode = "ReplayPointer"; break;
+        case AsyncPointer:      strmode = "AsyncPointer"; break;
+        case SyncPointer:       strmode = "SyncPointer"; break;
+    }
+
+    XORG_TESTCASE("Client 1: register for touch grabs with ownership on root window.\n"
+                  "Client 2: register for sync passive core pointer grab on root window.\n"
+                  "Client 3: register for core pointer events on root window.\n"
+                  "Touch begin/end, repeat\n"
+                  "Client 1: reject touch\n"
+                  "Client 2: AllowSome(" + strmode + ")\n"
+                  "Client 3: consume events.\n"
+                  "Repeat\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=56578");
+
+    ::Display *dpy1 = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    ::Display *dpy3 = XOpenDisplay(server.GetDisplayString().c_str());
+
+    XSynchronize(dpy1, True);
+    XSynchronize(dpy2, True);
+    XSynchronize(dpy3, True);
+
+    Window root = DefaultRootWindow(dpy1);
+    Window win = CreateWindow(dpy2, None);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchOwnership);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchOwnership);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy1, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    XGrabButton(dpy2, AnyButton, XIAnyModifier, win, False,
+                ButtonPressMask|ButtonReleaseMask,
+                GrabModeSync, GrabModeAsync, None, None);
+
+    XSelectInput(dpy3, win, ButtonPressMask|ButtonReleaseMask);
+
+    for (int i = 0; i < 2; i++) {
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
+        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    }
+
+    for (int i = 0; i < 2; i++) {
+        ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
+        ASSERT_EVENT(XIDeviceEvent, towner, dpy1, GenericEvent, xi2_opcode, XI_TouchOwnership);
+        ASSERT_EVENT(XIDeviceEvent, tupdate, dpy1, GenericEvent, xi2_opcode, XI_TouchUpdate);
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
+        XIAllowTouchEvents(dpy1, tbegin->deviceid, tbegin->detail, root, XIRejectTouch);
+        if (i == 0)
+            ASSERT_EQ(XPending(dpy1), 4); /* begin, owner, update, end of
+                                             second touch */
+        else
+            ASSERT_TRUE(NoEventPending(dpy1));
+
+        ASSERT_EVENT(XEvent, grab_press, dpy2, ButtonPress);
+        XAllowEvents(dpy2, mode, CurrentTime);
+
+        if (mode == ReplayPointer) {
+            ASSERT_EVENT(XEvent, press, dpy3, ButtonPress);
+            ASSERT_EVENT(XEvent, release, dpy3, ButtonRelease);
+            ASSERT_TRUE(NoEventPending(dpy2));
+        } else {
+            ASSERT_EVENT(XEvent, release, dpy2, ButtonRelease);
+            ASSERT_TRUE(NoEventPending(dpy3));
+        }
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(, TouchGrabTestAllowSome,
+                        ::testing::Values(AsyncPointer, SyncPointer, ReplayPointer));
 
 class TouchGrabTestMultipleModes : public TouchGrabTest,
                                    public ::testing::WithParamInterface<int>
 {
 };
+
+TEST_P(TouchGrabTestMultipleModes, SingleTouchGrabListenerAcceptRejectBeforeTouchEnd)
+{
+    int mode = GetParam();
+    std::string strmode = (mode == XIAcceptTouch) ? "XIAcceptTouch" : "XIRejectTouch";
+
+    XORG_TESTCASE("Register for a touch grab.\n"
+                  "Begin touch\n"
+                  "Verify begin event is received.\n"
+                  "Call XIAllowTouchEvents(i" + strmode + ")\n"
+                  "End touch\n"
+                  "Verify end event is received at the right time.\n");
+
+    ::Display *dpy = Display();
+    Window root = DefaultRootWindow(dpy);
+
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+
+    XIGrabModifiers mods = {};
+    mods.modifiers = XIAnyModifier;
+    ASSERT_EQ(Success, XIGrabTouchBegin(dpy, VIRTUAL_CORE_POINTER_ID,
+                                        root, False, &mask, 1, &mods));
+    delete[] mask.mask;
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    XIAllowTouchEvents(dpy, tbegin->deviceid, tbegin->detail, root, mode);
+
+    if (mode == XIAcceptTouch)
+        ASSERT_TRUE(NoEventPending(dpy));
+    else {
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    }
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    if (mode == XIAcceptTouch) {
+        ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
 
 TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
 {
@@ -804,6 +1571,7 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     mask.mask_len = XIMaskLen(XI_ButtonRelease);
     mask.mask = new unsigned char[mask.mask_len]();
     XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_ButtonRelease);
 
     XIGrabModifiers mods;
     mods.modifiers = XIAnyModifier;
@@ -829,14 +1597,15 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     XSync(dpy1, False);
     XSync(dpy2, False);
 
-    ASSERT_TRUE(XPending(dpy1));
+    ASSERT_GT(XPending(dpy1), 0);
     int event_count = 0;
     while (XPending(dpy1)) {
         event_count++;
 
-        ASSERT_EVENT(XIDeviceEvent, ev, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
+        ASSERT_EVENT(XIDeviceEvent, press, dpy1, GenericEvent, xi2_opcode, XI_ButtonPress);
         if (mode == GrabModeSync)
-            XIAllowEvents(dpy1, ev->deviceid, XISyncDevice, CurrentTime);
+            XIAllowEvents(dpy1, press->deviceid, XISyncDevice, CurrentTime);
+        ASSERT_EVENT(XIDeviceEvent, release, dpy1, GenericEvent, xi2_opcode, XI_ButtonRelease);
     }
 
     ASSERT_EQ(event_count, repeats); // ButtonPress event
@@ -948,28 +1717,6 @@ public:
         ASSERT_EQ(Success, XIGrabTouchBegin(dpy, XIAllMasterDevices,
                            win, False, &mask, 1, &mods));
 
-        delete[] mask.mask;
-        XSync(dpy, False);
-    }
-
-    void GrabDevice(::Display *dpy, int deviceid, Window win, bool ownership = false)
-    {
-        XIEventMask mask;
-        mask.deviceid = deviceid;
-        mask.mask_len = XIMaskLen(XI_TouchOwnership);
-        mask.mask = new unsigned char[mask.mask_len]();
-
-        XISetMask(mask.mask, XI_TouchBegin);
-        XISetMask(mask.mask, XI_TouchEnd);
-        XISetMask(mask.mask, XI_TouchUpdate);
-
-        if (ownership)
-            XISetMask(mask.mask, XI_TouchOwnership);
-
-        ASSERT_EQ(Success, XIGrabDevice(dpy, deviceid,
-                                        win, CurrentTime, None,
-                                        GrabModeAsync, GrabModeAsync,
-                                        False, &mask));
         delete[] mask.mask;
         XSync(dpy, False);
     }
@@ -1267,7 +2014,6 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     ASSERT_EQ(A_end->detail, touchid);
 
     /* Now we expect TouchOwnership on B */
-    ASSERT_EQ(XPending(dpy2), 1);
     ASSERT_EVENT(XITouchOwnershipEvent, oe, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
     ASSERT_EQ(oe->touchid, (unsigned int)touchid);
 
@@ -1329,8 +2075,7 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
                   "TouchBegin in the window.\n"
                   "Expect ButtonPress to A.\n"
                   "Ungrab pointer.\n"
-                  "Expect TouchBegin and TouchOwnership to B.\n"
-                  "TouchEnd in the window, expect TouchEnd on B.\n");
+                  "TouchEnd to B.\n");
 
     ::Display *dpy = Display();
     XSynchronize(dpy, True);
@@ -1354,14 +2099,14 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
     ASSERT_TRUE(NoEventPending(dpy2));
 
     XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
-
-    ASSERT_EVENT(XITouchOwnershipEvent, B_ownership, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
-
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    ASSERT_TRUE(NoEventPending(dpy));
 
     ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
 
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
     ASSERT_TRUE(NoEventPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy2));
 }
 
 #endif /* HAVE_XI22 */

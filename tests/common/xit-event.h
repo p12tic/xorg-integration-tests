@@ -45,6 +45,10 @@
         _type* _name = _name ## _xit_event.ev; \
         ASSERT_TRUE(_name);
 
+#define EXPECT_EVENT(_type, _name, ...) \
+        XITEvent<_type> _name ## _xit_event(__VA_ARGS__); \
+        _type* _name = _name ## _xit_event.ev; \
+        EXPECT_TRUE(_name);
 /**
  * Template class to work around the Xlib cookie API.
  * Create a single EW object that pulls down then next event from the wire,
