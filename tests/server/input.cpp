@@ -71,6 +71,73 @@ public:
     }
 };
 
+class TabletMotionTest : public PointerMotionTest
+{
+    virtual void SetUp() {
+        SetDevice("tablets/Wacom-Intuos4-6x9.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        /* need the wacom driver for this */
+        config.AddInputSection("wacom", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Type\" \"stylus\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(TabletMotionTest, MissingValuator1InEvent)
+{
+    XORG_TESTCASE("Create tablet device\n"
+                  "Register for XI 1.x motion events\n"
+                  "Move tablet's x and pressure axis, leave y umodified\n"
+                  "Ensure that valuator 1 is set correctly in XI event\n");
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    dev->PlayOne(EV_ABS, ABS_X, 1000);
+    dev->PlayOne(EV_ABS, ABS_Y, 1000);
+    dev->PlayOne(EV_ABS, ABS_PRESSURE, 56);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, true);
+
+    XDevice *xdev = XOpenDevice(dpy, deviceid);
+    ASSERT_TRUE(xdev);
+
+    XSetDeviceMode(dpy, xdev, Relative);
+
+    int motion_type;
+    XEventClass evclass;
+    DeviceMotionNotify(xdev, motion_type, evclass);
+    XSelectExtensionEvent(dpy, DefaultRootWindow(dpy), &evclass, 1);
+
+    dev->PlayOne(EV_ABS, ABS_X, 5000);
+    dev->PlayOne(EV_ABS, ABS_Y, 1000);
+    dev->PlayOne(EV_ABS, ABS_PRESSURE, 200);
+    dev->PlayOne(EV_ABS, ABS_DISTANCE, 0);
+    dev->PlayOne(EV_KEY, BTN_TOOL_PEN, 1, true);
+
+    ASSERT_EVENT(XEvent, motion, dpy, motion_type);
+    XDeviceMotionEvent *m = reinterpret_cast<XDeviceMotionEvent*>(motion);
+    ASSERT_EQ(m->first_axis, 0);
+    ASSERT_EQ(m->axes_count, 6);
+    ASSERT_GT(m->axis_data[0], 1000);
+    ASSERT_EQ(m->axis_data[1], 1000);
+    ASSERT_GT(m->axis_data[2], 56);
+
+    XCloseDevice(dpy, xdev);
+}
+
 #ifdef HAVE_XI22
 enum scoll_direction {
     VSCROLL_UP = 4,
