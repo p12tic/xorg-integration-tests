@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include <pixman.h>
+#include <fcntl.h>
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -323,8 +324,29 @@ public:
                          "Option \"Device\" \"" + dev->GetDeviceNode() + "\"";
     }
 
+    virtual void SetResolution(const std::string &file, int code, int resolution) {
+        int fd, rc;
+        struct input_absinfo abs;
+
+        fd = open(file.c_str(), O_RDWR);
+        ASSERT_NE(fd, -1);
+
+        rc = ioctl(fd, EVIOCGABS(code), &abs);
+        ASSERT_NE(rc, -1) << strerror(errno);
+
+        abs.resolution = resolution;
+        rc = ioctl(fd, EVIOCSABS(code), &abs);
+        ASSERT_NE(rc, -1) << strerror(errno);
+
+        close(fd);
+    }
+
     virtual void SetUpTablet() {
+        xres = 10000;
+        yres = 10000;
+
         SetDevice("tablets/Wacom-Intuos4-6x9.desc");
+
         driver = "wacom";
         config_section =  "Option \"device\" \"" + dev->GetDeviceNode() + "\"\n"
                           "Option \"GrabDevice\" \"on\"\n"
@@ -334,7 +356,11 @@ public:
     }
 
     virtual void SetUpTouchpad() {
+        xres = 75;
+        yres = 129;
+
         SetDevice("touchpads/SynPS2-Synaptics-TouchPad.desc");
+
         driver = "synaptics";
         config_section =  "Option \"device\" \"" + dev->GetDeviceNode() + "\"\n"
                           "Option \"GrabDevice\" \"on\"\n"
@@ -348,6 +374,12 @@ public:
             case TABLET: SetUpTablet(); break;
             case TOUCHPAD: SetUpTouchpad(); break;
         }
+
+        /* FIXME: evemu should do this */
+        if (xres != 0)
+            SetResolution(dev->GetDeviceNode(), ABS_X, xres);
+        if (yres != 0)
+            SetResolution(dev->GetDeviceNode(), ABS_Y, yres);
 
         XITServerInputTest::SetUp();
     }
@@ -397,8 +429,8 @@ public:
 
                 while (x < 10000)
                 {
-                    x += (maxx - minx)/10.0;
-                    y += (maxy - miny)/10.0;
+                    x += 10 * xres/100.0;
+                    y += 10 * yres/100.0;
                     dev->PlayOne(EV_ABS, ABS_X, x);
                     dev->PlayOne(EV_ABS, ABS_Y, y);
 
@@ -416,8 +448,8 @@ public:
 
                 while (x < 3000)
                 {
-                    x += (maxx - minx)/10.0;
-                    y += (maxy - miny)/10.0;
+                    x += 10 * xres;
+                    y += 10 * yres;
                     dev->PlayOne(EV_ABS, ABS_X, x);
                     dev->PlayOne(EV_ABS, ABS_Y, y);
 
@@ -435,6 +467,9 @@ public:
 private:
     std::string config_section;
     std::string driver;
+
+    int xres;
+    int yres;
 };
 
 TEST_P(PointerAccelerationTest, IdenticalMovementVerticalHorizontal)
