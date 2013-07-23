@@ -742,7 +742,7 @@ public:
         TouchUpdate(x, y);
     }
 
-    virtual void TouchUpdate(int x, int y) {
+    virtual void TouchUpdate(int x, int y, bool sync = true) {
         dev->PlayOne(EV_ABS, ABS_X, x);
         dev->PlayOne(EV_ABS, ABS_Y, y);
         dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, x);
@@ -752,7 +752,8 @@ public:
         dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MAJOR, 468);
         dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MINOR, 306);
         dev->PlayOne(EV_SYN, SYN_MT_REPORT, 0);
-        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+        if (sync)
+            dev->PlayOne(EV_SYN, SYN_REPORT, 0);
     }
 
     virtual void TouchEnd() {
@@ -1045,6 +1046,38 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
     ASSERT_EVENT(XIDeviceEvent, tend3, dpy3, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_TRUE(NoEventPending(dpy3));
 }
+
+TEST_F(TouchGrabTest, GrabMultipleTouchpoints)
+{
+    XORG_TESTCASE("Grab the device with touch mask\n"
+                  "Touch repeatedly\n"
+                  "Ensure all touches send touch events\n");
+
+    ::Display *dpy = Display();
+
+
+    int deviceid;
+    FindInputDeviceByName(dpy, "--device--", &deviceid);
+
+    Window win = CreateWindow(dpy, DefaultRootWindow(dpy));
+
+    GrabDevice(dpy, deviceid, win);
+
+    /* ntrig has no slots, so the second update actually creates a new point */
+    TouchBegin(200, 200);
+    TouchUpdate(250, 250, false);
+    TouchUpdate(2500, 2500, true);
+    TouchUpdate(2700, 2700, true);
+    TouchEnd();
+
+    EXPECT_EVENT(XIDeviceEvent, tbegin1, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    EXPECT_EVENT(XIDeviceEvent, tupdate1, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
+    EXPECT_EVENT(XIDeviceEvent, tbegin2, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    EXPECT_EVENT(XIDeviceEvent, tupdate2, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
+    EXPECT_EVENT(XIDeviceEvent, tend1, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+    EXPECT_EVENT(XIDeviceEvent, tend2, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+}
+
 
 class TouchGrabTestOnLegacyClient : public TouchGrabTest {
     virtual void SetUp() {
