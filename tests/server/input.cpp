@@ -1325,3 +1325,58 @@ TEST_F(KeyboardTest, FocusTestFloatingSlave)
     ASSERT_EQ(release->deviceid, deviceid);
 }
 
+
+class XIQueryVersionTest : public XITServerTest,
+                           public ::testing::WithParamInterface<int>
+{
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.WriteConfig();
+    }
+};
+
+TEST_F(XIQueryVersionTest, OverrideXI2Version)
+{
+    XORG_TESTCASE("Submit XIQueryVersion request\n"
+                  "Resubmit XIQueryVersion request with different XI2 minor\n"
+                  "Expect BadValue for mismatch, success otherwise\n");
+
+    int major = 2;
+    int max_minor = 25;
+    ::Display *test_dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    XIQueryVersion(test_dpy, &major, &max_minor);
+    XCloseDisplay(test_dpy);
+
+    for (int i = 0; i < XI_2_Minor + 1; i++) {
+        ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+        int prev_minor = i;
+        XIQueryVersion(dpy, &major, &prev_minor);
+
+        EXPECT_EQ(major, 2);
+        if (prev_minor < i)
+            break;
+
+        for (int j = 0; j < XI_2_Minor + 1; j++) {
+            const XErrorEvent *err;
+            int minor = j;
+            SetErrorTrap(dpy);
+            XIQueryVersion(dpy, &major, &minor);
+            EXPECT_EQ(major, 2);
+            err = ReleaseErrorTrap(dpy);
+
+            std::stringstream ss; ss << "Requested 2." << prev_minor << ", then 2." << j;
+            SCOPED_TRACE(ss.str());
+
+            if (prev_minor < 2 || j < 2) {
+                if (j < prev_minor) {
+                    ASSERT_ERROR(err, BadValue);
+                } else
+                    ASSERT_EQ(minor, prev_minor);
+            } else { /* both versions are 2.2 or higher */
+                ASSERT_EQ(minor, std::min(j, max_minor));
+            }
+        }
+
+        XCloseDisplay(dpy);
+    }
+}
