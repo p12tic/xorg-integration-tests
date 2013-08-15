@@ -691,7 +691,7 @@ public:
             ADD_FAILURE() << "Failed to open display for new client.\n";
         XSynchronize(d, True);
         int major = maj, minor = min;
-        if (XIQueryVersion(d, &major, &minor) != Success)
+        if (maj >= 2 && XIQueryVersion(d, &major, &minor) != Success)
             ADD_FAILURE() << "XIQueryVersion failed on new client.\n";
         return d;
     }
