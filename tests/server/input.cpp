@@ -1380,3 +1380,28 @@ TEST_F(XIQueryVersionTest, OverrideXI2Version)
         XCloseDisplay(dpy);
     }
 }
+
+TEST_F(XIQueryVersionTest, NoBadLengthOnXIAllowEvents)
+{
+    XORG_TESTCASE("Submit XIQueryVersion request\n"
+                  "Call XIAllowEvents\n"
+                  "Ensure no BadLength is received\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=68554");
+
+
+    int major = 2;
+    int minor = 2;
+    ::Display *test_dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    XIQueryVersion(test_dpy, &major, &minor);
+    XCloseDisplay(test_dpy);
+    ASSERT_GE(minor, 2); /* server must provide 2.2 at least */
+
+    ::Display *dpy = Display();
+    minor = 0;
+    XIQueryVersion(dpy, &major, &minor);
+
+    SetErrorTrap(dpy);
+    XIAllowEvents(dpy, 2, XIAsyncDevice, CurrentTime);
+    ASSERT_NO_ERROR(ReleaseErrorTrap(dpy));
+    XSync(dpy, False);
+}
