@@ -508,6 +508,8 @@ TEST_P(PointerSingleGrabTypeTest, OverwriteGrab)
             rc = XIGrabDevice(Display(), VIRTUAL_CORE_POINTER_ID, root, CurrentTime, None,
                               GrabModeAsync, GrabModeAsync, False, &mask);
             break;
+        case GRABTYPE_XI2TOUCH:
+            break;
     }
     ASSERT_EQ(rc, Success);
 
@@ -544,6 +546,8 @@ TEST_P(PointerSingleGrabTypeTest, OverwriteGrab)
                 ASSERT_EQ(rc, Success);
                 break;
             }
+        case GRABTYPE_XI2TOUCH:
+            break;
     }
 
     dev->PlayOne(EV_REL, REL_X, -1, true);
