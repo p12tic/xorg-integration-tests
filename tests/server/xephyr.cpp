@@ -97,6 +97,43 @@ TEST_F(Xephyr24bppTest, CrashOn24bppHost)
     xephyr.Terminate(1000);
 }
 
+class Xephyr8bppTest : public XITServerTest {
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.WriteConfig();
+    }
+};
+
+TEST_F(Xephyr8bppTest, No8bppCrash)
+{
+    XORG_TESTCASE("Start 8-bit Xephyr.\n"
+                  "Verify Xephyr doesn't crash\n"
+                  "https://bugzilla.redhat.com/show_bug.cgi?id=518960");
+
+    ::Display *dpy = Display();
+    int depth = DefaultDepth(dpy, 0);
+    ASSERT_GT(depth, 8);
+
+    Process xephyr;
+    setenv("DISPLAY", server.GetDisplayString().c_str(), 1);
+    xephyr.Start("Xephyr", "-screen", "320x220x8", ":134", NULL);
+    ASSERT_GT(xephyr.Pid(), 0);
+    ASSERT_EQ(xephyr.GetState(), xorg::testing::Process::RUNNING);
+
+    ::Display *ephdpy = NULL;
+
+    int i = 0;
+    while (i++ < 10 && !ephdpy) {
+        ephdpy = XOpenDisplay(":134");
+        if (!ephdpy)
+            usleep(10000);
+    }
+    ASSERT_EQ(xephyr.GetState(), xorg::testing::Process::RUNNING);
+    ASSERT_TRUE(ephdpy);
+
+    xephyr.Terminate(1000);
+}
+
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
