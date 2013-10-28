@@ -791,6 +791,7 @@ TEST_F(TouchGrabTest, ActivePointerGrabOverPointerSelection)
 
     ASSERT_EVENT(XIDeviceEvent, press, dpy2, GenericEvent, xi2_opcode, XI_ButtonPress);
     ASSERT_EVENT(XIDeviceEvent, motion, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, motion1, dpy2, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_EVENT(XIDeviceEvent, release, dpy2, GenericEvent, xi2_opcode, XI_ButtonRelease);
 
     ASSERT_TRUE(NoEventPending(dpy2));
@@ -801,6 +802,7 @@ TEST_F(TouchGrabTest, ActivePointerGrabOverPointerSelection)
 
     ASSERT_EVENT(XIDeviceEvent, press2, dpy2, GenericEvent, xi2_opcode, XI_ButtonPress);
     ASSERT_EVENT(XIDeviceEvent, motion2, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, motion3, dpy2, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_EVENT(XIDeviceEvent, release2, dpy2, GenericEvent, xi2_opcode, XI_ButtonRelease);
 
     ASSERT_TRUE(NoEventPending(dpy2));
@@ -1189,13 +1191,19 @@ TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabOverPointerSelection)
 
     EXPECT_EVENT(XIDeviceEvent, press_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
     EXPECT_EQ(press_dev_1->deviceid, deviceid);
+
     EXPECT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
     EXPECT_EQ(motion->deviceid, VIRTUAL_CORE_POINTER_ID);
-
     EXPECT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
     EXPECT_EQ(press->deviceid, VIRTUAL_CORE_POINTER_ID);
+
+    EXPECT_EVENT(XIDeviceEvent, motion_dev_1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EQ(motion_dev_1->deviceid, deviceid);
     EXPECT_EVENT(XIDeviceEvent, release_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
     EXPECT_EQ(release_dev_1->deviceid, deviceid);
+
+    EXPECT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EQ(motion2->deviceid, VIRTUAL_CORE_POINTER_ID);
     EXPECT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
     EXPECT_EQ(release->deviceid, VIRTUAL_CORE_POINTER_ID);
 
