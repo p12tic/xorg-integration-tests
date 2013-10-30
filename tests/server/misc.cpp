@@ -478,8 +478,8 @@ TEST_F(IdletimerTest, NegativeTransition)
 
     /* bug: if the negative transition threshold fires but the idletime is
        below the threshold, it is never set up again */
-    const int threshold = 1000;
-    usleep(threshold * 1001);
+    const int threshold = 5;
+    usleep(threshold * 1200);
 
     idlecounter = GetIdletimeCounter(dpy);
     ASSERT_GT(idlecounter, (XSyncCounter)None);
@@ -488,7 +488,7 @@ TEST_F(IdletimerTest, NegativeTransition)
 
     dev->PlayOne(EV_REL, REL_X, 10, true);
     WaitForEvent(dpy);
-    usleep(threshold * 1001);
+    usleep(threshold * 1200);
 
     dev->PlayOne(EV_REL, REL_X, 10, true);
     WaitForEvent(dpy);
@@ -523,7 +523,7 @@ TEST_F(IdletimerTest, NegativeTransitionMultipleAlarms)
 
     /* bug: if the negative transition threshold fires but the idletime is
        below the threshold, it is never set up again */
-    const int threshold = 200;
+    const int threshold = 5;
     usleep(threshold * 2000);
 
     idlecounter = GetIdletimeCounter(dpy);
