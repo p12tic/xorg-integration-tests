@@ -440,7 +440,7 @@ TEST_F(IdletimerTest, PositiveTransitionLowThreshold)
     idlecounter = GetIdletimeCounter(dpy);
     ASSERT_GT(idlecounter, (XSyncCounter)None);
     pos_alarm = SetAbsoluteAlarm(dpy, idlecounter, threshold, XSyncPositiveTransition);
-    SetAbsoluteAlarm(dpy, idlecounter, threshold + 1, XSyncNegativeTransition, false);
+    SetAbsoluteAlarm(dpy, idlecounter, threshold, XSyncNegativeTransition, false);
     ASSERT_GT(pos_alarm, (XSyncAlarm)None);
 
     WaitForEvent(dpy);
