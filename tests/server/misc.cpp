@@ -544,6 +544,50 @@ TEST_F(IdletimerTest, NegativeTransitionMultipleAlarms)
     ASSERT_EVENT(XSyncAlarmNotifyEvent, ev4, dpy, sync_event + XSyncAlarmNotify);
 }
 
+TEST_F(IdletimerTest, NegativeTransitionToZero)
+{
+    XORG_TESTCASE("Set up an alarm on negative transition to 0\n"
+                  "Move pointer\n"
+                  "Expect event\n"
+                  "Wait for timeout\n"
+                  "Move pointer again\n"
+                  "Expect event\n");
+
+    ::Display *dpy = Display();
+
+    /* make sure server is ready to send events */
+    WaitForEvent(dpy);
+    XSync(dpy, True);
+
+    XSyncAlarm neg_alarm;
+    XSyncCounter idlecounter;
+
+    /* bug: if the negative transition threshold fires but the idletime is
+       below the threshold, it is never set up again */
+    const int threshold = 0;
+    usleep(10000);
+
+    idlecounter = GetIdletimeCounter(dpy);
+    ASSERT_GT(idlecounter, (XSyncCounter)None);
+    neg_alarm = SetAbsoluteAlarm(dpy, idlecounter, threshold, XSyncNegativeTransition);
+    ASSERT_GT(neg_alarm, (XSyncAlarm)None);
+
+    dev->PlayOne(EV_REL, REL_X, 10, true);
+    WaitForEvent(dpy);
+    usleep(10000);
+
+    dev->PlayOne(EV_REL, REL_X, 10, true);
+    WaitForEvent(dpy);
+
+    ASSERT_EVENT(XSyncAlarmNotifyEvent, ev1, dpy, sync_event + XSyncAlarmNotify);
+    ASSERT_EQ(ev1->alarm, neg_alarm);
+    ASSERT_EQ(ev1->state, XSyncAlarmActive);
+
+    ASSERT_EVENT(XSyncAlarmNotifyEvent, ev2, dpy, sync_event + XSyncAlarmNotify);
+    ASSERT_EQ(ev2->alarm, neg_alarm);
+    ASSERT_EQ(ev1->state, XSyncAlarmActive);
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
