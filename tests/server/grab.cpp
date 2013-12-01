@@ -385,6 +385,177 @@ TEST_F(PointerGrabTest, AsyncPassiveGrabPressRelease)
     ASSERT_TRUE(NoEventPending(dpy2));
 }
 
+class PointerKeyboardGrabTest : public PointerGrabTest {
+public:
+    std::auto_ptr<xorg::testing::evemu::Device> mouse;
+    std::auto_ptr<xorg::testing::evemu::Device> keyboard;
+    std::auto_ptr<xorg::testing::evemu::Device> touch;
+
+    virtual void SetUp() {
+      mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+              new xorg::testing::evemu::Device(
+                  RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
+              );
+
+      keyboard = std::auto_ptr<xorg::testing::evemu::Device>(
+              new xorg::testing::evemu::Device(
+                  RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc")
+              );
+
+      touch = std::auto_ptr<xorg::testing::evemu::Device>(
+              new xorg::testing::evemu::Device(
+                  RECORDINGS_DIR "tablets/N-Trig-MultiTouch.desc")
+              );
+
+      XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--mouse--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + mouse->GetDeviceNode() + "\"");
+        config.AddInputSection("evdev", "--keyboard--",
+                               "Option \"CoreKeyboard\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + keyboard->GetDeviceNode() + "\"");
+        config.AddInputSection("evdev", "--touch--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + touch->GetDeviceNode() + "\"");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(PointerKeyboardGrabTest, PointerAsyncKeyboardSyncKeyboardReplay)
+{
+    XORG_TESTCASE("Async button grab (keyboard mode sync) on window\n"
+                  "Generate button press event\n"
+                  "Generate keyboard events\n"
+                  "Generate button release event\n"
+                  "Make sure all events arrive\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=71878");
+
+    ::Display *dpy = Display();
+    Window win = CreateWindow(dpy);
+
+    XSelectInput(dpy, win, ButtonPressMask|ButtonReleaseMask|KeyPressMask|KeyReleaseMask);
+    XSetInputFocus(dpy, win, PointerRoot, CurrentTime);
+
+    XGrabButton(dpy, 1, AnyModifier, win, False, ButtonPressMask,
+                GrabModeAsync, GrabModeSync, None, None);
+
+    mouse->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
+    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
+    mouse->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, key_press, dpy, KeyPress);
+    ASSERT_EVENT(XEvent, key_release, dpy, KeyRelease);
+    ASSERT_EQ(XPending(dpy), 0); /* release is swallowed by grab */
+}
+
+TEST_F(PointerKeyboardGrabTest, TouchPointerAsyncKeyboardSyncKeyboardReplay)
+{
+    XORG_TESTCASE("Async button grab (keyboard mode sync) on window\n"
+                  "Generate button press event from touch device\n"
+                  "Generate keyboard events\n"
+                  "Generate button release event\n"
+                  "Make sure all events arrive\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=71878");
+
+    ::Display *dpy = Display();
+    Window win = CreateWindow(dpy);
+
+    XSelectInput(dpy, win, ButtonPressMask|ButtonReleaseMask|KeyPressMask|KeyReleaseMask);
+    XSetInputFocus(dpy, win, PointerRoot, CurrentTime);
+
+    XGrabButton(dpy, 1, AnyModifier, win, False, ButtonPressMask,
+                GrabModeAsync, GrabModeSync, None, None);
+
+    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
+    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
+    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, key_press, dpy, KeyPress);
+    ASSERT_EVENT(XEvent, key_release, dpy, KeyRelease);
+    ASSERT_EQ(XPending(dpy), 0); /* release is swallowed by grab */
+}
+
+TEST_F(PointerKeyboardGrabTest, TouchPointerAsyncKeyboardSyncKeyboardReplayMultipleListeners)
+{
+    XORG_TESTCASE("Async button grab (keyboard mode sync) on window\n"
+                  "Second client has same grab on the root window\n"
+                  "Generate button press event from touch device\n"
+                  "Generate keyboard events\n"
+                  "Generate button release event\n"
+                  "Make sure all events arrive\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=71878");
+
+    ::Display *dpy = Display();
+    ::Display *dpy2 = XOpenDisplay(server.GetDisplayString().c_str());
+    XSynchronize(dpy2, True);
+
+    Window win = CreateWindow(dpy);
+
+    XSelectInput(dpy, win, ButtonPressMask|ButtonReleaseMask|KeyPressMask|KeyReleaseMask);
+    XSetInputFocus(dpy, win, PointerRoot, CurrentTime);
+
+    XGrabButton(dpy, 1, AnyModifier, win, False, ButtonPressMask,
+                GrabModeAsync, GrabModeSync, None, None);
+    XGrabButton(dpy2, 1, AnyModifier, DefaultRootWindow(dpy2), False,
+                ButtonPressMask, GrabModeAsync, GrabModeSync, None, None);
+
+    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
+    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
+    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
+    ASSERT_EVENT(XEvent, key_press, dpy, KeyPress);
+    ASSERT_EVENT(XEvent, key_release, dpy, KeyRelease);
+    ASSERT_EQ(XPending(dpy2), 0); /* release is swallowed by grab */
+    ASSERT_EQ(XPending(dpy), 0);
+}
+
+TEST_F(PointerKeyboardGrabTest, TouchPointerAsyncKeyboardSyncKeyboardReplayOwnerEventsTrue)
+{
+    XORG_TESTCASE("Async button grab (keyboard mode sync) on window\n"
+                  "Generate button press event from touch device\n"
+                  "Generate keyboard events\n"
+                  "Generate button release event\n"
+                  "Make sure all events arrive\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=71878");
+
+    ::Display *dpy = Display();
+
+    Window win = CreateWindow(dpy);
+
+    XSelectInput(dpy, win, ButtonPressMask|ButtonReleaseMask|KeyPressMask|KeyReleaseMask);
+    XSetInputFocus(dpy, win, PointerRoot, CurrentTime);
+
+    XGrabButton(dpy, 1, AnyModifier, win, True,
+            ButtonPressMask|ButtonReleaseMask,
+                GrabModeAsync, GrabModeSync, None, None);
+
+    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
+    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
+    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EVENT(XEvent, key_press, dpy, KeyPress);
+    ASSERT_EVENT(XEvent, key_release, dpy, KeyRelease);
+    ASSERT_EQ(XPending(dpy), 0); /* release is swallowed by grab */
+}
+
+
 /**
  * @tparam AsyncPointer, SyncPointer, ReplayPointer
  */
