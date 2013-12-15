@@ -44,6 +44,7 @@
 
 #include "xit-server-input-test.h"
 #include "xit-property.h"
+#include "xit-event.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -612,6 +613,7 @@ public:
     virtual void SetUp() {
         SetDevice("touchpads/SynPS2-Synaptics-TouchPad-Clickpad.desc");
         XITServerInputTest::SetUp();
+        nfingers_down = 0;
     }
 
     /**
@@ -628,6 +630,58 @@ public:
                                "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
         config.WriteConfig();
     }
+
+    int nfingers_down;
+
+    virtual void TouchBegin(unsigned int slot, int x, int y) {
+        static unsigned int tracking_id;
+        nfingers_down |= 1 << slot;
+        dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
+        dev->PlayOne(EV_ABS, ABS_MT_SLOT, slot);
+        dev->PlayOne(EV_ABS, ABS_MT_TRACKING_ID, tracking_id++);
+        TouchUpdate(slot, x, y);
+    }
+
+    virtual void TouchUpdate(unsigned int slot, int x, int y, bool sync = true) {
+        dev->PlayOne(EV_ABS, ABS_MT_SLOT, slot);
+        dev->PlayOne(EV_ABS, ABS_X, x);
+        dev->PlayOne(EV_ABS, ABS_Y, y);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, x);
+        dev->PlayOne(EV_ABS, ABS_MT_POSITION_Y, y);
+        dev->PlayOne(EV_ABS, ABS_MT_PRESSURE, 68);
+        if (sync)
+            dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
+    virtual void TouchEnd(unsigned int slot) {
+        dev->PlayOne(EV_ABS, ABS_MT_SLOT, slot);
+        dev->PlayOne(EV_ABS, ABS_MT_TRACKING_ID, -1);
+        nfingers_down &= ~(1 << slot);
+        if (!nfingers_down)
+            dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
+        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    }
+
+    virtual void
+    SetClickfingerProperty(const char* name,
+                           unsigned char cf1 = 1, unsigned char cf2 = 1, unsigned char cf3 = 1)
+    {
+        ::Display *dpy = Display();
+        int deviceid;
+        ASSERT_EQ(FindInputDeviceByName(dpy, name, &deviceid), 1);
+
+        Atom clickfinger_prop = XInternAtom(dpy, "Synaptics Click Action", True);
+        ASSERT_NE(clickfinger_prop, (Atom)None);
+
+        unsigned char data[3] = {cf1, cf2, cf3};
+
+        XIChangeProperty(dpy, deviceid, clickfinger_prop, XA_INTEGER, 8,
+                         PropModeReplace, data, 3);
+        XSync(dpy, False);
+    }
+
+
+
 };
 
 static void
@@ -913,6 +967,112 @@ TEST_F(SynapticsClickpadTest, DisableDeviceTwoFingersOneFingerResume)
     DeviceSetEnabled(Display(), deviceid, true);
     dev->Play(RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.one-finger-up.events");
 }
+
+TEST_F(SynapticsClickpadTest, ClickFinger2)
+{
+    XORG_TESTCASE("Put two fingers on the touchpad\n"
+                  "Trigger BTN_LEFT\n"
+                  "Expect ClickFinger2 action\n");
+    ::Display *dpy = Display();
+
+    SetClickfingerProperty("--device--", 0, 2, 0);
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 2000, 2000);
+    TouchBegin(1, 2300, 2010);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(1);
+    TouchEnd(0);
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(press->xbutton.button, 2);
+    ASSERT_EQ(release->xbutton.button, 2);
+}
+
+TEST_F(SynapticsClickpadTest, ClickFinger2Distance)
+{
+    XORG_TESTCASE("Put two fingers on the touchpad, too far apart for clickfinger\n"
+                  "Trigger BTN_LEFT\n"
+                  "Expect ClickFinger1 action\n");
+    ::Display *dpy = Display();
+
+    SetClickfingerProperty("--device--", 3, 2, 0);
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 2000, 2000);
+    TouchBegin(1, 4300, 2010);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(1);
+    TouchEnd(0);
+
+    /* one finger on a clickpad doesn't trigger clickfinger, just normal
+       button press */
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(press->xbutton.button, 1);
+    ASSERT_EQ(release->xbutton.button, 1);
+}
+
+TEST_F(SynapticsClickpadTest, ClickFinger3)
+{
+    XORG_TESTCASE("Put two fingers on the touchpad\n"
+                  "Trigger BTN_TOOL_TRIPLETAP\n"
+                  "Trigger BTN_LEFT\n"
+                  "Expect ClickFinger2 action\n");
+    ::Display *dpy = Display();
+
+    SetClickfingerProperty("--device--", 0, 0, 2);
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 2000, 2000);
+    TouchBegin(1, 2300, 2010);
+    /* this touchpad only does two touchpoints */
+    dev->PlayOne(EV_KEY, BTN_TOOL_TRIPLETAP, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(1);
+    TouchEnd(0);
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(press->xbutton.button, 2);
+    ASSERT_EQ(release->xbutton.button, 2);
+}
+
+TEST_F(SynapticsClickpadTest, ClickFinger3Distance)
+{
+    XORG_TESTCASE("Put two fingers on the touchpad, too far apart for clickfinger\n"
+                  "Trigger BTN_TOOL_TRIPLETAP\n"
+                  "Trigger BTN_LEFT\n"
+                  "Expect ClickFinger2 action\n");
+    ::Display *dpy = Display();
+
+    SetClickfingerProperty("--device--", 0, 2, 3);
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 2000, 2000);
+    TouchBegin(1, 4300, 2010);
+    dev->PlayOne(EV_KEY, BTN_TOOL_TRIPLETAP, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(1);
+    TouchEnd(0);
+
+    /* First two fingers too far apart but the third counts, so we expect
+       CF2 action */
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(press->xbutton.button, 2);
+    ASSERT_EQ(release->xbutton.button, 2);
+}
+
 
 /**
  * Synaptics driver test for clickpad devices with the SoftButtonArea option
