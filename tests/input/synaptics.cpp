@@ -1511,6 +1511,127 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     server.RemoveLogFile();
 }
 
+class SynapticsScrollButtonTest : public SynapticsTest {
+public:
+    virtual void SetUp() {
+        SetDevice("touchpads/SynPS2-Synaptics-TouchPad-ScrollButtons.events");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("synaptics", "--device--",
+                               "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
+                               "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
+        config.WriteConfig();
+    }
+
+};
+
+TEST_F(SynapticsScrollButtonTest, ScrollButtonPropertyExists)
+{
+    XORG_TESTCASE("Initialize with a touchpad with scroll buttons\n"
+                  "Make sure the scroll button properties exists\n");
+
+    ::Display *dpy = Display();
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    XITProperty<char> scrollbutton_prop(dpy, deviceid, "Synaptics Button Scrolling");
+    XITProperty<char> scrollbutton_repeat_prop(dpy, deviceid, "Synaptics Button Scrolling Repeat");
+    XITProperty<int> scrollbutton_time_prop(dpy, deviceid, "Synaptics Button Scrolling Time");
+}
+
+TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownScroll)
+{
+    XORG_TESTCASE("Initialize with a touchpad with scroll buttons\n"
+                  "Trigger events for BTN_0 and BTN_1\n"
+                  "Expect up/down scrolling, respectively\n");
+
+    ::Display *dpy = Display();
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    XSelectInput(dpy, DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+
+    dev->PlayOne(EV_KEY, BTN_0, 1, true);
+    dev->PlayOne(EV_KEY, BTN_0, 0, true);
+    dev->PlayOne(EV_KEY, BTN_0, 1, true);
+    dev->PlayOne(EV_KEY, BTN_0, 0, true);
+
+    ASSERT_EVENT(XEvent, up1, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, up2, dpy, ButtonRelease);
+    ASSERT_EVENT(XEvent, up3, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, up4, dpy, ButtonRelease);
+
+    ASSERT_EQ(up1->xbutton.button, 4);
+    ASSERT_EQ(up2->xbutton.button, 4);
+    ASSERT_EQ(up3->xbutton.button, 4);
+    ASSERT_EQ(up4->xbutton.button, 4);
+
+    dev->PlayOne(EV_KEY, BTN_1, 1, true);
+    dev->PlayOne(EV_KEY, BTN_1, 0, true);
+    dev->PlayOne(EV_KEY, BTN_1, 1, true);
+    dev->PlayOne(EV_KEY, BTN_1, 0, true);
+
+    ASSERT_EVENT(XEvent, down1, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, down2, dpy, ButtonRelease);
+    ASSERT_EVENT(XEvent, down3, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, down4, dpy, ButtonRelease);
+
+    ASSERT_EQ(down1->xbutton.button, 5);
+    ASSERT_EQ(down2->xbutton.button, 5);
+    ASSERT_EQ(down3->xbutton.button, 5);
+    ASSERT_EQ(down4->xbutton.button, 5);
+}
+
+TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownMiddleDouble)
+{
+    XORG_TESTCASE("Initialize with a touchpad with scroll buttons\n"
+                  "Disable up/down scrolling through property\n"
+                  "Trigger events for BTN_0 and BTN_1\n"
+                  "Expect middle and double-click, respectively\n");
+
+    ::Display *dpy = Display();
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
+
+    XITProperty<char> scrollbutton_prop(dpy, deviceid, "Synaptics Button Scrolling");
+    scrollbutton_prop.data[0] = 0;
+    scrollbutton_prop.Update();
+
+    XSelectInput(dpy, DefaultRootWindow(Display()), ButtonPressMask | ButtonReleaseMask);
+
+    dev->PlayOne(EV_KEY, BTN_0, 1, true);
+    dev->PlayOne(EV_KEY, BTN_0, 0, true);
+
+    ASSERT_EVENT(XEvent, double1, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, double2, dpy, ButtonRelease);
+    ASSERT_EVENT(XEvent, double3, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, double4, dpy, ButtonRelease);
+
+    ASSERT_EQ(double1->xbutton.button, 1);
+    ASSERT_EQ(double2->xbutton.button, 1);
+    ASSERT_EQ(double3->xbutton.button, 1);
+    ASSERT_EQ(double4->xbutton.button, 1);
+
+    dev->PlayOne(EV_KEY, BTN_1, 1, true);
+    dev->PlayOne(EV_KEY, BTN_1, 0, true);
+    dev->PlayOne(EV_KEY, BTN_1, 1, true);
+    dev->PlayOne(EV_KEY, BTN_1, 0, true);
+
+    ASSERT_EVENT(XEvent, middle1, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, middle2, dpy, ButtonRelease);
+    ASSERT_EVENT(XEvent, middle3, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, middle4, dpy, ButtonRelease);
+
+    ASSERT_EQ(middle1->xbutton.button, 2);
+    ASSERT_EQ(middle2->xbutton.button, 2);
+    ASSERT_EQ(middle3->xbutton.button, 2);
+    ASSERT_EQ(middle4->xbutton.button, 2);
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
