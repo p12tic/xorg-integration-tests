@@ -1360,23 +1360,23 @@ TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabOverPointerSelection)
     TouchUpdate(202, 202);
     TouchEnd();
 
-    EXPECT_EVENT(XIDeviceEvent, press_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
-    EXPECT_EQ(press_dev_1->deviceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, press_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_EQ(press_dev_1->deviceid, deviceid);
 
-    EXPECT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
-    EXPECT_EQ(motion->deviceid, VIRTUAL_CORE_POINTER_ID);
-    EXPECT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
-    EXPECT_EQ(press->deviceid, VIRTUAL_CORE_POINTER_ID);
+    ASSERT_EVENT(XIDeviceEvent, motion, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion->deviceid, VIRTUAL_CORE_POINTER_ID);
+    ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    ASSERT_EQ(press->deviceid, VIRTUAL_CORE_POINTER_ID);
 
-    EXPECT_EVENT(XIDeviceEvent, motion_dev_1, dpy, GenericEvent, xi2_opcode, XI_Motion);
-    EXPECT_EQ(motion_dev_1->deviceid, deviceid);
-    EXPECT_EVENT(XIDeviceEvent, release_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
-    EXPECT_EQ(release_dev_1->deviceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, motion_dev_1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion_dev_1->deviceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, release_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+    ASSERT_EQ(release_dev_1->deviceid, deviceid);
 
-    EXPECT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
-    EXPECT_EQ(motion2->deviceid, VIRTUAL_CORE_POINTER_ID);
-    EXPECT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
-    EXPECT_EQ(release->deviceid, VIRTUAL_CORE_POINTER_ID);
+    ASSERT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion2->deviceid, VIRTUAL_CORE_POINTER_ID);
+    ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
+    ASSERT_EQ(release->deviceid, VIRTUAL_CORE_POINTER_ID);
 
     ASSERT_TRUE(NoEventPending(dpy));
 }
