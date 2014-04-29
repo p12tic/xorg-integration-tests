@@ -1640,7 +1640,7 @@ TEST_P(TouchGrabTestMultipleModes, SingleTouchGrabListenerAcceptRejectBeforeTouc
     XORG_TESTCASE("Register for a touch grab.\n"
                   "Begin touch\n"
                   "Verify begin event is received.\n"
-                  "Call XIAllowTouchEvents(i" + strmode + ")\n"
+                  "Call XIAllowTouchEvents(" + strmode + ")\n"
                   "End touch\n"
                   "Verify end event is received at the right time.\n");
 
