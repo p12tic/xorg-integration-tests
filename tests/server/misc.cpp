@@ -92,7 +92,7 @@ TEST_F(EventQueueTest, mieqOverflow)
 TEST(MiscServerTest, DoubleSegfault)
 {
     XORG_TESTCASE("TESTCASE: SIGSEGV the server. The server must catch the "
-                  "signal, clean up and then call abort().\n");
+                  "signal, clean up and then call exit(1).\n");
 
     XITServer server;
     server.Start();
@@ -112,10 +112,9 @@ TEST(MiscServerTest, DoubleSegfault)
         if (waitpid(server.Pid(), &status, 0) == -1)
             break;
 
-    ASSERT_TRUE(WIFSIGNALED(status));
-    int termsig = WTERMSIG(status);
-    ASSERT_EQ(termsig, SIGABRT)
-        << "Expected SIGABRT, got " << termsig << " (" << strsignal(termsig) << ")";
+    /* A SIGSEGV triggers FatalError and then exit(1) */
+    ASSERT_FALSE(WIFSIGNALED(status));
+    ASSERT_EQ(WEXITSTATUS(status), 1);
 
     std::ifstream logfile(server.GetLogFilePath().c_str());
     std::string line;
