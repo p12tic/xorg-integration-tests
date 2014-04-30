@@ -689,14 +689,9 @@ set_clickpad_property(Display *dpy, const char* name)
 {
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(dpy, name, &deviceid), 1);
-
-    Atom clickpad_prop = XInternAtom(dpy, "Synaptics ClickPad", True);
-    ASSERT_NE(clickpad_prop, (Atom)None);
-
-    unsigned char data = 1;
-
-    XIChangeProperty(dpy, deviceid, clickpad_prop, XA_INTEGER, 8,
-                     PropModeReplace, &data, 1);
+    ASSERT_PROPERTY(char, clickpad_prop, dpy, deviceid, "Synaptics ClickPad");
+    clickpad_prop.data[0] = 1;
+    clickpad_prop.Update();
     XSync(dpy, False);
 }
 
@@ -713,61 +708,38 @@ TEST_F(SynapticsClickpadTest, ClickpadProperties)
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
 
-    Atom clickpad_prop = XInternAtom(Display(), "Synaptics ClickPad", True);
-    ASSERT_NE(clickpad_prop, (Atom)None);
-
-    Status status;
-    Atom type;
-    int format;
-    unsigned long nitems, bytes_after;
-    unsigned char *data;
-
-    status = XIGetProperty(Display(), deviceid, clickpad_prop, 0, 1, False,
-                           AnyPropertyType, &type, &format, &nitems,
-                           &bytes_after, &data);
-
-    ASSERT_EQ(status, Success);
-    ASSERT_EQ(format, 8);
-    ASSERT_EQ(nitems, 1U);
-    ASSERT_EQ(bytes_after, 0U);
+    ASSERT_PROPERTY(char, prop_clickpad, Display(), deviceid, "Synaptics ClickPad");
+    ASSERT_EQ(prop_clickpad.type, XA_INTEGER);
+    ASSERT_EQ(prop_clickpad.format, 8);
+    ASSERT_EQ(prop_clickpad.nitems, 1);
 #ifdef INPUT_PROP_BUTTONPAD
-    ASSERT_EQ(data[0], 1U);
+    ASSERT_EQ(prop_clickpad.data[0], 1);
 #else
-    ASSERT_EQ(data[0], 0U) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
+    ASSERT_EQ(prop_clickpad.data[0], 0) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
 #endif
-    free(data);
 
     /* This option is assigned by the xorg.conf.d, it won't activate for
        xorg.conf devices. */
-    Atom softbutton_props = XInternAtom(Display(), "Synaptics Soft Button Areas", True);
-#ifdef INPUT_PROP_BUTTONPAD
-    ASSERT_NE(softbutton_props, (Atom)None);
-#else
-    ASSERT_EQ(softbutton_props, (Atom)None) << "Not expecting Soft Buttons property on non-clickpads";
+#ifndef INPUT_PROP_BUTTONPAD
+    int prop = XInternAtom(Display(), "Synaptics Soft Button Areas", True);
+    ASSERT_EQ(prop, (Atom)None) << "Not expecting Soft Buttons property on non-clickpads";
     return;
 #endif
 
-    status = XIGetProperty(Display(), deviceid, softbutton_props, 0, 8, False,
-                           AnyPropertyType, &type, &format, &nitems,
-                           &bytes_after, &data);
+    ASSERT_PROPERTY(int, prop_softbutton, Display(), deviceid, "Synaptics Soft Button Areas");
 
-    ASSERT_EQ(status, Success);
-    ASSERT_EQ(format, 32);
-    ASSERT_EQ(nitems, 8U);
-    ASSERT_EQ(bytes_after, 0U);
+    ASSERT_EQ(prop_softbutton.format, 32);
+    ASSERT_EQ(prop_softbutton.nitems, 8);
+    ASSERT_EQ(prop_softbutton.type, XA_INTEGER);
 
-    int32_t *buttons = reinterpret_cast<int32_t*>(data);
-    ASSERT_EQ(buttons[0], 0);
-    ASSERT_EQ(buttons[1], 0);
-    ASSERT_EQ(buttons[2], 0);
-    ASSERT_EQ(buttons[3], 0);
-    ASSERT_EQ(buttons[4], 0);
-    ASSERT_EQ(buttons[5], 0);
-    ASSERT_EQ(buttons[6], 0);
-    ASSERT_EQ(buttons[7], 0);
-
-    free(data);
-
+    ASSERT_EQ(prop_softbutton.data[0], 0);
+    ASSERT_EQ(prop_softbutton.data[1], 0);
+    ASSERT_EQ(prop_softbutton.data[2], 0);
+    ASSERT_EQ(prop_softbutton.data[3], 0);
+    ASSERT_EQ(prop_softbutton.data[4], 0);
+    ASSERT_EQ(prop_softbutton.data[5], 0);
+    ASSERT_EQ(prop_softbutton.data[6], 0);
+    ASSERT_EQ(prop_softbutton.data[7], 0);
 }
 
 TEST_F(SynapticsClickpadTest, Tap)
@@ -1452,60 +1424,39 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     EXPECT_EQ(ndevices, 1) << "More than one touchpad found, cannot "
                               "guarantee right behaviour.";
 
-    Atom clickpad_prop = XInternAtom(dpy, "Synaptics ClickPad", True);
-    ASSERT_NE(clickpad_prop, (Atom)None);
+    ASSERT_PROPERTY(char, prop_clickpad, dpy, deviceid, "Synaptics ClickPad");
+    ASSERT_EQ(prop_clickpad.type, XA_INTEGER);
+    ASSERT_EQ(prop_clickpad.format, 8);
+    ASSERT_EQ(prop_clickpad.nitems, 1);
 
-    Status status;
-    Atom type;
-    int format;
-    unsigned long nitems, bytes_after;
-    unsigned char *data;
-
-    status = XIGetProperty(dpy, deviceid, clickpad_prop, 0, 1, False,
-                           AnyPropertyType, &type, &format, &nitems,
-                           &bytes_after, &data);
-
-    ASSERT_EQ(status, Success);
-    ASSERT_EQ(format, 8);
-    ASSERT_EQ(nitems, 1U);
-    ASSERT_EQ(bytes_after, 0U);
 #ifdef INPUT_PROP_BUTTONPAD
-    ASSERT_EQ(data[0], 1U);
+    ASSERT_EQ(prop_clickpad.data[0], 1U);
 #else
-    ASSERT_EQ(data[0], 0U) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
+    ASSERT_EQ(prop_clickpad.data[0], 0U) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
 #endif
-    free(data);
 
     /* This option is assigned by the xorg.conf.d, it won't activate for
        xorg.conf devices. */
-    Atom softbutton_props = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
-#ifdef INPUT_PROP_BUTTONPAD
-    ASSERT_NE(softbutton_props, (Atom)None);
-#else
-    ASSERT_EQ(softbutton_props, (Atom)None) << "Not expecting Soft Buttons property on non-clickpads";
+#ifndef INPUT_PROP_BUTTONPAD
+    int prop = XInternAtom(dpy, "Synaptics Soft Button Areas", True);
+    ASSERT_EQ(prop, (Atom)None) << "Not expecting Soft Buttons property on non-clickpads";
     return;
 #endif
 
-    status = XIGetProperty(dpy, deviceid, softbutton_props, 0, 8, False,
-                           AnyPropertyType, &type, &format, &nitems,
-                           &bytes_after, &data);
+    ASSERT_PROPERTY(int, prop_softbutton, dpy, deviceid, "Synaptics Soft Button Areas");
 
-    ASSERT_EQ(status, Success);
-    ASSERT_EQ(format, 32);
-    ASSERT_EQ(nitems, 8U);
-    ASSERT_EQ(bytes_after, 0U);
+    ASSERT_EQ(prop_softbutton.format, 32);
+    ASSERT_EQ(prop_softbutton.nitems, 8);
+    ASSERT_EQ(prop_softbutton.type, XA_INTEGER);
 
-    int32_t *buttons = reinterpret_cast<int32_t*>(data);
-    ASSERT_EQ(buttons[0], 3472);
-    ASSERT_EQ(buttons[1], 0);
-    ASSERT_EQ(buttons[2], 3900);
-    ASSERT_EQ(buttons[3], 0);
-    ASSERT_EQ(buttons[4], 0);
-    ASSERT_EQ(buttons[5], 0);
-    ASSERT_EQ(buttons[6], 0);
-    ASSERT_EQ(buttons[7], 0);
-
-    free(data);
+    ASSERT_EQ(prop_softbutton.data[0], 3472);
+    ASSERT_EQ(prop_softbutton.data[1], 0);
+    ASSERT_EQ(prop_softbutton.data[2], 3900);
+    ASSERT_EQ(prop_softbutton.data[3], 0);
+    ASSERT_EQ(prop_softbutton.data[4], 0);
+    ASSERT_EQ(prop_softbutton.data[5], 0);
+    ASSERT_EQ(prop_softbutton.data[6], 0);
+    ASSERT_EQ(prop_softbutton.data[7], 0);
 
     config.RemoveConfig();
     server.RemoveLogFile();
