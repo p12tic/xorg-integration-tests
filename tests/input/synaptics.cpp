@@ -638,6 +638,7 @@ public:
         nfingers_down |= 1 << slot;
         dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
         dev->PlayOne(EV_ABS, ABS_MT_SLOT, slot);
+        dev->PlayOne(EV_ABS, ABS_PRESSURE, 40);
         dev->PlayOne(EV_ABS, ABS_MT_TRACKING_ID, tracking_id++);
         TouchUpdate(slot, x, y);
     }
@@ -1045,6 +1046,14 @@ TEST_F(SynapticsClickpadTest, ClickFinger3Distance)
     ASSERT_EQ(release->xbutton.button, 3);
 }
 
+TEST_F(SynapticsClickpadTest, SecondaryButtonPropertyNotSet)
+{
+    XORG_TESTCASE("Secondary software button property must not exist on this device\n");
+
+    int deviceid;
+    ASSERT_TRUE(FindInputDeviceByName(Display(), "--device--", &deviceid));
+    ASSERT_FALSE(DevicePropertyExists(Display(), deviceid, "Synaptics Secondary Soft Button Areas"));
+}
 
 /**
  * Synaptics driver test for clickpad devices with the SoftButtonArea option
@@ -1581,6 +1590,232 @@ TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownMiddleDouble)
     ASSERT_EQ(middle2->xbutton.button, 2);
     ASSERT_EQ(middle3->xbutton.button, 2);
     ASSERT_EQ(middle4->xbutton.button, 2);
+}
+
+class SynapticsSecondarySoftButtonTest : public SynapticsClickpadTest {
+public:
+    /**
+     * Initializes a standard touchpad device.
+     */
+    virtual void SetUp() {
+        SetDevice("touchpads/SynPS2-Synaptics-TouchPad-T440.desc");
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 1;
+
+        XITServerInputTest::SetUp();
+    }
+
+    /**
+     * Sets up an xorg.conf for a single synaptics CorePointer device based on
+     * the evemu device. Options enabled: tapping (1 finger), two-finger
+     * vertical scroll.
+     */
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("synaptics", "--device--",
+                               "Option \"Protocol\"            \"event\"\n"
+                               "Option \"CorePointer\"         \"on\"\n"
+                               "Option \"TapButton1\"          \"1\"\n"
+                               "Option \"GrabEventDevice\"     \"1\"\n"
+                               "Option \"FastTaps\"            \"1\"\n"
+                               "Option \"VertTwoFingerScroll\" \"1\"\n"
+                               "Option \"SecondarySoftButtonAreas\" \"58% 0 0 8% 42% 58% 0 8%\"\n"
+                               "Option \"Device\"              \"" + dev->GetDeviceNode() + "\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(SynapticsSecondarySoftButtonTest, PropertyExists)
+{
+    XORG_TESTCASE("Start with a default value for SecondarySoftButtonAreas\n"
+                  "Expect the property to exist and be non-zero");
+
+    ::Display *dpy = Display();
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    ASSERT_PROPERTY(int, prop, dpy, deviceid, "Synaptics Secondary Soft Button Areas");
+
+    ASSERT_EQ(prop.type, XA_INTEGER);
+    ASSERT_EQ(prop.nitems, 8);
+    ASSERT_EQ(prop.format, 32);
+
+    ASSERT_NE(prop.data[0], 0);
+    ASSERT_NE(prop.data[3], 0);
+    ASSERT_NE(prop.data[4], 0);
+    ASSERT_NE(prop.data[5], 0);
+    ASSERT_NE(prop.data[7], 0);
+
+    ASSERT_EQ(prop.data[1], 0);
+    ASSERT_EQ(prop.data[2], 0);
+    ASSERT_EQ(prop.data[6], 0);
+}
+
+TEST_F(SynapticsSecondarySoftButtonTest, NoMovementWithinTopButtons)
+{
+    XORG_TESTCASE("Start with the top buttons enabled\n"
+                  "Put a finger down in the top buttons\n"
+                  "Move finger across, staying in the area\n"
+                  "Don't expect events\n");
+
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 1500, 1500);
+    TouchUpdate(0, 1600, 1500);
+    TouchUpdate(0, 1700, 1500);
+    TouchEnd(0);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+TEST_F(SynapticsSecondarySoftButtonTest, NoMovementInTopButtonsAfterClick)
+{
+    XORG_TESTCASE("Start with the top buttons enabled\n"
+                  "Put a finger down in the top buttons\n"
+                  "Press\n"
+                  "Move finger out of button area\n"
+                  "Don't expect motion events\n");
+
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 1500, 1500);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    TouchUpdate(0, 1600, 1500);
+    TouchUpdate(0, 1700, 1500);
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(0);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+}
+
+TEST_F(SynapticsSecondarySoftButtonTest, MovementInTopButtonsMovingOut)
+{
+    XORG_TESTCASE("Start with the top buttons enabled\n"
+                  "Put a finger down in the top buttons\n"
+                  "Move finger out of the buttons\n"
+                  "Expect motion events\n");
+
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 1500, 1500);
+    TouchUpdate(0, 1600, 2600);
+    TouchUpdate(0, 1700, 3500);
+    TouchEnd(0);
+
+    ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+}
+
+TEST_F(SynapticsSecondarySoftButtonTest, MovementIntoTopButtons)
+{
+    XORG_TESTCASE("Start with the top buttons enabled\n"
+                  "Put a finger down outside the top buttons\n"
+                  "Move finger into the buttons\n"
+                  "Expect motion events\n"
+                  "Move finger within the buttons\n"
+                  "Expect motion events\n");
+
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 1500, 3500);
+    TouchUpdate(0, 1500, 2500);
+    TouchUpdate(0, 1500, 1500);
+
+    while (XPending(dpy)) {
+        ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+        XSync(dpy, False);
+    }
+
+    TouchUpdate(0, 1600, 1500);
+    TouchUpdate(0, 1700, 1500);
+    TouchUpdate(0, 1800, 1500);
+    TouchUpdate(0, 1900, 1500);
+
+    TouchEnd(0);
+
+    ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+    while (XPending(dpy)) {
+        ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+        XSync(dpy, False);
+    }
+}
+
+TEST_F(SynapticsSecondarySoftButtonTest, TopButtonLeftClick)
+{
+    XORG_TESTCASE("Start with the top buttons set\n"
+                  "Put a finger down in the top buttons\n"
+                  "Click\n"
+                  "Expect left click\n");
+
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 1500, 1500);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(0);
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(press->xbutton.button, 1);
+    ASSERT_EQ(release->xbutton.button, 1);
+}
+
+TEST_F(SynapticsSecondarySoftButtonTest, TopButtonRightClick)
+{
+    XORG_TESTCASE("Start with the top buttons set\n"
+                  "Put a finger down in the top buttons\n"
+                  "Click\n"
+                  "Expect right click\n");
+
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 4500, 1500);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(0);
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(press->xbutton.button, 3);
+    ASSERT_EQ(release->xbutton.button, 3);
+}
+
+TEST_F(SynapticsSecondarySoftButtonTest, TopButtonMiddleClick)
+{
+    XORG_TESTCASE("Start with the top buttons set\n"
+                  "Put a finger down in the top buttons\n"
+                  "Click\n"
+                  "Expect middle click\n");
+
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask | ButtonPressMask | ButtonReleaseMask);
+
+    TouchBegin(0, 3292, 1500);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    TouchEnd(0);
+
+    ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
+    ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
+    ASSERT_EQ(press->xbutton.button, 2);
+    ASSERT_EQ(release->xbutton.button, 2);
 }
 
 int main(int argc, char **argv) {
