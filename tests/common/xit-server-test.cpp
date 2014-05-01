@@ -31,7 +31,7 @@
 #include "xit-server-test.h"
 #include "helpers.h"
 
-#define TEST_TIMEOUT 60
+#define TEST_TIMEOUT 10
 
 void XITServerTest::SetUpEventListener() {
     failed = false;
@@ -101,7 +101,7 @@ void XITServerTest::StartServer() {
        that suggest we're actually debugging the server */
     if (!getenv("XORG_GTEST_XSERVER_SIGSTOP") &&
         !getenv("XORG_GTEST_XSERVER_KEEPALIVE")) {
-        alarm(60);
+        alarm(TEST_TIMEOUT);
         signal(SIGALRM, sighandler_alarm);
     }
 
