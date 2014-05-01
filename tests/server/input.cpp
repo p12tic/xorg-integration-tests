@@ -623,7 +623,7 @@ TEST_P(PointerButtonMotionMaskTest, ButtonXMotionMask)
 
 INSTANTIATE_TEST_CASE_P(, PointerButtonMotionMaskTest, ::testing::Range(1, 4));
 
-class PointerSubpixelTest : public PointerMotionTest {
+class DISABLED_PointerSubpixelTest : public PointerMotionTest {
     /**
      * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
      * the evemu device. The input from GetParam() is used as XkbLayout.
@@ -642,7 +642,7 @@ class PointerSubpixelTest : public PointerMotionTest {
     }
 };
 
-TEST_F(PointerSubpixelTest, NoSubpixelCoreEvents)
+TEST_F(DISABLED_PointerSubpixelTest, NoSubpixelCoreEvents)
 {
     XORG_TESTCASE("Move pointer by less than a pixels\n"
                   "Ensure no core motion event is received\n"
