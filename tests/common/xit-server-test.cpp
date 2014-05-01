@@ -121,7 +121,15 @@ void XITServerTest::StartServer() {
     server.SetOption("-noreset", "");
     server.SetOption("-logverbose", "12");
     server.Start();
-    xorg::testing::Test::SetDisplayString(server.GetDisplayString());
+
+    std::string display;
+    const char *dpy = getenv("XORG_GTEST_XSERVER_OVERRIDE_DISPLAY");
+    if (dpy)
+        display = std::string(dpy);
+    else
+        display = server.GetDisplayString();
+
+    xorg::testing::Test::SetDisplayString(display);
 
     ASSERT_NO_FATAL_FAILURE(xorg::testing::Test::SetUp());
 }
