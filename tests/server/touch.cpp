@@ -1013,8 +1013,8 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
     XISetMask(mask.mask, XI_DeviceChanged);
 
     ASSERT_EQ(Success,
-              XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1));
-    XSync(Display(), False);
+              XISelectEvents(dpy, DefaultRootWindow(Display()), &mask, 1));
+    XSync(dpy, False);
     delete[] mask.mask;
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
@@ -1022,7 +1022,7 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
 
     XSync(dpy, False);
 
-    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
+    ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy,
                                                            GenericEvent,
                                                            xi2_opcode,
                                                            XI_DeviceChanged));
@@ -1031,7 +1031,7 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
     ASSERT_EQ(ev.type, GenericEvent);
     ASSERT_EQ(ev.xcookie.extension, xi2_opcode);
     ASSERT_EQ(ev.xcookie.evtype, XI_DeviceChanged);
-    ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
+    ASSERT_TRUE(XGetEventData(dpy, &ev.xcookie));
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
