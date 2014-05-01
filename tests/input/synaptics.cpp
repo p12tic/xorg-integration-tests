@@ -1047,10 +1047,10 @@ TEST_F(SynapticsClickpadTest, ClickFinger3)
 
 TEST_F(SynapticsClickpadTest, ClickFinger3Distance)
 {
-    XORG_TESTCASE("Put two fingers on the touchpad, too far apart for clickfinger\n"
+    XORG_TESTCASE("Put two fingers on the touchpad, far apart\n"
                   "Trigger BTN_TOOL_TRIPLETAP\n"
                   "Trigger BTN_LEFT\n"
-                  "Expect ClickFinger2 action\n");
+                  "Expect ClickFinger3 action\n");
     ::Display *dpy = Display();
 
     SetClickfingerProperty("--device--", 0, 2, 3);
@@ -1065,12 +1065,12 @@ TEST_F(SynapticsClickpadTest, ClickFinger3Distance)
     TouchEnd(1);
     TouchEnd(0);
 
-    /* First two fingers too far apart but the third counts, so we expect
-       CF2 action */
+    /* xf86-input-synaptics-1.7.99.1-7-ga6f0f4c changed the behaviour, now
+       we always expect clickfinger 3, regardless of distance */
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 2);
-    ASSERT_EQ(release->xbutton.button, 2);
+    ASSERT_EQ(press->xbutton.button, 3);
+    ASSERT_EQ(release->xbutton.button, 3);
 }
 
 
