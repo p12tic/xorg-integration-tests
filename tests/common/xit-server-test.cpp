@@ -91,9 +91,22 @@ void XITServerTest::TearDown() {
     listeners.Release(this);
 }
 
-static void sighandler_alarm(int signal)
+class XITServerTimeoutError : public std::runtime_error {
+    public:
+        XITServerTimeoutError(const std::string &msg) : std::runtime_error(msg) {}
+};
+
+static void sighandler_alarm(int sig)
 {
-    FAIL() << "Test has timed out (" << __func__ << "). Adjust TEST_TIMEOUT (" << TEST_TIMEOUT << "s) if needed.";
+    static int exception = 0;
+
+    if (exception++ == 0) {
+        alarm(2);
+        FAIL() << "Test has timed out (" << __func__ << "). Adjust TEST_TIMEOUT (" << TEST_TIMEOUT << "s) if needed.";
+    } else {
+        exception = 0;
+        throw XITServerTimeoutError("Test has timed out.  Adjust TEST_TIMEOUT if needed");
+    }
 }
 
 void XITServerTest::StartServer() {
