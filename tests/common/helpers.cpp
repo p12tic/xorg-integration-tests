@@ -40,7 +40,7 @@
 
 int FindInputDeviceByName(Display *dpy, const std::string &device_name, int *deviceid)
 {
-    int ndevices;
+    int ndevices = 0;
     XIDeviceInfo *info;
 
     info = XIQueryDevice(dpy, XIAllDevices, &ndevices);

@@ -1182,7 +1182,7 @@ public:
     }
 
     std::vector<Atom> GetAxisLabels(::Display *dpy, int deviceid) {
-        int ndevices;
+        int ndevices = 0;
         XIDeviceInfo *info = XIQueryDevice(dpy, deviceid, &ndevices);
 
         EXPECT_EQ(ndevices, 1);
@@ -1214,14 +1214,15 @@ public:
         return atoms;
     }
 
-    int SetUpDevice(::Display *dpy, const std::string &recordings_file, const std::string name) {
-        int deviceid;
-
+    void SetUpDevice(::Display *dpy,
+                     const std::string &recordings_file,
+                     const std::string name,
+                     int *deviceid) {
+        *deviceid = -1;
         SetDevice(recordings_file);
-        EXPECT_TRUE(xorg::testing::XServer::WaitForDevice(dpy, name));
-        EXPECT_EQ(FindInputDeviceByName(dpy, name, &deviceid), 1);
-
-        return deviceid;
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(dpy, name, 2000));
+        ASSERT_EQ(1, FindInputDeviceByName(dpy, name, deviceid));
+        ASSERT_NE(*deviceid, -1);
     }
 
     void CompareLabels(::Display *dpy, int deviceid, const char *axislabels[])
@@ -1253,7 +1254,10 @@ public:
 TEST_F(EvdevAxisLabelTest, RelativeAxes)
 {
     ::Display *dpy = Display();
-    int deviceid = SetUpDevice(dpy, "mice/PIXART-USB-OPTICAL-MOUSE.desc", "PIXART USB OPTICAL MOUSE");
+    int deviceid;
+
+    SetUpDevice(dpy, "mice/PIXART-USB-OPTICAL-MOUSE.desc", "PIXART USB OPTICAL MOUSE", &deviceid);
+    ASSERT_NE(deviceid, 0);
 
     const char *l[] = {"Rel X", "Rel Y", "Rel Vert Wheel", NULL};
 
@@ -1264,7 +1268,10 @@ TEST_F(EvdevAxisLabelTest, RelativeAxes)
 TEST_F(EvdevAxisLabelTest, AbsoluteAxes)
 {
     ::Display *dpy = Display();
-    int deviceid = SetUpDevice(dpy, "tablets/N-Trig-MultiTouch.desc", "N-Trig MultiTouch");
+    int deviceid;
+
+    SetUpDevice(dpy, "tablets/N-Trig-MultiTouch.desc", "N-Trig MultiTouch", &deviceid);
+    ASSERT_NE(deviceid, 0);
 
     const char *l[] = {"Abs MT Position X", "Abs MT Position Y", "Abs Misc",
                        "Abs MT Touch Major", "Abs MT Touch Minor", "Abs MT Orientation", NULL};
@@ -1275,7 +1282,10 @@ TEST_F(EvdevAxisLabelTest, AbsoluteAxes)
 TEST_F(EvdevAxisLabelTest, RelAndAbsoluteAxes)
 {
     ::Display *dpy = Display();
-    int deviceid = SetUpDevice(dpy, "tablets/QEMU-0.12.1-QEMU-USB-Tablet.desc", "QEMU 0.12.1 QEMU USB Tablet");
+    int deviceid;
+
+    SetUpDevice(dpy, "tablets/QEMU-0.12.1-QEMU-USB-Tablet.desc", "QEMU 0.12.1 QEMU USB Tablet", &deviceid);
+    ASSERT_NE(deviceid, 0);
 
     const char *l[] = {"Abs X", "Abs Y",  "Rel Vert Wheel", NULL};
 
