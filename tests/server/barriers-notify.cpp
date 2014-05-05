@@ -186,6 +186,8 @@ public:
                 target_dev = &dev2;
                 source_dev = "--device2--";
                 break;
+            default:
+                FAIL();
         }
 
         ASSERT_TRUE(FindInputDeviceByName(Display(), source_dev, &sourceid)) << "Failed to find device.";

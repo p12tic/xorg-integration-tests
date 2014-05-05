@@ -231,6 +231,8 @@ TEST_P(SmoothScrollingTest, SmoothScrolling)
             direction = 1;
             increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeHorizontal);
             break;
+        default:
+            FAIL();
     }
 
     SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
@@ -327,6 +329,8 @@ TEST_P(SmoothScrollingTest, SmoothScrollingButtonInverted)
             direction = 1;
             increment = GetScrollIncrement(dpy, deviceid, XIScrollTypeHorizontal);
             break;
+        default:
+            FAIL();
     }
 
     SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
