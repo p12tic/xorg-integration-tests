@@ -396,6 +396,7 @@ TEST(ElographicsTest, StylusMovement)
     server.RemoveLogFile();
 }
 
+#ifndef HAVE_RHEL6
 TEST(ElographicsTest, InvertX)
 {
     XOrgConfig config;
@@ -495,6 +496,7 @@ TEST(ElographicsTest, InvertY)
     config.RemoveConfig();
     server.RemoveLogFile();
 }
+#endif
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
