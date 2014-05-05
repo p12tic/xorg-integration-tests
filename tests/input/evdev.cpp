@@ -1224,7 +1224,7 @@ public:
                      int *deviceid) {
         *deviceid = -1;
         SetDevice(recordings_file);
-        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(dpy, name, 2000));
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(dpy, name, 10000));
         ASSERT_EQ(1, FindInputDeviceByName(dpy, name, deviceid));
         ASSERT_NE(*deviceid, -1);
     }
