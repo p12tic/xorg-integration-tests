@@ -1189,7 +1189,7 @@ public:
 
         std::vector<Atom> atoms;
 
-        for (int i = 0; i < info->num_classes; i++) {
+        for (int i = 0; info && i < info->num_classes; i++) {
             if (info->classes[i]->type != XIValuatorClass)
                 continue;
 
