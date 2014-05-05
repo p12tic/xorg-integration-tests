@@ -712,7 +712,7 @@ TEST_F(SynapticsClickpadTest, ClickpadProperties)
     ASSERT_PROPERTY(char, prop_clickpad, Display(), deviceid, "Synaptics ClickPad");
     ASSERT_EQ(prop_clickpad.type, XA_INTEGER);
     ASSERT_EQ(prop_clickpad.format, 8);
-    ASSERT_EQ(prop_clickpad.nitems, 1);
+    ASSERT_EQ(prop_clickpad.nitems, 1U);
 #ifdef INPUT_PROP_BUTTONPAD
     ASSERT_EQ(prop_clickpad.data[0], 1);
 #else
@@ -730,7 +730,7 @@ TEST_F(SynapticsClickpadTest, ClickpadProperties)
     ASSERT_PROPERTY(int, prop_softbutton, Display(), deviceid, "Synaptics Soft Button Areas");
 
     ASSERT_EQ(prop_softbutton.format, 32);
-    ASSERT_EQ(prop_softbutton.nitems, 8);
+    ASSERT_EQ(prop_softbutton.nitems, 8U);
     ASSERT_EQ(prop_softbutton.type, XA_INTEGER);
 
     ASSERT_EQ(prop_softbutton.data[0], 0);
@@ -961,8 +961,8 @@ TEST_F(SynapticsClickpadTest, ClickFinger2)
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 2);
-    ASSERT_EQ(release->xbutton.button, 2);
+    ASSERT_EQ(press->xbutton.button, 2U);
+    ASSERT_EQ(release->xbutton.button, 2U);
 }
 
 TEST_F(SynapticsClickpadTest, ClickFinger2Distance)
@@ -987,8 +987,8 @@ TEST_F(SynapticsClickpadTest, ClickFinger2Distance)
        button press */
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 1);
-    ASSERT_EQ(release->xbutton.button, 1);
+    ASSERT_EQ(press->xbutton.button, 1U);
+    ASSERT_EQ(release->xbutton.button, 1U);
 }
 
 TEST_F(SynapticsClickpadTest, ClickFinger3)
@@ -1014,8 +1014,8 @@ TEST_F(SynapticsClickpadTest, ClickFinger3)
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 2);
-    ASSERT_EQ(release->xbutton.button, 2);
+    ASSERT_EQ(press->xbutton.button, 2U);
+    ASSERT_EQ(release->xbutton.button, 2U);
 }
 
 TEST_F(SynapticsClickpadTest, ClickFinger3Distance)
@@ -1042,8 +1042,8 @@ TEST_F(SynapticsClickpadTest, ClickFinger3Distance)
        we always expect clickfinger 3, regardless of distance */
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 3);
-    ASSERT_EQ(release->xbutton.button, 3);
+    ASSERT_EQ(press->xbutton.button, 3U);
+    ASSERT_EQ(release->xbutton.button, 3U);
 }
 
 TEST_F(SynapticsClickpadTest, SecondaryButtonPropertyNotSet)
@@ -1436,12 +1436,12 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     ASSERT_PROPERTY(char, prop_clickpad, dpy, deviceid, "Synaptics ClickPad");
     ASSERT_EQ(prop_clickpad.type, XA_INTEGER);
     ASSERT_EQ(prop_clickpad.format, 8);
-    ASSERT_EQ(prop_clickpad.nitems, 1);
+    ASSERT_EQ(prop_clickpad.nitems, 1U);
 
 #ifdef INPUT_PROP_BUTTONPAD
-    ASSERT_EQ(prop_clickpad.data[0], 1U);
+    ASSERT_EQ(prop_clickpad.data[0], 1);
 #else
-    ASSERT_EQ(prop_clickpad.data[0], 0U) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
+    ASSERT_EQ(prop_clickpad.data[0], 0) << "Not expecting ClickPad to be set on a kernel without INPUT_PROP_BUTTONPAD";
 #endif
 
     /* This option is assigned by the xorg.conf.d, it won't activate for
@@ -1455,7 +1455,7 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     ASSERT_PROPERTY(int, prop_softbutton, dpy, deviceid, "Synaptics Soft Button Areas");
 
     ASSERT_EQ(prop_softbutton.format, 32);
-    ASSERT_EQ(prop_softbutton.nitems, 8);
+    ASSERT_EQ(prop_softbutton.nitems, 8U);
     ASSERT_EQ(prop_softbutton.type, XA_INTEGER);
 
     ASSERT_EQ(prop_softbutton.data[0], 3472);
@@ -1525,10 +1525,10 @@ TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownScroll)
     ASSERT_EVENT(XEvent, up3, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, up4, dpy, ButtonRelease);
 
-    ASSERT_EQ(up1->xbutton.button, 4);
-    ASSERT_EQ(up2->xbutton.button, 4);
-    ASSERT_EQ(up3->xbutton.button, 4);
-    ASSERT_EQ(up4->xbutton.button, 4);
+    ASSERT_EQ(up1->xbutton.button, 4U);
+    ASSERT_EQ(up2->xbutton.button, 4U);
+    ASSERT_EQ(up3->xbutton.button, 4U);
+    ASSERT_EQ(up4->xbutton.button, 4U);
 
     dev->PlayOne(EV_KEY, BTN_1, 1, true);
     dev->PlayOne(EV_KEY, BTN_1, 0, true);
@@ -1540,10 +1540,10 @@ TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownScroll)
     ASSERT_EVENT(XEvent, down3, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, down4, dpy, ButtonRelease);
 
-    ASSERT_EQ(down1->xbutton.button, 5);
-    ASSERT_EQ(down2->xbutton.button, 5);
-    ASSERT_EQ(down3->xbutton.button, 5);
-    ASSERT_EQ(down4->xbutton.button, 5);
+    ASSERT_EQ(down1->xbutton.button, 5U);
+    ASSERT_EQ(down2->xbutton.button, 5U);
+    ASSERT_EQ(down3->xbutton.button, 5U);
+    ASSERT_EQ(down4->xbutton.button, 5U);
 }
 
 TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownMiddleDouble)
@@ -1571,10 +1571,10 @@ TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownMiddleDouble)
     ASSERT_EVENT(XEvent, double3, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, double4, dpy, ButtonRelease);
 
-    ASSERT_EQ(double1->xbutton.button, 1);
-    ASSERT_EQ(double2->xbutton.button, 1);
-    ASSERT_EQ(double3->xbutton.button, 1);
-    ASSERT_EQ(double4->xbutton.button, 1);
+    ASSERT_EQ(double1->xbutton.button, 1U);
+    ASSERT_EQ(double2->xbutton.button, 1U);
+    ASSERT_EQ(double3->xbutton.button, 1U);
+    ASSERT_EQ(double4->xbutton.button, 1U);
 
     dev->PlayOne(EV_KEY, BTN_1, 1, true);
     dev->PlayOne(EV_KEY, BTN_1, 0, true);
@@ -1586,10 +1586,10 @@ TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownMiddleDouble)
     ASSERT_EVENT(XEvent, middle3, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, middle4, dpy, ButtonRelease);
 
-    ASSERT_EQ(middle1->xbutton.button, 2);
-    ASSERT_EQ(middle2->xbutton.button, 2);
-    ASSERT_EQ(middle3->xbutton.button, 2);
-    ASSERT_EQ(middle4->xbutton.button, 2);
+    ASSERT_EQ(middle1->xbutton.button, 2U);
+    ASSERT_EQ(middle2->xbutton.button, 2U);
+    ASSERT_EQ(middle3->xbutton.button, 2U);
+    ASSERT_EQ(middle4->xbutton.button, 2U);
 }
 
 class SynapticsSecondarySoftButtonTest : public SynapticsClickpadTest {
@@ -1639,7 +1639,7 @@ TEST_F(SynapticsSecondarySoftButtonTest, PropertyExists)
     ASSERT_PROPERTY(int, prop, dpy, deviceid, "Synaptics Secondary Soft Button Areas");
 
     ASSERT_EQ(prop.type, XA_INTEGER);
-    ASSERT_EQ(prop.nitems, 8);
+    ASSERT_EQ(prop.nitems, 8U);
     ASSERT_EQ(prop.format, 32);
 
     ASSERT_NE(prop.data[0], 0);
@@ -1770,8 +1770,8 @@ TEST_F(SynapticsSecondarySoftButtonTest, TopButtonLeftClick)
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 1);
-    ASSERT_EQ(release->xbutton.button, 1);
+    ASSERT_EQ(press->xbutton.button, 1U);
+    ASSERT_EQ(release->xbutton.button, 1U);
 }
 
 TEST_F(SynapticsSecondarySoftButtonTest, TopButtonRightClick)
@@ -1792,8 +1792,8 @@ TEST_F(SynapticsSecondarySoftButtonTest, TopButtonRightClick)
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 3);
-    ASSERT_EQ(release->xbutton.button, 3);
+    ASSERT_EQ(press->xbutton.button, 3U);
+    ASSERT_EQ(release->xbutton.button, 3U);
 }
 
 TEST_F(SynapticsSecondarySoftButtonTest, TopButtonMiddleClick)
@@ -1814,8 +1814,8 @@ TEST_F(SynapticsSecondarySoftButtonTest, TopButtonMiddleClick)
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
-    ASSERT_EQ(press->xbutton.button, 2);
-    ASSERT_EQ(release->xbutton.button, 2);
+    ASSERT_EQ(press->xbutton.button, 2U);
+    ASSERT_EQ(release->xbutton.button, 2U);
 }
 
 int main(int argc, char **argv) {
