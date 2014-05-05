@@ -1561,6 +1561,62 @@ TEST_F(EvdevAbsXMissingTest, DevicePresent)
     dev->Play(RECORDINGS_DIR "tablets/n4.events");
 }
 
+class EvdevDuplicateTest : public EvdevMouseTest {
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("kbd", "keyboard-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.SetAutoAddDevices(true);
+        config.WriteConfig();
+    }
+};
+
+TEST_F(EvdevDuplicateTest, TooManyDevices)
+{
+    XORG_TESTCASE("Create more than MAXDEVICES evdev devices\n"
+                  "Server must not crash\n");
+
+    const int NDEVICES = 50;
+    std::auto_ptr<xorg::testing::evemu::Device> devices[NDEVICES];
+    for (int i = 0; i < NDEVICES; i++) {
+        devices[i] = std::auto_ptr<xorg::testing::evemu::Device>(
+                         new xorg::testing::evemu::Device(RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
+                     );
+    }
+
+    /* expect at least two hotplugged, but the actual number depends on the
+       local number of devices */
+    int deviceid;
+    ASSERT_GT(FindInputDeviceByName(Display(), "PIXART USB OPTICAL MOUSE", &deviceid), 2);
+}
+
+TEST_F(EvdevDuplicateTest, DuplicateDeviceCheck)
+{
+    XORG_TESTCASE("Add a device through the xorg.conf and hotplugging\n"
+                  "Expect it to be added only once\n");
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(Display(), "PIXART USB OPTICAL MOUSE", &deviceid), 0);
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--", &deviceid), 1);
+
+    std::ifstream logfile(server.GetLogFilePath().c_str());
+    std::string line;
+    std::string dup_warn("device file is duplicate. Ignoring.");
+    bool found = false;
+    ASSERT_TRUE(logfile.is_open());
+    while(!found && getline(logfile, line))
+        found = line.find(dup_warn);
+
+    ASSERT_TRUE(found) << "Expected message '" << dup_warn << "' in the log "
+                       << "but couldn't find it";
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
