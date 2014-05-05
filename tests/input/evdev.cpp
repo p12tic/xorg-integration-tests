@@ -1103,7 +1103,7 @@ TEST_P(EvdevTouchRotationTest, AxisSwapInversion)
     /* x movement first */
     for (int i = 30; i < 75; i += 5) {
         double xpos = i/100.0;
-        double x_expect, y_expect;
+        double x_expect = 0, y_expect = 0;
 
         TouchUpdate(devw * xpos, devh * 0.25);
 
@@ -1124,6 +1124,8 @@ TEST_P(EvdevTouchRotationTest, AxisSwapInversion)
                 x_expect = w * (1 - xpos);
                 y_expect = h * 0.75;
                 break;
+            default:
+                FAIL();
         }
 
 
@@ -1135,7 +1137,7 @@ TEST_P(EvdevTouchRotationTest, AxisSwapInversion)
     /* y movement */
     for (int i = 30; i < 75; i += 5) {
         double ypos = i/100.0;
-        double x_expect, y_expect;
+        double x_expect = 0, y_expect = 0;
 
         TouchUpdate(devw * 0.25, devh * ypos);
 
@@ -1156,6 +1158,8 @@ TEST_P(EvdevTouchRotationTest, AxisSwapInversion)
                 x_expect = w * 0.75;
                 y_expect = h * (1 - ypos);
                 break;
+            default:
+                FAIL();
         }
 
         ASSERT_EVENT(XIDeviceEvent, update, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
