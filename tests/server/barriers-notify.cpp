@@ -1055,13 +1055,14 @@ TEST_F(BarrierMPXTest, BarrierLeaveOnMDDestroyWhenInsideHitbox)
     }
 
     XIAnyHierarchyChangeInfo change;
-    change.remove = (XIRemoveMasterInfo) {
-        .type = XIRemoveMaster,
-        .deviceid = master_id_2,
-        .return_mode = XIAttachToMaster,
-        .return_pointer = VIRTUAL_CORE_POINTER_ID,
-        .return_keyboard = VIRTUAL_CORE_POINTER_ID + 1, /* VCK */
+    XIRemoveMasterInfo remove = {
+        XIRemoveMaster,
+        master_id_2,
+        XIAttachToMaster,
+        VIRTUAL_CORE_POINTER_ID,
+        VIRTUAL_CORE_POINTER_ID + 1, /* VCK */
     };
+    change.remove = remove;
 
     ASSERT_EQ(XIChangeHierarchy(dpy, &change, 1), Success) << "Couldn't remove new master device.";
 
