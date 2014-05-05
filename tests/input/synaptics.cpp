@@ -142,16 +142,9 @@ TEST_F(SynapticsTest, SmoothScrollingAvailable)
         }
     }
 
-#ifndef HAVE_RHEL6
     ASSERT_EQ(nvaluators, 4);
     ASSERT_TRUE(hscroll_class_found);
     ASSERT_TRUE(vscroll_class_found);
-#else
-    /* RHEL6 disables smooth scrolling */
-    ASSERT_EQ(nvaluators, 2);
-    ASSERT_FALSE(hscroll_class_found);
-    ASSERT_FALSE(vscroll_class_found);
-#endif
 
     XIFreeDeviceInfo(info);
 }
