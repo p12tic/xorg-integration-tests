@@ -168,12 +168,8 @@ TEST_P(KeyboardTest, KeyboardLayout)
 {
     std::string layout = GetParam();
 
+    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "--device--"));
     XSelectInput(Display(), DefaultRootWindow(Display()), KeyPressMask | KeyReleaseMask);
-    /* the server takes a while to start up bust the devices may not respond
-       to events yet. Add a noop call that just delays everything long
-       enough for this test to work */
-    XInternAtom(Display(), "foo", True);
-    XFlush(Display());
 
     keys_mapIter it;
     std::pair<keys_mapIter, keys_mapIter> keyRange = Keys.equal_range(layout);
