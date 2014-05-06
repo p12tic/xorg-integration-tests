@@ -96,7 +96,12 @@ XITEvent<EventType>::XITEvent(::Display *dpy, int type, int opcode, int evtype)
     XNextEvent(dpy, &e);
 
     if (e.type != type) {
-        ADD_FAILURE() << "Mismatching type: " << e.type << " (expected " << type << ")";
+        std::stringstream msg;
+        msg << "Mismatching type: " << e.type;
+        if (e.type == GenericEvent)
+            msg << " extension: " << ((XGenericEvent*)&e)->extension << " evtype: " << ((XGenericEvent*)&e)->evtype;
+        msg << " (expected " << type << ")";
+        ADD_FAILURE() << msg.str();
         ev = NULL;
         return;
     }
