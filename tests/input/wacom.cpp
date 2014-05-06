@@ -137,23 +137,6 @@ protected:
     }
 
     /**
-     * Register for XI2 Hierarchy events on the root window
-     */
-    void SetUpXIEventMask () {
-        XIEventMask evmask;
-        unsigned char mask[2] = { 0, 0 };
-
-        XISetMask(mask, XI_HierarchyChanged);
-
-        evmask.deviceid = XIAllDevices;
-        evmask.mask_len = sizeof(mask);
-        evmask.mask = mask;
-
-        EXPECT_EQ(Success, XISelectEvents(Display(), DefaultRootWindow(Display()), &evmask, 1));
-        XSync(Display(), False);
-    }
-
-    /**
      * Create an evemu device based on GetParam()'s tablet.
      */
     void VerifyDevice (const Tablet& tablet)
@@ -208,7 +191,6 @@ protected:
 
         XITServerInputTest::SetUp();
 
-        SetUpXIEventMask ();
         VerifyDevice(tablet);
     }
 };
