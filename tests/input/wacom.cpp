@@ -785,7 +785,7 @@ TEST_F(WacomPropertyTest, Button1DoubleMiddleClick)
 
     TipUp();
     XSync(dpy, False);
-    ASSERT_EQ(XPending(dpy), 0);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_F(WacomPropertyTest, ButtonActionInvalidFormat)
@@ -927,12 +927,12 @@ TEST_F(WacomPropertyTest, ButtonActionKeyPress)
     TipDown();
     ASSERT_EVENT(XEvent, press, dpy, KeyPress);
     ASSERT_EQ(press->xkey.keycode, KEY_A_KEYCODE);
-    ASSERT_EQ(XPending(dpy), 0);
+    ASSERT_TRUE(NoEventPending(dpy));
 
     TipUp();
     ASSERT_EVENT(XEvent, release, dpy, KeyRelease);
     ASSERT_EQ(release->xkey.keycode, KEY_A_KEYCODE);
-    ASSERT_EQ(XPending(dpy), 0);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 TEST_F(WacomPropertyTest, ButtonActionKeyPressRelease)
@@ -967,11 +967,11 @@ TEST_F(WacomPropertyTest, ButtonActionKeyPressRelease)
 
     ASSERT_EVENT(XEvent, release, dpy, KeyRelease);
     ASSERT_EQ(release->xkey.keycode, KEY_A_KEYCODE);
-    ASSERT_EQ(XPending(dpy), 0);
+    ASSERT_TRUE(NoEventPending(dpy));
 
     TipUp();
     XSync(dpy, False);
-    ASSERT_EQ(XPending(dpy), 0);
+    ASSERT_TRUE(NoEventPending(dpy));
 }
 
 int main(int argc, char **argv) {
