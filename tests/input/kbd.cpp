@@ -146,8 +146,8 @@ TEST_P(KeyboardTest, DeviceExists)
 
 void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_Pair pair)
 {
-    dev->PlayOne(EV_KEY, pair.first, 1, 1);
-    dev->PlayOne(EV_KEY, pair.first, 0, 1);
+    dev->PlayOne(EV_KEY, pair.first, 1, true);
+    dev->PlayOne(EV_KEY, pair.first, 0, true);
 
     XSync(display, False);
     ASSERT_NE(XPending(display), 0) << "No event pending" << std::endl;
