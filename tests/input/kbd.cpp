@@ -39,6 +39,7 @@
 #include <X11/extensions/XInput2.h>
 
 #include "xit-server-input-test.h"
+#include "xit-event.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -149,19 +150,14 @@ void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_P
     dev->PlayOne(EV_KEY, pair.first, 1, true);
     dev->PlayOne(EV_KEY, pair.first, 0, true);
 
-    XSync(display, False);
-    ASSERT_NE(XPending(display), 0) << "No event pending" << std::endl;
-
-    XEvent press;
-    XNextEvent(display, &press);
-
-    KeySym sym = XKeycodeToKeysym(display, press.xkey.keycode, 0);
-    ASSERT_NE((KeySym)NoSymbol, sym) << "No keysym for keycode " << press.xkey.keycode << std::endl;
-    ASSERT_EQ(pair.second, sym) << "Keysym not matching for keycode " << press.xkey.keycode << std::endl;
+    ASSERT_EVENT(XEvent, press, display, KeyPress);
+    KeySym sym = XKeycodeToKeysym(display, press->xkey.keycode, 0);
+    ASSERT_NE((KeySym)NoSymbol, sym) << "No keysym for keycode " << press->xkey.keycode << std::endl;
+    ASSERT_EQ(pair.second, sym) << "Keysym not matching for keycode " << press->xkey.keycode << std::endl;
 
     XSync(display, False);
     while (XPending(display))
-      XNextEvent(display, &press);
+        XSync(display, True);
 }
 
 TEST_P(KeyboardTest, KeyboardLayout)
