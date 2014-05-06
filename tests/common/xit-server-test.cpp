@@ -128,7 +128,8 @@ void XITServerTest::StartServer() {
     /* No test takes longer than 60 seconds unless we have some envs set
        that suggest we're actually debugging the server */
     if (!getenv("XORG_GTEST_XSERVER_SIGSTOP") &&
-        !getenv("XORG_GTEST_XSERVER_KEEPALIVE")) {
+        !getenv("XORG_GTEST_XSERVER_KEEPALIVE") &&
+        !getenv("XORG_GTEST_USE_VALGRIND")) {
         alarm(TEST_TIMEOUT);
         signal(SIGALRM, sighandler_alarm);
     }
