@@ -651,8 +651,11 @@ INSTANTIATE_TEST_CASE_P(, WacomToolProximityTest, ::testing::Values(BTN_TOOL_PEN
 class WacomPropertyTest : public WacomDeviceTest {
 public:
     virtual void SetUp(void) {
+        std::string name = "Wacom Intuos4 6x9 stylus";
         WacomDeviceTest::SetUp();
-        ASSERT_EQ(FindInputDeviceByName(Display(), "Wacom Intuos4 6x9 stylus", &stylus_id), 1);
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), name, 5000));
+        XSync(Display(), True);
+        ASSERT_EQ(FindInputDeviceByName(Display(), name, &stylus_id), 1);
     }
 
     bool PropertyExists(::Display *dpy, int deviceid, const std::string &propname)
