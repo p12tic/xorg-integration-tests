@@ -585,46 +585,6 @@ public:
         ASSERT_EQ(FindInputDeviceByName(Display(), name, &stylus_id), 1);
     }
 
-    bool PropertyExists(::Display *dpy, int deviceid, const std::string &propname)
-    {
-        Atom prop;
-
-        prop = XInternAtom(dpy, propname.c_str(), True);
-        if (prop == None)
-            return false;
-
-
-        Atom *props;
-        int nprops;
-        props = XIListProperties(dpy, deviceid, &nprops);
-
-        bool prop_found = false;
-        while (nprops-- && !prop_found)
-            prop_found = (props[nprops] == prop);
-
-        XFree(props);
-
-        return prop_found;
-    }
-
-    unsigned char *GetPropertyData(::Display *dpy, int deviceid, const std::string &propname)
-    {
-        Atom prop;
-
-        prop = XInternAtom(dpy, propname.c_str(), True);
-        if (prop == None)
-            return NULL;
-
-        unsigned char *data;
-        Atom type;
-        int format;
-        unsigned long nitems, bytes_after;
-        XIGetProperty(dpy, stylus_id, prop, 0, 100, False,
-                      AnyPropertyType, &type, &format, &nitems, &bytes_after,
-                      &data);
-        return data;
-    }
-
     int stylus_id;
 };
 
