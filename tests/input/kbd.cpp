@@ -54,13 +54,37 @@ typedef MultiMedia_Keys_Map::iterator multimediakeys_mapIter;
  * for the XkbLayout option.
  */
 class KeyboardTest : public XITServerInputTest,
-                     public DeviceInterface,
-                     public ::testing::WithParamInterface<std::string> {
+                     public DeviceInterface {
+public:
+    virtual void SetUp() {
+        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+
+        /* we don't use the dummy driver here, for some reason we won't get
+         * key events with it */
+        config.AddInputSection("kbd", "--device--",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.WriteConfig();
+    }
+
+
+};
+
+TEST_F(KeyboardTest, DeviceExists)
+{
+    ASSERT_TRUE(FindInputDeviceByName(Display(), "--device--"));
+}
+
+class KeyboardLayoutTest : public KeyboardTest,
+                           public ::testing::WithParamInterface<std::string> {
     /**
      * Initializes a standard keyboard device.
      */
     virtual void SetUp() {
-        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
+        KeyboardTest::SetUp();
 
         // Define a map of pair to hold each key/keysym per layout
         // US, QWERTY => qwerty
@@ -92,8 +116,6 @@ class KeyboardTest : public XITServerInputTest,
         Multimedia_Keys.push_back (Key_Pair (KEY_PLAYPAUSE,      XF86XK_AudioPlay));
         Multimedia_Keys.push_back (Key_Pair (KEY_NEXTSONG,       XF86XK_AudioNext));
         Multimedia_Keys.push_back (Key_Pair (KEY_PREVIOUSSONG,   XF86XK_AudioPrev));
-
-        XITServerInputTest::SetUp();
     }
 
     /**
@@ -124,27 +146,6 @@ class KeyboardTest : public XITServerInputTest,
     MultiMedia_Keys_Map Multimedia_Keys;
 };
 
-
-TEST_P(KeyboardTest, DeviceExists)
-{
-    std::string param;
-    int ndevices;
-    XIDeviceInfo *info;
-
-    info = XIQueryDevice(Display(), XIAllDevices, &ndevices);
-    bool found = false;
-    while(ndevices--) {
-        if (strcmp(info[ndevices].name, "--device--") == 0) {
-            ASSERT_EQ(found, false) << "Duplicate device" << std::endl;
-            found = true;
-        }
-    }
-
-    ASSERT_EQ(found, true);
-
-    XIFreeDeviceInfo(info);
-}
-
 void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_Pair pair)
 {
     dev->PlayOne(EV_KEY, pair.first, 1, true);
@@ -160,7 +161,7 @@ void play_key_pair (::Display *display, xorg::testing::evemu::Device *dev, Key_P
         XSync(display, True);
 }
 
-TEST_P(KeyboardTest, KeyboardLayout)
+TEST_P(KeyboardLayoutTest, KeyboardLayout)
 {
     std::string layout = GetParam();
 
@@ -178,7 +179,7 @@ TEST_P(KeyboardTest, KeyboardLayout)
         play_key_pair (Display(), dev.get(), (*m_it));
 }
 
-INSTANTIATE_TEST_CASE_P(, KeyboardTest, ::testing::Values("us", "de", "fr"));
+INSTANTIATE_TEST_CASE_P(, KeyboardLayoutTest, ::testing::Values("us", "de", "fr"));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
