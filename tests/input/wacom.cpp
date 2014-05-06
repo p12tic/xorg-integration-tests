@@ -213,29 +213,6 @@ protected:
     }
 };
 
-/* Return True if the given device has the property, or False otherwise */
-bool test_property(Display *dpy, int deviceid, const char *prop_name)
-{
-    Status status;
-    Atom prop;
-    Atom realtype;
-    int realformat;
-    unsigned long nitems, bytes_after;
-    unsigned char *data;
-
-    prop = XInternAtom (dpy, prop_name, False);
-    status = XIGetProperty(dpy, deviceid, prop , 0, 1000, False,
-                           AnyPropertyType, &realtype, &realformat,
-                           &nitems, &bytes_after, &data);
-    if (data != NULL)
-        XFree (data);
-
-    if (status == Success)
-        return True;
-
-    return False;
-}
-
 TEST_P(WacomDriverTest, DeviceNames)
 {
     XORG_TESTCASE("Test names of the tools and type properties match the tools");
@@ -246,66 +223,63 @@ TEST_P(WacomDriverTest, DeviceNames)
     int minor = 0;
     ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
 
-    bool prop_found;
-
-    /* Wait for devices to settle */
 
     int deviceid;
     char tool_name[255];
 
     if (tablet.stylus) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
-        prop_found = test_property (Display(), deviceid, WACOM_PROP_PRESSURECURVE);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
-
-        prop_found = test_property (Display(), deviceid, WACOM_PROP_ROTATION);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_ROTATION << " not found on " << tool_name << std::endl;
-
-        prop_found = test_property (Display(), deviceid, WACOM_PROP_TOOL_TYPE);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_TOOL_TYPE << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_PRESSURECURVE))
+                    << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_ROTATION))
+                    << "Property " << WACOM_PROP_ROTATION << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_TOOL_TYPE))
+                    << "Property " << WACOM_PROP_TOOL_TYPE << " not found on " << tool_name << std::endl;
     }
 
     if (tablet.eraser) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
-        prop_found = test_property (Display(), deviceid, WACOM_PROP_PRESSURECURVE);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
-
-        prop_found = test_property (Display(), deviceid, WACOM_PROP_ROTATION);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_ROTATION << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_PRESSURECURVE))
+                    << "Property " << WACOM_PROP_PRESSURECURVE << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_ROTATION))
+                    << "Property " << WACOM_PROP_ROTATION << " not found on " << tool_name << std::endl;
     }
 
     if (tablet.cursor) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
-        prop_found = test_property (Display(), deviceid,  WACOM_PROP_WHEELBUTTONS);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_WHEELBUTTONS << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_WHEELBUTTONS))
+                    << "Property " << WACOM_PROP_WHEELBUTTONS << " not found on " << tool_name << std::endl;
     }
 
     if (tablet.pad) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
-        prop_found = test_property (Display(), deviceid,  WACOM_PROP_STRIPBUTTONS);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_STRIPBUTTONS << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_STRIPBUTTONS))
+                    << "Property " << WACOM_PROP_STRIPBUTTONS << " not found on " << tool_name << std::endl;
     }
 
     if (tablet.touch) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
+        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
-        prop_found = test_property (Display(), deviceid,  WACOM_PROP_TOUCH);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_TOUCH << " not found on " << tool_name << std::endl;
-
-        prop_found = test_property (Display(), deviceid,  WACOM_PROP_ENABLE_GESTURE);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_ENABLE_GESTURE << " not found on " << tool_name << std::endl;
-
-        prop_found = test_property (Display(), deviceid,  WACOM_PROP_GESTURE_PARAMETERS);
-        EXPECT_EQ(prop_found, True) << "Property " << WACOM_PROP_GESTURE_PARAMETERS << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_TOUCH))
+                    << "Property " << WACOM_PROP_TOUCH << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_ENABLE_GESTURE))
+                    << "Property " << WACOM_PROP_ENABLE_GESTURE << " not found on " << tool_name << std::endl;
+        EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_GESTURE_PARAMETERS))
+                    << "Property " << WACOM_PROP_GESTURE_PARAMETERS << " not found on " << tool_name << std::endl;
     }
 }
 
@@ -314,12 +288,18 @@ void check_for_type (Display *dpy, XIDeviceInfo *list, int ndevices, const char 
     XIDeviceInfo *info;
     int loop;
     bool found = false;
+    Atom tool_type = XInternAtom(dpy, type, True);
+
+    ASSERT_NE((Atom)None, tool_type);
 
     info = list;
     for (loop = 0; loop < ndevices; loop++, info++) {
-        if (test_property (dpy, info->deviceid, type)) {
+        if (DevicePropertyExists(dpy, info->deviceid, WACOM_PROP_TOOL_TYPE)) {
+            ASSERT_PROPERTY(Atom, prop, dpy, info->deviceid, WACOM_PROP_TOOL_TYPE);
+            if (prop.data[0] == tool_type) {
                 found = True;
                 break;
+            }
         }
     }
     ASSERT_TRUE(found) << type << " not found" << std::endl;
@@ -330,9 +310,8 @@ TEST_P(WacomDriverTest, DeviceType)
     XORG_TESTCASE("Test type of the tools for the device");
 
     Tablet tablet = GetParam();
-    int major = 2;
-    int minor = 0;
-    ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
+
+    VerifyDevice(tablet);
 
     XIDeviceInfo *list;
     int ndevices;
@@ -356,14 +335,9 @@ TEST_P(WacomDriverTest, DeviceType)
     XIFreeDeviceInfo (list);
 }
 
-bool set_rotate(Display *dpy, int deviceid, const char *rotate)
+void set_rotate(Display *dpy, int deviceid, const char *rotate)
 {
-    Status status;
     int rotation = 0;
-    Atom prop, type;
-    int format;
-    unsigned char* data;
-    unsigned long nitems, bytes_after;
 
     if (strcasecmp(rotate, "cw") == 0)
         rotation = 1;
@@ -372,24 +346,10 @@ bool set_rotate(Display *dpy, int deviceid, const char *rotate)
     else if (strcasecmp(rotate, "half") == 0)
         rotation = 3;
 
-    prop = XInternAtom(dpy, WACOM_PROP_ROTATION, True);
-    if (!prop)
-        return False;
+    ASSERT_PROPERTY(char, prop, dpy, deviceid, WACOM_PROP_ROTATION);
 
-    status = XIGetProperty(dpy, deviceid, prop, 0, 1000, False,
-                           AnyPropertyType, &type, &format,
-                           &nitems, &bytes_after, &data);
-
-    if (status != Success || nitems == 0 || format != 8)
-        return False;
-
-    *data = rotation;
-
-    XIChangeProperty(dpy, deviceid, prop, type, format,
-                          PropModeReplace, data, nitems);
-    XFlush(dpy);
-
-    return True;
+    prop.data[0] = rotation;
+    prop.Update();
 }
 
 int stylus_move_right (Display *dpy, xorg::testing::evemu::Device *dev)
@@ -451,22 +411,13 @@ TEST_P(WacomDriverTest, Rotation)
 
     Tablet tablet = GetParam();
 
-    int major = 2;
-    int minor = 0;
-    ASSERT_EQ(Success, XIQueryVersion(Display(), &major, &minor));
-
-    bool status;
+    VerifyDevice(tablet);
+    XSync(Display(), True);
 
     XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask |
                                                           ButtonReleaseMask |
                                                           PointerMotionMask |
                                                           ButtonMotionMask);
-
-    /* the server takes a while to start up but the devices may not respond
-       to events yet. Add a noop call that just delays everything long
-       enough for this test to work */
-    XInternAtom(Display(), "foo", True);
-    XFlush(Display());
 
     char tool_name[255];
     int displace;
@@ -477,16 +428,14 @@ TEST_P(WacomDriverTest, Rotation)
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
         // Try with no rotation
-        status = set_rotate (Display(), deviceid, "none");
-        EXPECT_TRUE(status) << "Failed to rotate " << tool_name << std::endl;
+        set_rotate (Display(), deviceid, "none");
 
         displace = stylus_move_right (Display(), dev.get());
         ASSERT_NE (displace, 0) << "Did not get any event from " << tool_name << std::endl;
         EXPECT_TRUE(displace > 0) << "Pointer moved to the wrong direction with rotate none for " << tool_name << std::endl;
 
         // Set opposite rotation
-        status = set_rotate (Display(), deviceid, "half");
-        EXPECT_TRUE(status) << "Failed to rotate " << tool_name << std::endl;
+        set_rotate (Display(), deviceid, "half");
 
         displace = stylus_move_right (Display(), dev.get());
         ASSERT_NE (displace, 0) << "Did not get any event from " << tool_name << std::endl;
@@ -533,25 +482,21 @@ class WacomLensCursorTest : public WacomDriverTest
 
 TEST_P(WacomLensCursorTest, CursorMove)
 {
-    XSelectInput(Display(), DefaultRootWindow(Display()), ButtonPressMask |
-                                                          ButtonReleaseMask |
-                                                          PointerMotionMask |
-                                                          ButtonMotionMask);
-    XSync(Display(), False);
+    ::Display *dpy = Display();
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask |
+                                              ButtonReleaseMask |
+                                              PointerMotionMask |
+                                              ButtonMotionMask);
+    XSync(dpy, False);
 
     dev->Play(RECORDINGS_DIR "tablets/Wacom-Intuos4-8x13.lens-cursor-move.events");
 
-    XSync(Display(), False);
+    XSync(dpy, False);
 
-    ASSERT_TRUE(XPending(Display()));
-
-    XEvent ev;
-    XNextEvent(Display(), &ev);
-    ASSERT_EQ(ev.xany.type, MotionNotify);
-    XNextEvent(Display(), &ev);
-    ASSERT_EQ(ev.xany.type, MotionNotify);
-    XNextEvent(Display(), &ev);
-    ASSERT_EQ(ev.xany.type, MotionNotify);
+    ASSERT_EVENT(XEvent, m1, dpy, MotionNotify);
+    ASSERT_EVENT(XEvent, m2, dpy, MotionNotify);
+    ASSERT_EVENT(XEvent, m3, dpy, MotionNotify);
 }
 
 INSTANTIATE_TEST_CASE_P(, WacomLensCursorTest, ::testing::ValuesIn(lens_cursor_tablets));
