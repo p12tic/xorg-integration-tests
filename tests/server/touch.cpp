@@ -91,6 +91,8 @@ TEST_F(TouchTest, TouchEventFlags)
                   "Trigger touch end/receive\n"
                   "Verify only touch flags are set on touch event\n");
 
+    WaitForDevice("N-Trig MultiTouch");
+
     ::Display *dpy = Display();
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -139,7 +141,7 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
                   "Release the touch point.\n"
                   "Moving the mouse now must have a zero button mask.\n");
 
-    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
+    WaitForDevice("N-Trig MultiTouch");
 
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
@@ -166,7 +168,7 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
       return;
     }
 
-    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "PIXART USB OPTICAL MOUSE"));
+    WaitForDevice("PIXART USB OPTICAL MOUSE");
 
     XEvent event;
     XGenericEventCookie *xcookie;
@@ -249,6 +251,8 @@ TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndCore)
                   "The button mask in the button press event must be 0.\n"
                   "The button mask in the button release event must be set for button 1.");
 
+    WaitForDevice("N-Trig MultiTouch");
+
     XSelectInput(Display(), DefaultRootWindow(Display()),
                  PointerMotionMask|ButtonPressMask|ButtonReleaseMask);
     XSync(Display(), False);
@@ -290,6 +294,8 @@ TEST_P(TouchTestXI2Version, NoEmulatedButton1MotionWithoutButtonPress)
                   "No motion event expected\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=60394");
 
+    WaitForDevice("N-Trig MultiTouch");
+
     ::Display *dpy = Display();
     XSelectInput(dpy, DefaultRootWindow(dpy), Button1MotionMask);
     XSync(dpy, False);
@@ -306,6 +312,8 @@ TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)
     XORG_TESTCASE("Select for core Pointer1Motion mask on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
                   "Expect a motion event with the button mask 1.\n")
+
+    WaitForDevice("N-Trig MultiTouch");
 
     ::Display *dpy = Display();
     XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | Button1MotionMask);
@@ -328,6 +336,8 @@ TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndXI2)
                   "The button mask in the motion event must be 0.\n"
                   "The button mask in the button press event must be 0.\n"
                   "The button mask in the button release event must be set for button 1.");
+
+    WaitForDevice("N-Trig MultiTouch");
 
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -408,6 +418,8 @@ TEST_P(TouchTestXI2Version, XIQueryPointerTouchscreen)
                   " - button 1 state down for XI 2.0 and 2.1 clients\n"
                   " - button 1 state up for XI 2.2+ clients");
 
+    WaitForDevice("N-Trig MultiTouch");
+
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
     mask.mask_len = XIMaskLen(XI_ButtonPress);
@@ -421,8 +433,6 @@ TEST_P(TouchTestXI2Version, XIQueryPointerTouchscreen)
     delete[] mask.mask;
 
     XFlush(Display());
-
-    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
@@ -490,7 +500,7 @@ TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
 
     XFlush(Display());
 
-    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "N-Trig MultiTouch"));
+    WaitForDevice("N-Trig MultiTouch");
 
     dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
 
@@ -642,6 +652,8 @@ TEST_F(TouchTest, TouchEventsButtonState)
     XORG_TESTCASE("Select for touch events on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
                   "The button mask in the touch begin, update, and end event must be 0.");
+
+    WaitForDevice("N-Trig MultiTouch");
 
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -1003,6 +1015,8 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
                   "Touch and release from the touch device\n"
                   "Expect a DeviceChangedEvent for the touch device on the VCP\n");
 
+    WaitForDevice("N-Trig MultiTouch");
+
     ::Display *dpy = Display();
 
     mouse->PlayOne(EV_REL, REL_X, 1, true);
@@ -1055,6 +1069,8 @@ TEST_F(TouchTest, JumpingCursorOnTransformationMatrix)
                   "https://bugs.freedesktop.org/show_bug.cgi?id=49347");
 
     ::Display *dpy = Display();
+
+    WaitForDevice("N-Trig MultiTouch");
 
     int deviceid;
     ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);

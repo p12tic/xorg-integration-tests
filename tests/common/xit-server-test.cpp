@@ -59,6 +59,21 @@ void XITServerTest::SetUp() {
     return dpy;
 }
 
+bool XITServerTest::WaitForDevice(const std::string &name, int timeout)
+{
+    int result;
+    ::Display *dpy = XOpenDisplay(server.GetDisplayString().c_str());
+    if (!dpy) {
+        ADD_FAILURE() << "Failed to open separate Display.\n";
+        return false;
+    }
+
+    XSynchronize(dpy, True);
+    result = xorg::testing::XServer::WaitForDevice(dpy, name);
+    XCloseDisplay(dpy);
+
+    return result;
+}
 
 void XITServerTest::TearDown() {
     alarm(0);

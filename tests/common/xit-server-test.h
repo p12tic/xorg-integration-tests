@@ -93,6 +93,14 @@ protected:
     virtual ::Display* Display();
 
     /**
+     * Wait for a device to appear on this server. Unlike
+     * xorg::testing::XServer::WaitForDevice(Display() this call opens a new
+     * display to the server, thus avoiding polluting the event queue of the
+     * caller with hierarchy events.
+     */
+    virtual bool WaitForDevice(const std::string &name, int timeout = 1000);
+
+    /**
      * The X server instance. This server is started with StartServer() but
      * may be started by child classes directly.
      */
