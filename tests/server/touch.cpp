@@ -55,6 +55,7 @@ protected:
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
         config.AddInputClass("grab device", "MatchIsTouchscreen \"on\"",
+                             "Option \"Emulate3Buttons\" \"off\""
                              "Option \"GrabDevice\" \"on\"");
         config.SetAutoAddDevices(true);
         config.WriteConfig();

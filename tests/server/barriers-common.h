@@ -166,12 +166,14 @@ public:
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
         config.AddInputSection("evdev", "--device1--",
+                               "Option \"Emulate3Buttons\" \"off\""
                                "Option \"CorePointer\" \"on\""
                                "Option \"GrabDevice\" \"on\"\n"
                                "Option \"AccelerationProfile\" \"-1\""
                                "Option \"Device\" \"" + dev1->GetDeviceNode() + "\"");
 
         config.AddInputSection("evdev", "--device2--",
+                               "Option \"Emulate3Buttons\" \"off\""
                                "Option \"CorePointer\" \"on\""
                                "Option \"GrabDevice\" \"on\"\n"
                                "Option \"AccelerationProfile\" \"-1\""
