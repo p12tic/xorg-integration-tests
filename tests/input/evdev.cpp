@@ -1617,6 +1617,40 @@ TEST_F(EvdevDuplicateTest, DuplicateDeviceCheck)
                        << "but couldn't find it";
 }
 
+class EvdevDialTest : public EvdevMouseTest {
+public:
+    virtual void SetUp() {
+        SetDevice("mice/Microsoft-Microsoft®-2.4GHz-Transceiver-V2.0.desc");
+        XITServerInputTest::SetUp();
+    }
+};
+
+TEST_F(EvdevDialTest, HorizScrolling)
+{
+    XORG_TESTCASE("Add a device with REL_DIAL\n"
+                  "Send REL_DIAL events\n"
+                  "Expect horizontal scroll events\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=73105");
+
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | ButtonReleaseMask);
+
+    dev->PlayOne(EV_REL, REL_DIAL, -1, true);
+
+    ASSERT_EVENT(XEvent, left_press, dpy, ButtonPress);
+    ASSERT_EQ(left_press->xbutton.button, 6);
+    ASSERT_EVENT(XEvent, left_release, dpy, ButtonRelease);
+    ASSERT_EQ(left_release->xbutton.button, 6);
+
+    dev->PlayOne(EV_REL, REL_DIAL, 1, true);
+
+    ASSERT_EVENT(XEvent, right_press, dpy, ButtonPress);
+    ASSERT_EQ(right_press->xbutton.button, 7);
+    ASSERT_EVENT(XEvent, right_release, dpy, ButtonRelease);
+    ASSERT_EQ(right_release->xbutton.button, 7);
+}
+
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
