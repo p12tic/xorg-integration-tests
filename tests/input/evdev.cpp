@@ -418,16 +418,9 @@ TEST_F(EvdevMouseTest, SmoothScrollingAvailable)
         }
     }
 
-#ifndef HAVE_RHEL6
     ASSERT_EQ(nvaluators, 4);
     ASSERT_TRUE(hscroll_class_found);
     ASSERT_TRUE(vscroll_class_found);
-#else
-    /* RHEL6 disables smooth scrolling */
-    ASSERT_EQ(nvaluators, 2);
-    ASSERT_FALSE(hscroll_class_found);
-    ASSERT_FALSE(vscroll_class_found);
-#endif
 
     XIFreeDeviceInfo(info);
 }
@@ -451,7 +444,6 @@ TEST_F(EvdevMouseTest, SmoothScrolling)
     XEvent ev;
     XIDeviceEvent *e;
 
-#ifndef HAVE_RHEL6
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -465,7 +457,6 @@ TEST_F(EvdevMouseTest, SmoothScrolling)
     ASSERT_GE(e->valuators.mask_len, 1); /* one 4-byte unit */
     ASSERT_TRUE(XIMaskIsSet(e->valuators.mask, 3)); /* order of axes is x, y, hwheel, wheel */
     XFreeEventData(Display(), &ev.xcookie);
-#endif
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -478,11 +469,7 @@ TEST_F(EvdevMouseTest, SmoothScrolling)
     XGetEventData(Display(), &ev.xcookie);
     e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
     ASSERT_EQ(e->detail, 5);
-#ifndef HAVE_RHEL6
     ASSERT_EQ(e->flags & XIPointerEmulated, XIPointerEmulated);
-#else
-    ASSERT_EQ(e->flags & XIPointerEmulated, 0);
-#endif
     XFreeEventData(Display(), &ev.xcookie);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -495,11 +482,7 @@ TEST_F(EvdevMouseTest, SmoothScrolling)
     XGetEventData(Display(), &ev.xcookie);
     e = reinterpret_cast<XIDeviceEvent*>(ev.xcookie.data);
     ASSERT_EQ(e->detail, 5);
-#ifndef HAVE_RHEL6
     ASSERT_EQ(e->flags & XIPointerEmulated, XIPointerEmulated);
-#else
-    ASSERT_EQ(e->flags & XIPointerEmulated, 0);
-#endif
     XFreeEventData(Display(), &ev.xcookie);
 
     ASSERT_FALSE(XPending(Display()));
