@@ -165,7 +165,7 @@ TEST_P(KeyboardLayoutTest, KeyboardLayout)
 {
     std::string layout = GetParam();
 
-    ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), "--device--"));
+    ASSERT_TRUE(WaitForDevice("--device--"));
     XSelectInput(Display(), DefaultRootWindow(Display()), KeyPressMask | KeyReleaseMask);
 
     keys_mapIter it;

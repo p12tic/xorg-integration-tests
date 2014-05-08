@@ -146,7 +146,7 @@ protected:
         if (tablet.stylus) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
             if (!FindInputDeviceByName(Display(), tool_name)) {
-                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                ASSERT_TRUE(WaitForDevice(tool_name, 5000))
                     << "Tool '" << tool_name << "' not found" << std::endl;
             }
         }
@@ -154,7 +154,7 @@ protected:
         if (tablet.eraser) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
             if (!FindInputDeviceByName(Display(), tool_name)) {
-                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                ASSERT_TRUE(WaitForDevice(tool_name, 5000))
                     << "Tool '" << tool_name << "' not found" << std::endl;
             }
         }
@@ -162,7 +162,7 @@ protected:
         if (tablet.cursor) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
             if (!FindInputDeviceByName(Display(), tool_name)) {
-                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                ASSERT_TRUE(WaitForDevice(tool_name, 5000))
                     << "Tool '" << tool_name << "' not found" << std::endl;
             }
         }
@@ -170,7 +170,7 @@ protected:
         if (tablet.touch) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
             if (!FindInputDeviceByName(Display(), tool_name)) {
-                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                ASSERT_TRUE(WaitForDevice(tool_name, 5000))
                     << "Tool '" << tool_name << "' not found" << std::endl;
             }
         }
@@ -178,7 +178,7 @@ protected:
         if (tablet.pad) {
             snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
             if (!FindInputDeviceByName(Display(), tool_name)) {
-                ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000))
+                ASSERT_TRUE(WaitForDevice(tool_name, 5000))
                     << "Tool '" << tool_name << "' not found" << std::endl;
             }
         }
@@ -211,7 +211,7 @@ TEST_P(WacomDriverTest, DeviceNames)
 
     if (tablet.stylus) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.stylus);
-        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
+        ASSERT_TRUE(WaitForDevice(tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
         EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_PRESSURECURVE))
@@ -224,7 +224,7 @@ TEST_P(WacomDriverTest, DeviceNames)
 
     if (tablet.eraser) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.eraser);
-        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
+        ASSERT_TRUE(WaitForDevice(tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
         EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_PRESSURECURVE))
@@ -235,7 +235,7 @@ TEST_P(WacomDriverTest, DeviceNames)
 
     if (tablet.cursor) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.cursor);
-        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
+        ASSERT_TRUE(WaitForDevice(tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
         EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_WHEELBUTTONS))
@@ -244,7 +244,7 @@ TEST_P(WacomDriverTest, DeviceNames)
 
     if (tablet.pad) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.pad);
-        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
+        ASSERT_TRUE(WaitForDevice(tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
         EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_STRIPBUTTONS))
@@ -253,7 +253,7 @@ TEST_P(WacomDriverTest, DeviceNames)
 
     if (tablet.touch) {
         snprintf (tool_name, sizeof (tool_name), "%s %s", tablet.name, tablet.touch);
-        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), tool_name, 5000));
+        ASSERT_TRUE(WaitForDevice(tool_name, 5000));
         ASSERT_EQ(FindInputDeviceByName(Display(), tool_name, &deviceid), 1) <<  "Tool not found " << tool_name <<std::endl;
 
         EXPECT_TRUE(DevicePropertyExists(Display(), deviceid, WACOM_PROP_TOUCH))
@@ -580,7 +580,7 @@ public:
     virtual void SetUp(void) {
         std::string name = "Wacom Intuos4 6x9 stylus";
         WacomDeviceTest::SetUp();
-        ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(Display(), name, 5000));
+        ASSERT_TRUE(WaitForDevice(name, 5000));
         XSync(Display(), True);
         ASSERT_EQ(FindInputDeviceByName(Display(), name, &stylus_id), 1);
     }
