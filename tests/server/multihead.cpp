@@ -101,6 +101,8 @@ public:
     void VerifyLeaveEvent(::Display *dpy) {
         XSync(dpy, False);
 
+        ASSERT_GT(XPending(dpy), 0);
+
         XEvent ev;
         XNextEvent(dpy, &ev);
         ASSERT_EQ(ev.type, LeaveNotify);
@@ -128,20 +130,31 @@ public:
 
     void MoveUntilMotionEvent(::Display *dpy, int direction)
     {
+        int limit = 0;
         while (!XPending(dpy)) {
             dev->PlayOne(EV_REL, REL_X, direction * 3, true);
             XSync(dpy, False);
+            if (limit++ > 50) {
+                ADD_FAILURE() << "Expected events after pointer move";
+                return;
+            }
         }
     }
 
     void FlushMotionEvents(::Display *dpy, int direction)
     {
+        int limit = 0;
         dev->PlayOne(EV_REL, REL_X, direction * 3, true);
         XSync(dpy, False);
         while (XPending(dpy)) {
             XEvent ev;
             XNextEvent(dpy, &ev);
             ASSERT_EQ(ev.type, MotionNotify);
+
+            if (limit++ > 50) {
+                ADD_FAILURE() << "Expected events to stop";
+                return;
+            }
         }
     }
 
@@ -157,11 +170,13 @@ public:
         XEvent ev;
         bool on_screen = true;
         int old_x = (direction > 0) ? INT_MIN : INT_MAX;
+        int limit = 0;
         do {
             MoveUntilMotionEvent(dpy, direction);
             bool done = false;
             while (XPending(dpy) && !done) {
                 XNextEvent(dpy, &ev);
+                std::cout << "here3\n";
 
                 switch(ev.type) {
                     case LeaveNotify:
@@ -183,6 +198,10 @@ public:
                         done = true;
                         break;
                 }
+            }
+            if (limit++ > 30) {
+                ADD_FAILURE() << "Expected to hit the screen edge\n";
+                return false;
             }
         } while(on_screen &&
                 old_x < (DisplayWidth(dpy, 0) - 1) &&
