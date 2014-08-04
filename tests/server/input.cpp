@@ -38,6 +38,7 @@
 
 #include "xit-server-input-test.h"
 #include "xit-event.h"
+#include "xit-property.h"
 #include "device-interface.h"
 #include "helpers.h"
 
@@ -379,7 +380,7 @@ INSTANTIATE_TEST_CASE_P(, SmoothScrollingTest,
 
 
 enum device_type {
-    MOUSE, TABLET, TOUCHPAD
+    MOUSE, TABLET, TOUCHPAD, KEYBOARD
 };
 
 class PointerAccelerationTest : public XITServerInputTest,
@@ -445,6 +446,9 @@ public:
             case MOUSE: SetUpMouse(); break;
             case TABLET: SetUpTablet(); break;
             case TOUCHPAD: SetUpTouchpad(); break;
+            default:
+                FAIL() << "Unsupported device type";
+                break;
         }
 
         /* FIXME: evemu should do this */
@@ -477,6 +481,9 @@ public:
                     dev->PlayOne(EV_ABS, ABS_Y, 2000);
                     dev->PlayOne(EV_ABS, ABS_PRESSURE, 34);
                     dev->PlayOne(EV_KEY, BTN_TOOL_FINGER, 1, true);
+                    break;
+            default:
+                    FAIL() << "Unsupported device type";
                     break;
         }
     }
@@ -533,6 +540,9 @@ public:
 
                 dev->PlayOne(EV_KEY, BTN_TOOL_FINGER, 0, true);
                 break;
+            default:
+                FAIL() << "Unsupported device type";
+                break;
         }
     }
 
@@ -552,7 +562,9 @@ TEST_P(PointerAccelerationTest, IdenticalMovementVerticalHorizontal)
         case MOUSE: devtype = "mouse"; break;
         case TABLET: devtype = "tablet"; break;
         case TOUCHPAD: devtype = "touchpad"; break;
-
+        default:
+            FAIL() << "Unsupported device type";
+            break;
     }
 
     XORG_TESTCASE("Start server with devices in mode relative\n"
@@ -1410,3 +1422,73 @@ TEST_F(XIQueryVersionTest, NoBadLengthOnXIAllowEvents)
     ASSERT_NO_ERROR(ReleaseErrorTrap(dpy));
     XSync(dpy, False);
 }
+
+class FloatingSlaveTest : public XITServerInputTest,
+                          public DeviceInterface,
+                          public ::testing::WithParamInterface<enum device_type>
+{
+    virtual void SetUpMouse() {
+        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+    }
+
+    virtual void SetUpKeyboard() {
+        SetDevice("keyboards/AT-Translated-Set-2-Keyboard.desc");
+    }
+
+    virtual void SetUp() {
+
+        switch(GetParam()) {
+            case MOUSE: SetUpMouse(); break;
+            case KEYBOARD: SetUpKeyboard(); break;
+            default:
+                FAIL() << "Unsupported device type";
+                break;
+        }
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"Floating\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+        config.AddInputSection("kbd", "kbd-device",
+                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("mouse", "mouse-device",
+                               "Option \"CorePointer\" \"on\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_P(FloatingSlaveTest, NoCrashOnStartup)
+{
+    XORG_TESTCASE("Start with a floating pointer device\n"
+                  "Expect no crash\n");
+
+    ::Display *dpy = Display();
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+}
+
+TEST_P(FloatingSlaveTest, DisableEnableDevice)
+{
+    XORG_TESTCASE("Start with a floating pointer device\n"
+                  "Disable, re-enable device\n"
+                  "Expect no crash\n");
+
+    ::Display *dpy = Display();
+    int deviceid;
+
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
+
+    ASSERT_PROPERTY(int, enabled_prop, dpy, deviceid, "Device Enabled");
+    enabled_prop.data[0] = 0;
+    enabled_prop.Update();
+    XSync(dpy, False);
+    enabled_prop.data[0] = 1;
+    enabled_prop.Update();
+    XSync(dpy, False);
+}
+
+INSTANTIATE_TEST_CASE_P(, FloatingSlaveTest, ::testing::Values(MOUSE, KEYBOARD));
