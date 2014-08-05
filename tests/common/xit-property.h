@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <xorg/gtest/xorg-gtest.h>
 #include <X11/Xatom.h>
+#include <X11/extensions/XInput2.h>
 
 #define ASSERT_PROPERTY(_type, _name, _dpy, _deviceid, _propname) \
     ASSERT_TRUE(DevicePropertyExists(_dpy, _deviceid, _propname)); \
