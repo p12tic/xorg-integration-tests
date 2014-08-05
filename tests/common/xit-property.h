@@ -80,25 +80,7 @@ public:
 };
 
 
-bool DevicePropertyExists(::Display *dpy, int deviceid, const std::string &propname) {
-    Atom prop;
-
-    prop = XInternAtom(dpy, propname.c_str(), True);
-    if (prop == None)
-        return false;
-
-    Atom *props;
-    int nprops;
-    props = XIListProperties(dpy, deviceid, &nprops);
-
-    bool prop_found = false;
-    while (nprops-- && !prop_found)
-        prop_found = (props[nprops] == prop);
-
-    XFree(props);
-
-    return prop_found;
-}
+bool DevicePropertyExists(::Display *dpy, int deviceid, const std::string &propname);
 
 template <typename DataType>
 XITProperty<DataType>::XITProperty(::Display *dpy, int deviceid, const std::string &propname)
