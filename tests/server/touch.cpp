@@ -33,6 +33,7 @@
 #include "device-interface.h"
 #include "xit-server-input-test.h"
 #include "xit-event.h"
+#include "xit-property.h"
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -476,6 +477,35 @@ TEST_P(TouchTestXI2Version, XIQueryPointerTouchscreen)
 
 #ifdef HAVE_XI22
 class TouchDeviceTest : public TouchTest {};
+
+TEST_F(TouchDeviceTest, DisabledDevice)
+{
+    XORG_TESTCASE("Disable device\n"
+                  "Send events\n"
+                  "Enable device\n"
+                  "Ensure no events are waiting")
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
+
+    SelectXI2Events(dpy, XIAllMasterDevices, DefaultRootWindow(dpy),
+                    XI_TouchBegin, XI_TouchUpdate, XI_TouchEnd, -1);
+
+    ASSERT_PROPERTY(int, prop_enabled, dpy, deviceid, "Device Enabled");
+    prop_enabled.data[0] = 0;
+    prop_enabled.Update();
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    XSync(dpy, False);
+    prop_enabled.data[0] = 1;
+    prop_enabled.Update();
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
 
 TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
 {
