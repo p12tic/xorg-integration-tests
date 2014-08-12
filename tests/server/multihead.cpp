@@ -176,7 +176,6 @@ public:
             bool done = false;
             while (XPending(dpy) && !done) {
                 XNextEvent(dpy, &ev);
-                std::cout << "here3\n";
 
                 switch(ev.type) {
                     case LeaveNotify:
