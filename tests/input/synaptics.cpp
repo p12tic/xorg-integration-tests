@@ -1550,7 +1550,7 @@ TEST_F(SynapticsScrollButtonTest, ScrollButtonUpDownMiddleDouble)
     int deviceid;
     ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
 
-    XITProperty<char> scrollbutton_prop(dpy, deviceid, "Synaptics Button Scrolling");
+    ASSERT_PROPERTY(char, scrollbutton_prop, dpy, deviceid, "Synaptics Button Scrolling");
     scrollbutton_prop.data[0] = 0;
     scrollbutton_prop.Update();
 
