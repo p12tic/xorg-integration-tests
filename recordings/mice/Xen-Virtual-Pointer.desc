@@ -1,0 +1,62 @@
+# EVEMU 1.1
+# Input device name: "Xen Virtual Pointer"
+# Input device ID: bus 0x01 vendor 0x5853 product 0xfffe version 0000
+# Supported events:
+#   Event type 0 (EV_SYN)
+#     Event code 0 (SYN_REPORT)
+#     Event code 1 (SYN_CONFIG)
+#     Event code 2 (SYN_MT_REPORT)
+#     Event code 3 ((null))
+#   Event type 1 (EV_KEY)
+#     Event code 272 (BTN_LEFT)
+#     Event code 273 (BTN_RIGHT)
+#     Event code 274 (BTN_MIDDLE)
+#     Event code 275 (BTN_SIDE)
+#     Event code 276 (BTN_EXTRA)
+#     Event code 277 (BTN_FORWARD)
+#     Event code 278 (BTN_BACK)
+#     Event code 279 (BTN_TASK)
+#   Event type 2 (EV_REL)
+#     Event code 8 (REL_WHEEL)
+#   Event type 3 (EV_ABS)
+#     Event code 0 (ABS_X)
+#       Value    215
+#       Min        0
+#       Max      800
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+#     Event code 1 (ABS_Y)
+#       Value    180
+#       Min        0
+#       Max      600
+#       Fuzz       0
+#       Flat       0
+#       Resolution 0
+N: Xen Virtual Pointer
+I: 0001 5853 fffe 0000
+P: 00 00 00 00 00 00 00 00
+B: 00 0f 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 ff 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 01 00 00 00 00 00 00 00 00
+B: 02 00 01 00 00 00 00 00 00
+B: 03 03 00 00 00 00 00 00 00
+B: 04 00 00 00 00 00 00 00 00
+B: 05 00 00 00 00 00 00 00 00
+B: 11 00 00 00 00 00 00 00 00
+B: 12 00 00 00 00 00 00 00 00
+B: 15 00 00 00 00 00 00 00 00
+B: 15 00 00 00 00 00 00 00 00
+A: 00 0 800 0 0
+A: 01 0 600 0 0
+

@@ -1633,6 +1633,100 @@ TEST_F(EvdevDialTest, HorizScrolling)
     ASSERT_EQ(right_release->xbutton.button, 7);
 }
 
+class EvdevXenPointerTest : public EvdevMouseTest {
+public:
+    virtual void SetUp() {
+        SetDevice("mice/Xen-Virtual-Pointer.desc");
+        XITServerInputTest::SetUp();
+    }
+
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("evdev", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\""
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\""
+                               "Option \"IgnoreAbsoluteAxes\" \"off\"\n"
+                               "Option \"IgnoreRelativeAxes\" \"off\"\n");
+        config.WriteConfig();
+    }
+};
+
+TEST_F(EvdevXenPointerTest, AbsAxesInitialized)
+{
+    XORG_TESTCASE("Add a Xen Virtual Pointer\n"
+                  "Search the log file for successful abs axes init\n");
+
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
+    SearchFileForString(server.GetLogFilePath(),
+                        "Xen Virtual Pointer: initialized for absolute axes");
+}
+
+TEST_F(EvdevXenPointerTest, RelAxesInitialized)
+{
+    XORG_TESTCASE("Add a Xen Virtual Pointer\n"
+                  "Search the log file for successful rel axes init\n");
+
+    ASSERT_EQ(FindInputDeviceByName(Display(), "--device--"), 1);
+    SearchFileForString(server.GetLogFilePath(),
+                        "Xen Virtual Pointer: initialized for relative axes");
+}
+
+TEST_F(EvdevXenPointerTest, AbsAxisEvent)
+{
+    XORG_TESTCASE("Add a Xen Virtual Pointer\n"
+                  "Move the pointer through absolute axes\n"
+                  "Check the pointer moves\n");
+
+    ::Display *dpy = Display();
+    double x, y;
+
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+
+    QueryPointerPosition(dpy, &x, &y, VIRTUAL_CORE_POINTER_ID);
+
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
+
+    dev->PlayOne(EV_ABS, ABS_X, 700);
+    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    dev->PlayOne(EV_ABS, ABS_Y, 500);
+    dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+
+    XSync(dpy, False);
+    ASSERT_GE(XPending(dpy), 2);
+
+
+    XEvent ev;
+    XNextEvent(dpy, &ev);
+    ASSERT_EQ(ev.xmotion.type, MotionNotify);
+    ASSERT_GE(ev.xmotion.x_root, x);
+    ASSERT_EQ(ev.xmotion.y_root, y);
+    x = ev.xmotion.x_root;
+
+    XNextEvent(dpy, &ev);
+    ASSERT_EQ(ev.xmotion.type, MotionNotify);
+    ASSERT_EQ(ev.xmotion.x_root, x);
+    ASSERT_GE(ev.xmotion.x_root, y);
+}
+
+TEST_F(EvdevXenPointerTest, ScrollEvent)
+{
+    XORG_TESTCASE("Add a Xen Virtual Pointer\n"
+                  "Generate a scroll event\n"
+                  "Check a scroll event is sent\n");
+
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask|ButtonReleaseMask);
+
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--"), 1);
+
+    scroll_wheel_event(dpy, dev.get(), REL_WHEEL, 1, 4);
+    scroll_wheel_event(dpy, dev.get(), REL_WHEEL, 2, 4);
+    scroll_wheel_event(dpy, dev.get(), REL_WHEEL, -1, 5);
+    scroll_wheel_event(dpy, dev.get(), REL_WHEEL, -2, 5);
+}
+
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
