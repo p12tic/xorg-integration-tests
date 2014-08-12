@@ -45,6 +45,7 @@ XORG_ENABLE_INTEGRATION_TESTS(yes)
 PKG_CHECK_MODULES(XI, x11 xi xext)
 PKG_CHECK_MODULES(XRANDR, xrandr)
 PKG_CHECK_MODULES(EVEMU, [evemu >= 1.1.0])
+PKG_CHECK_MODULES(LIBEVDEV, libevdev)
 PKG_CHECK_MODULES(XI22, [inputproto >= 2.2] [xi >= 1.6],
                   AC_DEFINE(HAVE_XI22, 1, [XI 2.2 available]),
                   [noop=noop])

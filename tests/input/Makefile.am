@@ -23,7 +23,7 @@ mouse_driver_SOURCES = mouse.cpp
 mouse_driver_LDADD = $(XIT_LIBS) $(GTEST_LDADDS)
 
 evdev_driver_SOURCES = evdev.cpp
-evdev_driver_LDADD = $(XIT_LIBS) $(GTEST_LDADDS)
+evdev_driver_LDADD = $(XIT_LIBS) $(GTEST_LDADDS) $(LIBEVDEV_LIBS)
 
 synaptics_driver_SOURCES = synaptics.cpp
 synaptics_driver_LDADD = $(XIT_LIBS) $(GTEST_LDADDS)

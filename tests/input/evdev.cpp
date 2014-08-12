@@ -42,6 +42,9 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 
+#include <libevdev/libevdev.h>
+#include <libevdev/libevdev-uinput.h>
+
 #include "xit-server-input-test.h"
 #include "xit-event.h"
 #include "xit-property.h"
@@ -1727,6 +1730,273 @@ TEST_F(EvdevXenPointerTest, ScrollEvent)
     scroll_wheel_event(dpy, dev.get(), REL_WHEEL, -2, 5);
 }
 
+enum EvdevMixedDeviceTestIgoreOptions {
+    IGNORE_NONE,
+    IGNORE_REL,
+    IGNORE_ABS,
+    IGNORE_BOTH,
+    UNIGNORE_REL,
+    UNIGNORE_ABS,
+    UNIGNORE_BOTH
+};
+
+class EvdevMixedDeviceTest : public XITServerInputTest,
+                             public ::testing::WithParamInterface<enum EvdevMixedDeviceTestIgoreOptions>
+{
+public:
+    virtual void SetUpConfigAndLog() {
+        std::string ignore = "";
+        enum EvdevMixedDeviceTestIgoreOptions ign = GetParam();
+
+        switch(ign) {
+            case IGNORE_NONE:
+                break;
+            case IGNORE_REL:
+                ignore = "Option \"IgnoreRelativeAxes\" \"on\"";
+                break;
+            case IGNORE_ABS:
+                ignore = "Option \"IgnoreAbsoluteAxes\" \"on\"";
+                break;
+            case IGNORE_BOTH:
+                ignore = "Option \"IgnoreRelativeAxes\" \"on\"\n"
+                         "Option \"IgnoreAbsoluteAxes\" \"on\"";
+                break;
+            case UNIGNORE_REL:
+                ignore = "Option \"IgnoreRelativeAxes\" \"off\"";
+                break;
+            case UNIGNORE_ABS:
+                ignore = "Option \"IgnoreAbsoluteAxes\" \"off\"";
+                break;
+            case UNIGNORE_BOTH:
+                ignore = "Option \"IgnoreRelativeAxes\" \"off\"\n"
+                         "Option \"IgnoreAbsoluteAxes\" \"off\"";
+                break;
+        }
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputClass("grab device",
+                             "MatchDevicePath \"/dev/input/event*\"",
+                             "Driver \"evdev\"" + ignore +
+                             "Option \"Emulate3Buttons\" \"off\""
+                             "Option \"GrabDevice\" \"on\"");
+        config.SetAutoAddDevices(true);
+        config.WriteConfig();
+    }
+
+    void CreateDevice(const std::string &name, ...) {
+        int rc;
+        int type, code;
+        struct input_absinfo *absinfo;
+        va_list args;
+
+        evdev = libevdev_new();
+        ASSERT_TRUE(evdev != NULL);
+
+        libevdev_set_name(evdev, name.c_str());
+
+        va_start(args, name);
+        while(1) {
+            type = va_arg(args, int);
+            if (type == -1)
+                break;
+            code = va_arg(args, int);
+            if (code == -1)
+                break;
+            absinfo = va_arg(args, struct input_absinfo*);
+
+            libevdev_enable_event_code(evdev, type, code, absinfo);
+        }
+        va_end(args);
+
+        rc = libevdev_uinput_create_from_device(evdev,
+                                                LIBEVDEV_UINPUT_OPEN_MANAGED,
+                                                &uinput);
+        ASSERT_EQ(rc, 0);
+    }
+
+    ~EvdevMixedDeviceTest() {
+        libevdev_uinput_destroy(uinput);
+        libevdev_free(evdev);
+    }
+
+protected:
+    struct libevdev_uinput *uinput;
+    struct libevdev *evdev;
+};
+
+TEST_P(EvdevMixedDeviceTest, RelScrollOnly)
+{
+    XORG_TESTCASE("Add a device with only REL_WHEEL\n");
+
+    const std::string name = "scroll only device";
+
+    CreateDevice(name,
+                 EV_REL, REL_WHEEL, NULL,
+                 -1);
+
+    ASSERT_TRUE(WaitForDevice(name, 2000));
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask);
+
+    libevdev_uinput_write_event(uinput, EV_REL, REL_WHEEL, 1);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+    libevdev_uinput_write_event(uinput, EV_REL, REL_WHEEL, -1);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+
+    XSync(dpy, False);
+
+    /* Mouse wheels are excempt, so we expect those to work for any
+       combination of options */
+    ASSERT_EVENT(XEvent, down, dpy, ButtonPress);
+    ASSERT_EQ(down->xbutton.button, 4);
+    ASSERT_EVENT(XEvent, up, dpy, ButtonPress);
+    ASSERT_EQ(up->xbutton.button, 5);
+}
+
+TEST_P(EvdevMixedDeviceTest, AbsAndRelAxes)
+{
+    XORG_TESTCASE("Add a device with abs and rel axes\n"
+                  "Test for events depending on Ignore*Axis settings\n");
+
+    struct input_absinfo absinfo = { 0 };
+
+    const std::string name = "abs and rel only device";
+
+    absinfo.maximum = 100;
+    /* give it a button so it still comes up even with both axis types ignored */
+    CreateDevice(name,
+                 EV_KEY, BTN_LEFT, (struct input_absinfo*)NULL, /* RHEL6 sizeof(NULL) != sizeof(void*) */
+                 EV_REL, REL_X, (struct input_absinfo*)NULL,
+                 EV_REL, REL_Y, (struct input_absinfo*)NULL,
+                 EV_ABS, ABS_X, &absinfo,
+                 EV_ABS, ABS_Y, &absinfo,
+                 -1);
+
+    ASSERT_TRUE(WaitForDevice(name, 2000));
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
+
+    libevdev_uinput_write_event(uinput, EV_REL, REL_X, 1);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+
+    XSync(dpy, False);
+
+    switch(GetParam()) {
+        case IGNORE_NONE:
+        case IGNORE_ABS:
+        case UNIGNORE_REL:
+        case UNIGNORE_ABS:
+        case UNIGNORE_BOTH:
+            {
+                ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+            }
+            break;
+        case IGNORE_REL:
+        case IGNORE_BOTH:
+            break;
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    libevdev_uinput_write_event(uinput, EV_ABS, ABS_X, 30);
+    libevdev_uinput_write_event(uinput, EV_ABS, ABS_Y, 70);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+
+    XSync(dpy, False);
+
+    switch(GetParam()) {
+        case IGNORE_NONE:
+        case IGNORE_ABS:
+        case IGNORE_BOTH:
+        case UNIGNORE_REL:
+            break;
+        case IGNORE_REL:
+        case UNIGNORE_ABS:
+        case UNIGNORE_BOTH:
+            {
+                ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
+            }
+            break;
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+TEST_P(EvdevMixedDeviceTest, AbsXYAndRelScroll)
+{
+    XORG_TESTCASE("Add a device with Abs x/y and REL_WHEEL\n");
+
+    struct input_absinfo absinfo = { 0 };
+
+    const std::string name = "abs + scroll device";
+
+    absinfo.maximum = 100;
+    /* only abs x/y and wheel confuses evdev, add a button so it looks like
+       an absolute mouse */
+    CreateDevice(name,
+                 EV_KEY, BTN_LEFT, NULL,
+                 EV_REL, REL_WHEEL, NULL,
+                 EV_ABS, ABS_X, &absinfo,
+                 EV_ABS, ABS_Y, &absinfo,
+                 -1);
+
+    ASSERT_TRUE(WaitForDevice(name, 2000));
+
+    ::Display *dpy = Display();
+    XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask|PointerMotionMask);
+
+    libevdev_uinput_write_event(uinput, EV_REL, REL_WHEEL, 1);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+    libevdev_uinput_write_event(uinput, EV_REL, REL_WHEEL, -1);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+
+    XSync(dpy, False);
+
+    ASSERT_EVENT(XEvent, down, dpy, ButtonPress);
+    ASSERT_EQ(down->xbutton.button, 4);
+    ASSERT_EVENT(XEvent, up, dpy, ButtonPress);
+    ASSERT_EQ(up->xbutton.button, 5);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    double x, y;
+    QueryPointerPosition(dpy, &x, &y, VIRTUAL_CORE_POINTER_ID);
+
+    libevdev_uinput_write_event(uinput, EV_ABS, ABS_X, 70);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+    libevdev_uinput_write_event(uinput, EV_ABS, ABS_Y, 70);
+    libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0);
+
+    XSync(dpy, False);
+
+    switch(GetParam()) {
+        case IGNORE_ABS:
+        case IGNORE_BOTH:
+            break;
+        case IGNORE_NONE:
+        case IGNORE_REL:
+        case UNIGNORE_ABS:
+        case UNIGNORE_REL:
+        case UNIGNORE_BOTH:
+            {
+                ASSERT_EVENT(XEvent, xev, dpy, MotionNotify);
+                ASSERT_GE(xev->xmotion.x_root, x);
+                ASSERT_EVENT(XEvent, yev, dpy, MotionNotify);
+                ASSERT_GE(yev->xmotion.y_root, y);
+            }
+            break;
+    }
+
+    ASSERT_TRUE(NoEventPending(dpy));
+}
+
+INSTANTIATE_TEST_CASE_P(, EvdevMixedDeviceTest, ::testing::Values(IGNORE_NONE,
+                                                                  IGNORE_REL,
+                                                                  IGNORE_ABS,
+                                                                  IGNORE_BOTH,
+                                                                  UNIGNORE_REL,
+                                                                  UNIGNORE_ABS,
+                                                                  UNIGNORE_BOTH));
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

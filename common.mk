@@ -7,6 +7,7 @@ AM_CPPFLAGS = \
 	      $(XFIXES_CFLAGS) \
 	      $(XRANDR_CFLAGS) \
 	      $(WACOM_CFLAGS) \
+	      $(LIBEVDEV_CFLAGS) \
 	      $(GTEST_CPPFLAGS) \
 	      $(XORG_GTEST_CPPFLAGS) \
               -Wall \
