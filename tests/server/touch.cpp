@@ -55,10 +55,11 @@ protected:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputClass("grab device", "MatchIsTouchscreen \"on\"",
-                             "Option \"Emulate3Buttons\" \"off\""
-                             "Option \"GrabDevice\" \"on\"");
-        config.SetAutoAddDevices(true);
+        config.AddInputSection("evdev", "N-Trig MultiTouch",
+                               "Option \"Emulate3Buttons\" \"off\""
+                               "Option \"CorePointer\" \"on\""
+                               "Option \"GrabDevice\" \"on\"\n"
+                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
         config.WriteConfig();
     }
 
@@ -92,8 +93,6 @@ TEST_F(TouchTest, TouchEventFlags)
                   "Trigger touch end/receive\n"
                   "Verify only touch flags are set on touch event\n");
 
-    WaitForDevice("N-Trig MultiTouch");
-
     ::Display *dpy = Display();
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -126,6 +125,12 @@ TEST_F(TouchTest, TouchEventFlags)
 class TouchTestXI2Version : public TouchTest,
                             public ::testing::WithParamInterface<int> {
 protected:
+    virtual void SetUpConfigAndLog()
+    {
+        config.SetAutoAddDevices(true);
+        TouchTest::SetUpConfigAndLog();
+    }
+
     virtual void RequireXI2(int major, int minor, int *maj_ret, int *min_ret)
     {
         XITServerInputTest::RequireXI2(2, GetParam());
