@@ -512,6 +512,41 @@ TEST_F(TouchDeviceTest, DisabledDevice)
     ASSERT_TRUE(NoEventPending(dpy));
 }
 
+TEST_F(TouchDeviceTest, TouchStartsInDisabledDevice)
+{
+    XORG_TESTCASE("Disable device\n"
+                  "Send touch start\n"
+                  "Enable device\n"
+                  "Continue with touch events\n"
+                  "Ensure no events are waiting")
+
+    ::Display *dpy = Display();
+
+    int deviceid;
+    ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
+
+    SelectXI2Events(dpy, XIAllMasterDevices, DefaultRootWindow(dpy),
+                    XI_TouchBegin, XI_TouchUpdate, XI_TouchEnd, -1);
+
+    ASSERT_PROPERTY(int, prop_enabled, dpy, deviceid, "Device Enabled");
+    prop_enabled.data[0] = 0;
+    prop_enabled.Update();
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    XSync(dpy, False);
+    prop_enabled.data[0] = 1;
+    prop_enabled.Update();
+
+    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    ASSERT_TRUE(NoEventPending(dpy));
+
+    const std::string error = "unable to find touch point";
+    ASSERT_FALSE(SearchFileForString(server.GetLogFilePath(), error));
+}
+
+
 TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
 {
     XORG_TESTCASE("Register for touch events.\n"
