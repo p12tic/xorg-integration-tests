@@ -18,6 +18,8 @@ common_sources =  \
 		 $(top_srcdir)/tests/common/helpers.h \
 		 $(top_srcdir)/tests/common/device-interface.cpp \
 		 $(top_srcdir)/tests/common/device-interface.h  \
+		 $(top_srcdir)/tests/common/device-emulated-interface.cpp \
+		 $(top_srcdir)/tests/common/device-emulated-interface.h  \
 		 $(top_srcdir)/tests/common/video-driver-test.h
 
 libxit_a_SOURCES = $(common_sources)
