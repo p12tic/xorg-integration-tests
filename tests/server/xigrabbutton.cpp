@@ -32,37 +32,44 @@
 #include <X11/extensions/XInput2.h>
 
 #include "xit-server-input-test.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 #include "helpers.h"
 
 
 /**
  */
 class XIGrabButtonTest : public XITServerInputTest,
-                         public DeviceInterface {
+                         public DeviceEmulatedInterface {
 public:
     /**
      * Initializes a wacom pad device.
      */
-    virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XITServerInputTest::SetUp();
     }
 
     /**
      */
-    virtual void SetUpConfigAndLog() {
+    void SetUpConfigAndLog() override {
 
         config.SetAutoAddDevices(false);
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
-                               "    Option \"Device\" \"" + dev->GetDeviceNode() + "\""
+        config.AddInputSection("emulated", "--device--",
                                "    Option \"CorePointer\" \"on\"\n"
-                               "    Option \"GrabDevice\" \"on\"\n");
+                               "    Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "    Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("emulated", "--kbd-device--",
+                               "    Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -161,11 +168,11 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
     // First, check without the grab, the top win should get the event
     XSync(dpy2, False);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    Dev(0).PlayButtonDown(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy2, ButtonPress, -1, -1));
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonUp(1);
 
     XEvent ev;
     XNextEvent(dpy2, &ev);
@@ -188,8 +195,8 @@ TEST_F(XIGrabButtonTest, GrabWindowTest)
     grab_buttons (dpy1, DefaultRootWindow(dpy1), deviceid);
     XSync(dpy1, False);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy1,
                                                            GenericEvent,
