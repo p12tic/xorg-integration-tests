@@ -87,6 +87,16 @@ public:
     virtual void RemoveConfig();
 
     /**
+     * Add an option to the server layout.
+     * Options may be specified by the caller and must be a single string.
+     * It is recommened that multiple options are separated by line-breaks
+     * to improve the readability of the config file.
+     *
+     * @param option Option in the form "<option name> <values>"
+     */
+    void AddServerLayoutOption(const std::string& option);
+
+    /**
      * Add a Section InputDevice to the config file. This section is
      * optionally referenced from the ServerLayout written by this section,
      * and in the form of:
@@ -178,6 +188,7 @@ protected:
     std::string config_file;
     std::vector<std::string> sections;
     std::vector<std::string> input_devices;
+    std::vector<std::string> server_layout_opts;
     std::string default_device;
     bool auto_add_devices;
 };
