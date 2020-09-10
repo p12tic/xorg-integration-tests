@@ -992,7 +992,7 @@ enum MatrixType {
 
 class PointerAbsoluteTransformationMatrixTest : public XITServerInputTest,
                                                 public DeviceInterface,
-                                                public ::testing::WithParamInterface<std::tr1::tuple<enum ::MatrixType, int> > {
+                                                public ::testing::WithParamInterface<std::tuple<enum ::MatrixType, int> > {
 public:
     virtual void SetUp() {
         SetDevice("tablets/Wacom-Intuos4-6x9.desc");
@@ -1020,9 +1020,9 @@ public:
     }
 
     virtual void SetUpConfigAndLog() {
-        std::tr1::tuple<enum MatrixType, int> t = GetParam();
-        enum MatrixType mtype = std::tr1::get<0>(t);
-        int nscreens = std::tr1::get<1>(t);
+        std::tuple<enum MatrixType, int> t = GetParam();
+        enum MatrixType mtype = std::get<0>(t);
+        int nscreens = std::get<1>(t);
 
         std::string opts = EvdevOptions(mtype);
 
@@ -1083,9 +1083,9 @@ public:
 
 TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
 {
-    std::tr1::tuple<enum MatrixType, int> t = GetParam();
-    enum MatrixType mtype = std::tr1::get<0>(t);
-    int nscreens = std::tr1::get<1>(t);
+    std::tuple<enum MatrixType, int> t = GetParam();
+    enum MatrixType mtype = std::get<0>(t);
+    int nscreens = std::get<1>(t);
 
     std::string matrix;
     switch(mtype) {

@@ -26,7 +26,7 @@
 #include <config.h>
 #endif
 
-#include <tr1/tuple>
+#include <tuple>
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -730,7 +730,7 @@ INSTANTIATE_TEST_CASE_P(, PointerSingleGrabTypeTest, ::testing::Values(GRABTYPE_
 
 class PointerGrabTypeTest : public PointerGrabTest,
                             public
-                            ::testing::WithParamInterface<std::tr1::tuple<enum ::GrabType, enum GrabType> > {};
+                            ::testing::WithParamInterface<std::tuple<enum ::GrabType, enum GrabType> > {};
 
 TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
 {
@@ -739,9 +739,9 @@ TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
                   "Expect AlreadyGrabbed for different types\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=58255");
 
-    std::tr1::tuple<enum GrabType, enum GrabType> t = GetParam();
-    enum GrabType grab_type_1 = std::tr1::get<0>(t);
-    enum GrabType grab_type_2 = std::tr1::get<1>(t);
+    std::tuple<enum GrabType, enum GrabType> t = GetParam();
+    enum GrabType grab_type_1 = std::get<0>(t);
+    enum GrabType grab_type_2 = std::get<1>(t);
     std::stringstream ss;
     ss << grabtype_enum_to_string(grab_type_1) << " vs. " << grabtype_enum_to_string(grab_type_2);
     SCOPED_TRACE(ss.str());
@@ -1762,13 +1762,13 @@ TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
 INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleModes, ::testing::Values(XIAcceptTouch, XIRejectTouch));
 
 class TouchGrabTestMultipleTaps : public TouchGrabTest,
-                                  public ::testing::WithParamInterface<std::tr1::tuple<int, int> > {};
+                                  public ::testing::WithParamInterface<std::tuple<int, int> > {};
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFastSuccession)
 {
-    std::tr1::tuple<int, int> t = GetParam();
-    int repeats = std::tr1::get<0>(t);
-    int mode = std::tr1::get<1>(t);
+    std::tuple<int, int> t = GetParam();
+    int repeats = std::get<0>(t);
+    int mode = std::get<1>(t);
 
     std::string strmode = (mode == GrabModeAsync) ? "GrabModeAsync" : "GrabModeSync";
     std::stringstream ss;
@@ -1833,9 +1833,9 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 {
-    std::tr1::tuple<int, int> param = GetParam();
-    int repeats = std::tr1::get<0>(param);
-    int mode = std::tr1::get<1>(param);
+    std::tuple<int, int> param = GetParam();
+    int repeats = std::get<0>(param);
+    int mode = std::get<1>(param);
 
     std::string strmode = (mode == GrabModeAsync) ? "GrabModeAsync" : "GrabModeSync";
     std::stringstream ss;

@@ -27,7 +27,7 @@
 #endif
 
 #include <stdexcept>
-#include <tr1/tuple>
+#include <tuple>
 
 #include "helpers.h"
 #include "device-interface.h"

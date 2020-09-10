@@ -27,7 +27,7 @@
 #endif
 
 #include <stdexcept>
-#include <tr1/tuple>
+#include <tuple>
 
 #include "helpers.h"
 #include "device-interface.h"
@@ -613,7 +613,7 @@ TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
  * @tparam The device ID
  */
 class XISelectEventsTouchTest : public TouchTest,
-                                public ::testing::WithParamInterface<std::tr1::tuple<int, int> >
+                                public ::testing::WithParamInterface<std::tuple<int, int> >
 {
 };
 
@@ -636,9 +636,9 @@ TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
     XISetMask(mask.mask, XI_TouchUpdate);
     XISetMask(mask.mask, XI_TouchEnd);
 
-    std::tr1::tuple<int, int> t = GetParam();
-    int clientA_deviceid = std::tr1::get<0>(t);
-    int clientB_deviceid = std::tr1::get<1>(t);
+    std::tuple<int, int> t = GetParam();
+    int clientA_deviceid = std::get<0>(t);
+    int clientB_deviceid = std::get<1>(t);
 
     /* client A */
     mask.deviceid = clientA_deviceid;
