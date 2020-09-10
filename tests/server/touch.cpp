@@ -317,7 +317,7 @@ TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)
 {
     XORG_TESTCASE("Select for core Pointer1Motion mask on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
-                  "Expect a motion event with the button mask 1.\n")
+                  "Expect a motion event with the button mask 1.\n");
 
     WaitForDevice("N-Trig MultiTouch");
 
@@ -488,7 +488,7 @@ TEST_F(TouchDeviceTest, DisabledDevice)
     XORG_TESTCASE("Disable device\n"
                   "Send events\n"
                   "Enable device\n"
-                  "Ensure no events are waiting")
+                  "Ensure no events are waiting");
 
     ::Display *dpy = Display();
 
@@ -518,7 +518,7 @@ TEST_F(TouchDeviceTest, TouchStartsInDisabledDevice)
                   "Send touch start\n"
                   "Enable device\n"
                   "Continue with touch events\n"
-                  "Ensure no events are waiting")
+                  "Ensure no events are waiting");
 
     ::Display *dpy = Display();
 
