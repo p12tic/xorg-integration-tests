@@ -1243,6 +1243,73 @@ TEST_F(TouchGrabTest, GrabMultipleTouchpoints)
     EXPECT_EVENT(XIDeviceEvent, tend2, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
 }
 
+TEST_F(TouchGrabTest, DeviceGrabDeactivationReplayEmulatedEvents)
+{
+    XORG_TESTCASE("Client A actively grabs touch events on the device.\n"
+                  "Client B selects for pointer events.\n"
+                  "A touch begins and ends.\n"
+                  "Client A deactivates the active grab.\n"
+                  "https://gitlab.freedesktop.org/xorg/xserver/-/issues/7\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=96536\n");
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* Client A grabs the device */
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchOwnership);
+    mask.mask = new unsigned char[mask.mask_len]();
+
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+    XISetMask(mask.mask, XI_TouchOwnership);
+
+    ASSERT_EQ(Success, XIGrabDevice(dpy, VIRTUAL_CORE_POINTER_ID,
+                                    DefaultRootWindow(dpy), CurrentTime, None,
+                                    GrabModeAsync, GrabModeAsync,
+                                    False, &mask));
+
+    delete[] mask.mask;
+    XSync(dpy, False);
+
+    /* Client B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy2));
+
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+
+    XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_Motion);
+    XISetMask(mask.mask, XI_ButtonRelease);
+
+    ASSERT_EQ(Success, XISelectEvents(dpy2, win, &mask, 1));
+
+    delete[] mask.mask;
+    XSync(dpy2, False);
+
+    /* Touch begins */
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchEnd(200, 200, 0);
+
+    /* Expect emulated motion and button press events on A */
+    ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+
+    /* No other events should come */
+    ASSERT_TRUE(NoEventPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy2));
+
+    /* Client A ungrabs */
+    XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
+    XSync(dpy, False);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy2));
+}
 
 class TouchGrabTestOnLegacyClient : public TouchGrabTest {
     virtual void SetUp() {
