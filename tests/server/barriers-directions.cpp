@@ -80,7 +80,7 @@ TEST_F(BarrierConstrained, VerticalBarrierNoDirectionBlocksMotion)
     ASSERT_PTR_POS(50, 30);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_X, -100, True);
+    Dev(0).PlayRelMotion(-100, 0);
     ASSERT_PTR_POS(20, 30);
 
     /* Warp the pointer to before the barrier. */
@@ -89,7 +89,7 @@ TEST_F(BarrierConstrained, VerticalBarrierNoDirectionBlocksMotion)
     ASSERT_PTR_POS(10, 30);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_X, 100, True);
+    Dev(0).PlayRelMotion(100, 0);
     ASSERT_PTR_POS(19, 30);
 
     XFixesDestroyPointerBarrier (dpy, barrier);
@@ -127,7 +127,7 @@ TEST_F(BarrierConstrained, VerticalBarrierPositiveXBlocksMotion)
     ASSERT_PTR_POS(50, 30);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_X, -100, True);
+    Dev(0).PlayRelMotion(-100, 0);
     ASSERT_PTR_POS(20, 30);
 
     /* Warp the pointer to before the barrier. */
@@ -136,7 +136,7 @@ TEST_F(BarrierConstrained, VerticalBarrierPositiveXBlocksMotion)
     ASSERT_PTR_POS(10, 30);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_X, 100, True);
+    Dev(0).PlayRelMotion(100, 0);
     ASSERT_PTR_POS(110, 30);
 
     XFixesDestroyPointerBarrier (dpy, barrier);
@@ -174,7 +174,7 @@ TEST_F(BarrierConstrained, VerticalBarrierNegativeXBlocksMotion)
     ASSERT_PTR_POS(50, 30);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_X, -100, True);
+    Dev(0).PlayRelMotion(-100, 0);
     ASSERT_PTR_POS(0, 30);
 
     /* Warp the pointer to before the barrier. */
@@ -183,7 +183,7 @@ TEST_F(BarrierConstrained, VerticalBarrierNegativeXBlocksMotion)
     ASSERT_PTR_POS(10, 30);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_X, 100, True);
+    Dev(0).PlayRelMotion(100, 0);
     ASSERT_PTR_POS(19, 30);
 
     XFixesDestroyPointerBarrier (dpy, barrier);
@@ -222,7 +222,7 @@ TEST_F(BarrierConstrained, VerticalBarrierBothDirectionsXBlocksNoMotion)
     ASSERT_PTR_POS(50, 30);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_X, -100, True);
+    Dev(0).PlayRelMotion(-100, 0);
     ASSERT_PTR_POS(0, 30);
 
     /* Warp the pointer to before the barrier. */
@@ -231,7 +231,7 @@ TEST_F(BarrierConstrained, VerticalBarrierBothDirectionsXBlocksNoMotion)
     ASSERT_PTR_POS(10, 30);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_X, 100, True);
+    Dev(0).PlayRelMotion(100, 0);
     ASSERT_PTR_POS(110, 30);
 
     XFixesDestroyPointerBarrier (dpy, barrier);
@@ -270,7 +270,7 @@ TEST_F(BarrierConstrained, HorizontalBarrierNoDirectionBlocksMotion)
     ASSERT_PTR_POS(30, 50);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, -100, True);
+    Dev(0).PlayRelMotion(0, -100);
     ASSERT_PTR_POS(30, 20);
 
     /* Warp the pointer to before the barrier. */
@@ -279,7 +279,7 @@ TEST_F(BarrierConstrained, HorizontalBarrierNoDirectionBlocksMotion)
     ASSERT_PTR_POS(30, 10);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, 100, True);
+    Dev(0).PlayRelMotion(0, 100);
     ASSERT_PTR_POS(30, 19);
 
     XFixesDestroyPointerBarrier (dpy, barrier);
@@ -317,7 +317,7 @@ TEST_F(BarrierConstrained, HorizontalBarrierPositiveYBlocksMotion)
     ASSERT_PTR_POS(30, 50);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, -100, True);
+    Dev(0).PlayRelMotion(0, -100);
     ASSERT_PTR_POS(30, 20);
 
     /* Warp the pointer to before the barrier. */
@@ -326,7 +326,7 @@ TEST_F(BarrierConstrained, HorizontalBarrierPositiveYBlocksMotion)
     ASSERT_PTR_POS(30, 10);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, 100, True);
+    Dev(0).PlayRelMotion(0, 100);
     ASSERT_PTR_POS(30, 110);
 
     XFixesDestroyPointerBarrier (dpy, barrier);
@@ -364,7 +364,7 @@ TEST_F(BarrierConstrained, HoritzontalBarrierNegativeYBlocksMotion)
     ASSERT_PTR_POS(30, 50);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, -100, True);
+    Dev(0).PlayRelMotion(0, -100);
     ASSERT_PTR_POS(30, 0);
 
     /* Warp the pointer to before the barrier. */
@@ -373,7 +373,7 @@ TEST_F(BarrierConstrained, HoritzontalBarrierNegativeYBlocksMotion)
     ASSERT_PTR_POS(30, 10);
 
     /* This should be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, 100, True);
+    Dev(0).PlayRelMotion(0, 100);
     ASSERT_PTR_POS(30, 19);
 
     XFixesDestroyPointerBarrier (dpy, barrier);
@@ -412,7 +412,7 @@ TEST_F(BarrierConstrained, HorizontalBarrierBothDirectionsYBlocksNoMotion)
     ASSERT_PTR_POS(30, 50);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, -100, True);
+    Dev(0).PlayRelMotion(0, -100);
     ASSERT_PTR_POS(30, 0);
 
     /* Warp the pointer to before the barrier. */
@@ -421,7 +421,7 @@ TEST_F(BarrierConstrained, HorizontalBarrierBothDirectionsYBlocksNoMotion)
     ASSERT_PTR_POS(30, 10);
 
     /* This shouldn't be blocked. */
-    dev->PlayOne(EV_REL, REL_Y, 100, True);
+    Dev(0).PlayRelMotion(0, 100);
     ASSERT_PTR_POS(30, 110);
 
     XFixesDestroyPointerBarrier (dpy, barrier);

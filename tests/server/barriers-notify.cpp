@@ -39,7 +39,7 @@
 
 #if HAVE_XI23
 
-using namespace xorg::testing::evemu;
+using namespace xorg::testing::emulated;
 
 enum BarrierDeviceTestCombinations {
     NO_DEVICE_SPECIFICS, /**< test with no barrier device ID specified */
@@ -96,14 +96,16 @@ static std::string enum_to_string(enum BarrierDeviceTestCombinations b) {
 class BarrierNotify : public BarrierDevices,
                       public ::testing::WithParamInterface<enum BarrierDeviceTestCombinations> {
 public:
-    std::unique_ptr<Device>* target_dev;
+    Device* target_dev;
     int ndevices;
     int deviceid;
     int sourceid;
     int all_deviceids[2];
 
     virtual void SetUp(){
-        SetUpDevices();
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         xi2_major_minimum = 2;
         xi2_minor_minimum = 3;
@@ -138,53 +140,53 @@ public:
 
         switch(combination) {
             case NO_DEVICE_SPECIFICS:
-                target_dev = &dev1;
+                target_dev = &Dev(0);
                 deviceid = VIRTUAL_CORE_POINTER_ID;
                 ndevices = 0;
-                source_dev = "--device1--";
+                source_dev = "--device0--";
                 break;
             case TARGET_VCP:
             case VCP_ONLY:
                 ndevices = 1;
                 deviceid = VIRTUAL_CORE_POINTER_ID;
-                target_dev = &dev1;
-                source_dev = "--device1--";
+                target_dev = &Dev(0);
+                source_dev = "--device0--";
                 all_deviceids[0] = VIRTUAL_CORE_POINTER_ID;
                 break;
             case TARGET_POINTER2:
                 ndevices = 1;
                 deviceid = master_id_2;
-                target_dev = &dev2;
-                source_dev = "--device2--";
+                target_dev = &Dev(1);
+                source_dev = "--device1--";
                 all_deviceids[0] = master_id_2;
                 break;
             case TARGET_VCP_AND_ALL:
                 ndevices = 2;
                 deviceid = VIRTUAL_CORE_POINTER_ID;
-                target_dev = &dev1;
-                source_dev = "--device1--";
+                target_dev = &Dev(0);
+                source_dev = "--device0--";
                 all_deviceids[0] = VIRTUAL_CORE_POINTER_ID;
                 all_deviceids[1] = master_id_2;
                 break;
             case TARGET_POINTER2_AND_ALL:
                 ndevices = 2;
                 deviceid = master_id_2;
-                target_dev = &dev2;
-                source_dev = "--device2--";
+                target_dev = &Dev(1);
+                source_dev = "--device1--";
                 all_deviceids[0] = VIRTUAL_CORE_POINTER_ID;
                 all_deviceids[1] = master_id_2;
                 break;
             case LATE_SECOND_MD_VCP:
                 ndevices = 0;
                 deviceid = -1;
-                target_dev = &dev1;
-                source_dev = "--device1--";
+                target_dev = &Dev(0);
+                source_dev = "--device0--";
                 break;
             case LATE_SECOND_MD_POINTER2:
                 ndevices = 0;
                 deviceid = -1;
-                target_dev = &dev2;
-                source_dev = "--device2--";
+                target_dev = &Dev(1);
+                source_dev = "--device1--";
                 break;
             default:
                 FAIL();
@@ -244,7 +246,7 @@ TEST_P(BarrierNotify, ReceivesNotifyEvents)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XSync(dpy, False);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
 
     /* Ensure we have a BarrierHit on our hands. */
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -283,7 +285,7 @@ TEST_P(BarrierNotify, CorrectEventIDs)
 
     /* Ensure we have a bunch of BarrierHits on our hands. */
     for (int i = 0; i < 10; i++) {
-        (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+        target_dev->PlayRelMotion(-40, 0);
 
         /* Ensure we have a BarrierHit on our hands. */
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -306,13 +308,14 @@ TEST_P(BarrierNotify, CorrectEventIDs)
 
     /* Move outside the hitbox, and ensure that we
      * get a BarrierLeave */
-    (*target_dev)->PlayOne(EV_REL, REL_X, 20, true);
+    target_dev->PlayRelMotion(20, 0);
+
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierLeave);
     ASSERT_EQ(barrier, event.ev->barrier);
     ASSERT_EQ(1U, event.ev->eventid);
 
     for (int i = 0; i < 10; i++) {
-        (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+        target_dev->PlayRelMotion(-40, 0);
 
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(event.ev);
@@ -329,10 +332,10 @@ TEST_P(BarrierNotify, CorrectEventIDs)
 
     /* Ensure that we're still inside the hit box. Event ID
      * should stay the same on such a minor change. */
-    (*target_dev)->PlayOne(EV_REL, REL_X, 1, true);
+    target_dev->PlayRelMotion(1, 0);
 
     for (int i = 0; i < 10; i++) {
-        (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+        target_dev->PlayRelMotion(-40, 0);
 
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_EQ(barrier, event.ev->barrier);
@@ -369,7 +372,8 @@ TEST_P(BarrierNotify, BarrierReleases)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XSync(dpy, False);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
+
     {
         XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
         ASSERT_TRUE(event.ev);
@@ -383,7 +387,7 @@ TEST_P(BarrierNotify, BarrierReleases)
     XIBarrierReleasePointer(dpy, deviceid, barrier, 1);
     XSync(dpy, False);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
 
     /* We should have a new event because we exited the hit box */
     {
@@ -426,7 +430,7 @@ TEST_P(BarrierNotify, DestroyWindow)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XSync(dpy, False);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
 
     /* Ensure we have a BarrierHit on our hands. */
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -441,7 +445,7 @@ TEST_P(BarrierNotify, DestroyWindow)
     XDestroyWindow(dpy, win);
     XSync(dpy, True);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
 
     double x, y;
     QueryPointerPosition(dpy, &x, &y, deviceid);
@@ -482,7 +486,7 @@ TEST_P(BarrierNotify, UnmapWindow)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XSync(dpy, False);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
 
     /* Ensure we have a BarrierHit on our hands. */
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -497,7 +501,7 @@ TEST_P(BarrierNotify, UnmapWindow)
     XUnmapWindow(dpy, win);
     XSync(dpy, True);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
 
     double x, y;
     QueryPointerPosition(dpy, &x, &y, deviceid);
@@ -551,7 +555,9 @@ TEST_P(BarrierNotify, EventsDuringActiveGrab)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &event_mask, 1);
     XIGrabDevice(dpy, deviceid, root, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &no_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -570,14 +576,18 @@ TEST_P(BarrierNotify, EventsDuringActiveGrab)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &event_mask, 1);
     XIGrabDevice(dpy, deviceid, root, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &no_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_FALSE(xorg::testing::XServer::WaitForEvent(dpy, 500));
 
     /* if OE is true and mask is set → event */
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &no_mask, 1);
     XIGrabDevice(dpy, deviceid, root, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &event_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -596,7 +606,9 @@ TEST_P(BarrierNotify, EventsDuringActiveGrab)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &no_mask, 1);
     XIGrabDevice(dpy, deviceid, root, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &event_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -645,7 +657,9 @@ TEST_P(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &event_mask, 1);
     XIGrabDevice(dpy, deviceid, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &no_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -663,7 +677,9 @@ TEST_P(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     /* if OE is false and mask is not set, but set on window → event */
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XIGrabDevice(dpy, deviceid, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &no_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -681,7 +697,9 @@ TEST_P(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     /* if OE is true and mask is set → event */
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XIGrabDevice(dpy, deviceid, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, True, &event_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -699,7 +717,9 @@ TEST_P(BarrierNotify, EventsDuringActiveGrabNonGrabWindow)
     /* if OE is false and mask is set → event */
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XIGrabDevice(dpy, deviceid, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &event_mask);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -750,7 +770,9 @@ TEST_P(BarrierNotify, EventsDuringActiveGrabOtherClient)
     /* We still expect events */
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &event_mask, 1);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+
+    target_dev->PlayRelMotion(-40, 0);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -810,9 +832,11 @@ TEST_P(BarrierNotify, EventsDuringPassiveGrab)
     XISelectEvents(dpy, root, &event_mask, 1);
     XIGrabButton(dpy, deviceid, 1, root, None, GrabModeAsync, GrabModeAsync, True, &no_mask, 1, &mods);
     XSync(dpy, False);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    target_dev->PlayButtonDown(1);
+    target_dev->PlayRelMotion(-40, 0);
+    target_dev->PlayButtonUp(1);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -832,9 +856,11 @@ TEST_P(BarrierNotify, EventsDuringPassiveGrab)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &event_mask, 1);
     XIGrabButton(dpy, deviceid, 1, root, None, GrabModeAsync, GrabModeAsync, False, &no_mask, 1, &mods);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    target_dev->PlayButtonDown(1);
+    target_dev->PlayRelMotion(-40, 0);
+    target_dev->PlayButtonUp(1);
+
     {
         XITEvent<XIDeviceEvent> press(dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
         ASSERT_TRUE(press.ev);
@@ -847,9 +873,11 @@ TEST_P(BarrierNotify, EventsDuringPassiveGrab)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &no_mask, 1);
     XIGrabButton(dpy, deviceid, 1, root, None, GrabModeAsync, GrabModeAsync, True, &event_mask, 1, &mods);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    target_dev->PlayButtonDown(1);
+    target_dev->PlayRelMotion(-40, 0);
+    target_dev->PlayButtonUp(1);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -869,9 +897,11 @@ TEST_P(BarrierNotify, EventsDuringPassiveGrab)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XISelectEvents(dpy, root, &no_mask, 1);
     XIGrabButton(dpy, deviceid, 1, root, None, GrabModeAsync, GrabModeAsync, False, &event_mask, 1, &mods);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
-    (*target_dev)->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    target_dev->PlayButtonDown(1);
+    target_dev->PlayRelMotion(-40, 0);
+    target_dev->PlayButtonUp(1);
+
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, GenericEvent, xi2_opcode, XI_BarrierHit, 500));
     {
         XITEvent<XIBarrierEvent> hit(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
@@ -929,8 +959,7 @@ TEST_P(BarrierNotify, BarrierRandREventsVertical)
     ConfigureLateDevices(combination);
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, w - 40 , h - 30);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, 40, false);
-    (*target_dev)->PlayOne(EV_REL, REL_Y, 100, true);
+    target_dev->PlayRelMotion(40, 100);
 
     XITEvent<XIBarrierEvent> event(dpy, GenericEvent, xi2_opcode, XI_BarrierHit);
     ASSERT_EQ(barrier, event.ev->barrier);
@@ -964,7 +993,7 @@ TEST_P(BarrierNotify, ReceivesLeaveOnDestroyWhenInsideHitbox)
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XSync(dpy, False);
 
-    (*target_dev)->PlayOne(EV_REL, REL_X, -40, true);
+    target_dev->PlayRelMotion(-40, 0);
 
     /* Ensure we have a BarrierHit on our hands. */
     {
@@ -1010,7 +1039,7 @@ TEST_P(BarrierNotify, DoesntReceiveLeaveOnDestroyWhenOutsideHitbox)
     XSync(dpy, False);
 
     /* Move the pointer, but don't hit the barrier. */
-    (*target_dev)->PlayOne(EV_REL, REL_X, -5, true);
+    target_dev->PlayRelMotion(-5, 0);
 
     XIWarpPointer(dpy, deviceid, None, root, 0, 0, 0, 0, 30, 30);
     XFixesDestroyPointerBarrier(dpy, barrier);
@@ -1050,7 +1079,7 @@ TEST_F(BarrierMPXTest, BarrierLeaveOnMDDestroyWhenInsideHitbox)
 
     XIWarpPointer(dpy, master_id_2, None, root, 0, 0, 0, 0, 30, 30);
 
-    dev2->PlayOne(EV_REL, REL_X, -40, true);
+    Dev(1).PlayRelMotion(-40, 0);
 
     /* Ensure we have a BarrierHit on our hands. */
     {
