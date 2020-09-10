@@ -40,15 +40,17 @@
  *   ASSERT_EVENT(XMotionEvent, myevent, dpy, MotionNotify);
  *   ASSERT_EQ(myevent->detail, 1U);
  */
+// We use empty "do {} while (false)" statement at the end to permit the use of the macros as
+// statements ending with semicolons. This fixes empty statement warnings throughout the codebase.
 #define ASSERT_EVENT(_type, _name, ...) \
         XITEvent<_type> _name ## _xit_event(__VA_ARGS__); \
         _type* _name = _name ## _xit_event.ev; \
-        ASSERT_TRUE(_name);
+        ASSERT_TRUE(_name); do {} while (false)
 
 #define EXPECT_EVENT(_type, _name, ...) \
         XITEvent<_type> _name ## _xit_event(__VA_ARGS__); \
         _type* _name = _name ## _xit_event.ev; \
-        EXPECT_TRUE(_name);
+        EXPECT_TRUE(_name); do {} while (false)
 /**
  * Template class to work around the Xlib cookie API.
  * Create a single EW object that pulls down then next event from the wire,
