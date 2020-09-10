@@ -528,7 +528,7 @@ protected:
     virtual void SetUp() {
         SetDevice("tablets/N-Trig-MultiTouch.desc");
 
-        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+        mouse = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
                 );
@@ -536,7 +536,7 @@ protected:
         MultiheadTest::SetUp();
     }
 
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
+    std::unique_ptr<xorg::testing::evemu::Device> mouse;
 };
 
 TEST_F(ZaphodTouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)

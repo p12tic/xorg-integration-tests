@@ -30,6 +30,7 @@
 #define _DEVICE_INTERFACE_H_
 
 #include <xorg/gtest/xorg-gtest.h>
+#include <memory>
 
 /**
  * A test fixture for testing input drivers. This class automates basic
@@ -43,7 +44,7 @@ protected:
     /**
      * The evemu device to generate events.
      */
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
+    std::unique_ptr<xorg::testing::evemu::Device> dev;
 
     virtual void SetDevice(const std::string& path, const std::string &basedir = RECORDINGS_DIR);
 };

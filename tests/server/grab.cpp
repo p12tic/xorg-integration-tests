@@ -387,22 +387,22 @@ TEST_F(PointerGrabTest, AsyncPassiveGrabPressRelease)
 
 class PointerKeyboardGrabTest : public PointerGrabTest {
 public:
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
-    std::auto_ptr<xorg::testing::evemu::Device> keyboard;
-    std::auto_ptr<xorg::testing::evemu::Device> touch;
+    std::unique_ptr<xorg::testing::evemu::Device> mouse;
+    std::unique_ptr<xorg::testing::evemu::Device> keyboard;
+    std::unique_ptr<xorg::testing::evemu::Device> touch;
 
     virtual void SetUp() {
-      mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+      mouse = std::unique_ptr<xorg::testing::evemu::Device>(
               new xorg::testing::evemu::Device(
                   RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
               );
 
-      keyboard = std::auto_ptr<xorg::testing::evemu::Device>(
+      keyboard = std::unique_ptr<xorg::testing::evemu::Device>(
               new xorg::testing::evemu::Device(
                   RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc")
               );
 
-      touch = std::auto_ptr<xorg::testing::evemu::Device>(
+      touch = std::unique_ptr<xorg::testing::evemu::Device>(
               new xorg::testing::evemu::Device(
                   RECORDINGS_DIR "tablets/N-Trig-MultiTouch.desc")
               );
@@ -2331,15 +2331,15 @@ class GrabModeTest : public XITServerInputTest,
                      public ::testing::WithParamInterface<int>
 {
 public:
-    std::auto_ptr<xorg::testing::evemu::Device> ptr;
-    std::auto_ptr<xorg::testing::evemu::Device> kbd;
+    std::unique_ptr<xorg::testing::evemu::Device> ptr;
+    std::unique_ptr<xorg::testing::evemu::Device> kbd;
 
     virtual void SetUp() {
-        ptr = std::auto_ptr<xorg::testing::evemu::Device>(
+        ptr = std::unique_ptr<xorg::testing::evemu::Device>(
                new xorg::testing::evemu::Device(
                    RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
                ));
-        kbd = std::auto_ptr<xorg::testing::evemu::Device>(
+        kbd = std::unique_ptr<xorg::testing::evemu::Device>(
                new xorg::testing::evemu::Device(
                    RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc"
                ));

@@ -163,9 +163,9 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
 
     XFlush(Display());
 
-    std::auto_ptr<xorg::testing::evemu::Device> mouse_device;
+    std::unique_ptr<xorg::testing::evemu::Device> mouse_device;
     try {
-      mouse_device = std::auto_ptr<xorg::testing::evemu::Device>(
+      mouse_device = std::unique_ptr<xorg::testing::evemu::Device>(
           new xorg::testing::evemu::Device(
               RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
           );
@@ -976,7 +976,7 @@ INSTANTIATE_TEST_CASE_P(, TouchEventHistoryTest,
 class TouchDeviceChangeTest : public TouchTest {
 protected:
     virtual void SetUp() {
-        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+        mouse = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
                 );
@@ -993,7 +993,7 @@ protected:
         TouchTest::SetUpConfigAndLog();
     }
 
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
+    std::unique_ptr<xorg::testing::evemu::Device> mouse;
 };
 
 TEST_F(TouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)

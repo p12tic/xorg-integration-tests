@@ -1400,9 +1400,9 @@ TEST(SynapticsClickPad, HotPlugSoftButtons)
     SCOPED_TRACE("<linux/input.h>'s INPUT_PROP_BUTTONPAD is missing.\n"
                  "Clickpad detection will not work on this kernel");
 #endif
-    std::auto_ptr<xorg::testing::evemu::Device> dev;
+    std::unique_ptr<xorg::testing::evemu::Device> dev;
 
-    dev = std::auto_ptr<xorg::testing::evemu::Device>(
+    dev = std::unique_ptr<xorg::testing::evemu::Device>(
             new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "touchpads/SynPS2-Synaptics-TouchPad-Clickpad.desc"
                 )

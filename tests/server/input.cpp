@@ -850,12 +850,12 @@ INSTANTIATE_TEST_CASE_P(, PointerRelativeRotationMatrixTest, ::testing::Range(0,
 class DeviceChangedTest : public XITServerInputTest {
 public:
     virtual void SetUp() {
-        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+        mouse = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
                 );
 
-        touchpad = std::auto_ptr<xorg::testing::evemu::Device>(
+        touchpad = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "/touchpads/SynPS2-Synaptics-TouchPad.desc")
                 );
@@ -880,8 +880,8 @@ public:
         config.WriteConfig();
     }
 
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
-    std::auto_ptr<xorg::testing::evemu::Device> touchpad;
+    std::unique_ptr<xorg::testing::evemu::Device> mouse;
+    std::unique_ptr<xorg::testing::evemu::Device> touchpad;
 };
 
 

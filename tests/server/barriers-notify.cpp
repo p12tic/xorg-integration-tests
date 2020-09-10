@@ -96,7 +96,7 @@ static std::string enum_to_string(enum BarrierDeviceTestCombinations b) {
 class BarrierNotify : public BarrierDevices,
                       public ::testing::WithParamInterface<enum BarrierDeviceTestCombinations> {
 public:
-    std::auto_ptr<Device>* target_dev;
+    std::unique_ptr<Device>* target_dev;
     int ndevices;
     int deviceid;
     int sourceid;

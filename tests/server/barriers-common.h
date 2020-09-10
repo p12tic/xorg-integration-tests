@@ -96,8 +96,8 @@ public:
 
 class BarrierDevices : public BarrierBaseTest {
 public:
-    std::auto_ptr<xorg::testing::evemu::Device> dev1;
-    std::auto_ptr<xorg::testing::evemu::Device> dev2;
+    std::unique_ptr<xorg::testing::evemu::Device> dev1;
+    std::unique_ptr<xorg::testing::evemu::Device> dev2;
 
     int master_id_1;
     int master_id_2;
@@ -115,11 +115,11 @@ public:
     }
 
     virtual void SetUpDevices() {
-        dev1 = std::auto_ptr<xorg::testing::evemu::Device>(
+        dev1 = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
                 ));
-        dev2 = std::auto_ptr<xorg::testing::evemu::Device>(
+        dev2 = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
                 ));

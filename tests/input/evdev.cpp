@@ -1569,9 +1569,9 @@ TEST_F(EvdevDuplicateTest, TooManyDevices)
                   "Server must not crash\n");
 
     const int NDEVICES = 50;
-    std::auto_ptr<xorg::testing::evemu::Device> devices[NDEVICES];
+    std::unique_ptr<xorg::testing::evemu::Device> devices[NDEVICES];
     for (int i = 0; i < NDEVICES; i++) {
-        devices[i] = std::auto_ptr<xorg::testing::evemu::Device>(
+        devices[i] = std::unique_ptr<xorg::testing::evemu::Device>(
                          new xorg::testing::evemu::Device(RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
                      );
     }
