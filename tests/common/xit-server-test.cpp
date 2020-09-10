@@ -175,9 +175,9 @@ std::string XITServer::GetNormalizedTestName() {
 }
 
 std::string XITServer::GetDefaultLogFile() {
-    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".log");
+    return std::string(LOG_BASE_PATH) + std::string("/") + "xit_" + GetNormalizedTestName() + std::string(".log");
 }
 
 std::string XITServer::GetDefaultConfigFile() {
-    return std::string(LOG_BASE_PATH) + std::string("/") + GetNormalizedTestName() + std::string(".conf");
+    return std::string(LOG_BASE_PATH) + std::string("/") + "xit_" + GetNormalizedTestName() + std::string(".conf");
 }
