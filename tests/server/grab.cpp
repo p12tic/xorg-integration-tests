@@ -26,7 +26,7 @@
 #include <config.h>
 #endif
 
-#include <tr1/tuple>
+#include <tuple>
 
 #include <xorg/gtest/xorg-gtest.h>
 
@@ -37,7 +37,7 @@
 
 #include "xit-event.h"
 #include "xit-server-input-test.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 #include "helpers.h"
 
 
@@ -46,13 +46,14 @@
  * which is later used for the XkbLayout option.
  */
 class PointerGrabTest : public XITServerInputTest,
-                        public DeviceInterface {
+                        public DeviceEmulatedInterface {
 public:
     /**
      * Initializes a standard mouse device.
      */
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         xi2_major_minimum = 2;
         xi2_minor_minimum = 1;
@@ -67,14 +68,20 @@ public:
     virtual void SetUpConfigAndLog() {
 
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--device-kbd--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -118,7 +125,7 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
     XSync(dpy, False);
 
     /* Move pointer, make sure we receive raw events */
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    Dev(0).PlayRelMotion(1, 0);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -129,7 +136,7 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
     ASSERT_TRUE(NoEventPending(dpy));
 
     /* Now press button, make sure sure we still get raw events */
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    Dev(0).PlayButtonDown(1);
 
     /* raw button events come before normal button events */
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
@@ -142,7 +149,7 @@ TEST_F(PointerGrabTest, ImplicitGrabRawEvents)
                                                            xi2_opcode,
                                                            XI_ButtonPress,
                                                            1000));
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    Dev(0).PlayRelMotion(-1, 0);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -203,14 +210,14 @@ TEST_F(PointerGrabTest, DestroyWindowDuringImplicitGrab)
 
     XSync(dpy, True);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    Dev(0).PlayButtonDown(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
 
     XDestroyWindow(dpy, win);
     XSync(dpy, False);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonUp(1);
 
     XSync(dpy, False);
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
@@ -242,13 +249,13 @@ TEST_F(PointerGrabTest, DestroyClientDuringImplicitGrab)
 
     XSync(dpy, True);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    Dev(0).PlayButtonDown(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
 
     XCloseDisplay(dpy);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 }
@@ -280,7 +287,7 @@ TEST_F(PointerGrabTest, ImplicitGrabToActiveGrab)
 
     XSync(dpy, True);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    Dev(0).PlayButtonDown(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
 
@@ -288,7 +295,7 @@ TEST_F(PointerGrabTest, ImplicitGrabToActiveGrab)
                 GrabModeAsync, GrabModeAsync, None, None, CurrentTime));
     XSync(dpy, False);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonRelease, -1, -1));
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
@@ -322,7 +329,7 @@ TEST_F(PointerGrabTest, ImplicitGrabToActiveGrabDeactivated)
 
     XSync(dpy, True);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    Dev(0).PlayButtonDown(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonPress, -1, -1));
 
@@ -333,7 +340,7 @@ TEST_F(PointerGrabTest, ImplicitGrabToActiveGrabDeactivated)
     XUngrabPointer(dpy, CurrentTime);
     XSync(dpy, False);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(dpy, ButtonRelease, -1, -1));
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
@@ -360,10 +367,10 @@ TEST_F(PointerGrabTest, AsyncPassiveGrabPressRelease)
                 ButtonPressMask|ButtonReleaseMask,
                 GrabModeAsync, GrabModeAsync, None, None);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     for (int i = 0; i < 2; i++) {
         ASSERT_EVENT(XEvent, press, dpy1, ButtonPress);
@@ -371,10 +378,11 @@ TEST_F(PointerGrabTest, AsyncPassiveGrabPressRelease)
     }
 
     XUngrabButton(dpy1, AnyButton, XIAnyModifier, win);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     for (int i = 0; i < 2; i++) {
         ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
@@ -385,47 +393,42 @@ TEST_F(PointerGrabTest, AsyncPassiveGrabPressRelease)
     ASSERT_TRUE(NoEventPending(dpy2));
 }
 
-class PointerKeyboardGrabTest : public PointerGrabTest {
+class PointerKeyboardGrabTest : public XITServerInputTest,
+                                public DeviceEmulatedInterface {
 public:
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
-    std::auto_ptr<xorg::testing::evemu::Device> keyboard;
-    std::auto_ptr<xorg::testing::evemu::Device> touch;
+    xorg::testing::emulated::Device& MouseDev() { return Dev(0); }
+    xorg::testing::emulated::Device& KeyboardDev() { return Dev(1); }
+    xorg::testing::emulated::Device& TouchDev() { return Dev(2); }
 
-    virtual void SetUp() {
-      mouse = std::auto_ptr<xorg::testing::evemu::Device>(
-              new xorg::testing::evemu::Device(
-                  RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
-              );
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
 
-      keyboard = std::auto_ptr<xorg::testing::evemu::Device>(
-              new xorg::testing::evemu::Device(
-                  RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc")
-              );
-
-      touch = std::auto_ptr<xorg::testing::evemu::Device>(
-              new xorg::testing::evemu::Device(
-                  RECORDINGS_DIR "tablets/N-Trig-MultiTouch.desc")
-              );
-
-      XITServerInputTest::SetUp();
+        XITServerInputTest::SetUp();
     }
 
-    virtual void SetUpConfigAndLog() {
+    void SetUpConfigAndLog() override {
 
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--mouse--",
+        config.AddInputSection("test", "--mouse--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + mouse->GetDeviceNode() + "\"");
-        config.AddInputSection("evdev", "--keyboard--",
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               MouseDev().GetOptions());
+        config.AddInputSection("test", "--keyboard--",
                                "Option \"CoreKeyboard\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + keyboard->GetDeviceNode() + "\"");
-        config.AddInputSection("evdev", "--touch--",
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               KeyboardDev().GetOptions());
+        config.AddInputSection("test", "--touch--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + touch->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               TouchDev().GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -447,10 +450,10 @@ TEST_F(PointerKeyboardGrabTest, PointerAsyncKeyboardSyncKeyboardReplay)
     XGrabButton(dpy, 1, AnyModifier, win, False, ButtonPressMask,
                 GrabModeAsync, GrabModeSync, None, None);
 
-    mouse->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
-    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
-    mouse->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    MouseDev().PlayButtonDown(1);
+    KeyboardDev().PlayKeyDown(KEY_A);
+    KeyboardDev().PlayKeyUp(KEY_A);
+    MouseDev().PlayButtonUp(1);
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, key_press, dpy, KeyPress);
@@ -476,10 +479,10 @@ TEST_F(PointerKeyboardGrabTest, TouchPointerAsyncKeyboardSyncKeyboardReplay)
     XGrabButton(dpy, 1, AnyModifier, win, False, ButtonPressMask,
                 GrabModeAsync, GrabModeSync, None, None);
 
-    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
-    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
-    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchBegin(100, 200, 0);
+    KeyboardDev().PlayKeyDown(KEY_A);
+    KeyboardDev().PlayKeyUp(KEY_A);
+    TouchDev().PlayTouchEnd(100, 200, 0);
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, key_press, dpy, KeyPress);
@@ -511,10 +514,10 @@ TEST_F(PointerKeyboardGrabTest, TouchPointerAsyncKeyboardSyncKeyboardReplayMulti
     XGrabButton(dpy2, 1, AnyModifier, DefaultRootWindow(dpy2), False,
                 ButtonPressMask, GrabModeAsync, GrabModeSync, None, None);
 
-    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
-    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
-    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchBegin(100, 200, 0);
+    KeyboardDev().PlayKeyDown(KEY_A);
+    KeyboardDev().PlayKeyUp(KEY_A);
+    TouchDev().PlayTouchEnd(100, 200, 0);
 
     ASSERT_EVENT(XEvent, press, dpy2, ButtonPress);
     ASSERT_EVENT(XEvent, key_press, dpy, KeyPress);
@@ -543,10 +546,10 @@ TEST_F(PointerKeyboardGrabTest, TouchPointerAsyncKeyboardSyncKeyboardReplayOwner
             ButtonPressMask|ButtonReleaseMask,
                 GrabModeAsync, GrabModeSync, None, None);
 
-    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    keyboard->PlayOne(EV_KEY, KEY_A, 1, true);
-    keyboard->PlayOne(EV_KEY, KEY_A, 0, true);
-    touch->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchBegin(100, 200, 0);
+    KeyboardDev().PlayKeyDown(KEY_A);
+    KeyboardDev().PlayKeyUp(KEY_A);
+    TouchDev().PlayTouchEnd(100, 200, 0);
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, release, dpy, ButtonRelease);
@@ -560,7 +563,7 @@ TEST_F(PointerKeyboardGrabTest, TouchPointerAsyncKeyboardSyncKeyboardReplayOwner
  * @tparam AsyncPointer, SyncPointer, ReplayPointer
  */
 class PointerGrabTestAllowEvents : public PointerGrabTest,
-                                        public ::testing::WithParamInterface<int> {
+                                   public ::testing::WithParamInterface<int> {
 };
 
 TEST_P(PointerGrabTestAllowEvents, AllowEventsDoubleClick)
@@ -590,10 +593,10 @@ TEST_P(PointerGrabTestAllowEvents, AllowEventsDoubleClick)
                 ButtonPressMask|ButtonReleaseMask,
                 GrabModeSync, GrabModeAsync, None, None);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     for (int i = 0; i < 2; i++) {
         ASSERT_EVENT(XEvent, press, dpy1, ButtonPress);
@@ -684,7 +687,7 @@ TEST_P(PointerSingleGrabTypeTest, OverwriteGrab)
     }
     ASSERT_EQ(rc, Success);
 
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    Dev(0).PlayRelMotion(-1, 0);
 
     switch(grab_type) {
         case GRABTYPE_CORE:
@@ -721,7 +724,7 @@ TEST_P(PointerSingleGrabTypeTest, OverwriteGrab)
             break;
     }
 
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    Dev(0).PlayRelMotion(-1, 0);
 
     ASSERT_TRUE(NoEventPending(dpy));
 }
@@ -730,7 +733,7 @@ INSTANTIATE_TEST_CASE_P(, PointerSingleGrabTypeTest, ::testing::Values(GRABTYPE_
 
 class PointerGrabTypeTest : public PointerGrabTest,
                             public
-                            ::testing::WithParamInterface<std::tr1::tuple<enum ::GrabType, enum GrabType> > {};
+                            ::testing::WithParamInterface<std::tuple<enum ::GrabType, enum GrabType> > {};
 
 TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
 {
@@ -739,9 +742,9 @@ TEST_P(PointerGrabTypeTest, DifferentGrabTypesProhibited)
                   "Expect AlreadyGrabbed for different types\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=58255");
 
-    std::tr1::tuple<enum GrabType, enum GrabType> t = GetParam();
-    enum GrabType grab_type_1 = std::tr1::get<0>(t);
-    enum GrabType grab_type_2 = std::tr1::get<1>(t);
+    std::tuple<enum GrabType, enum GrabType> t = GetParam();
+    enum GrabType grab_type_1 = std::get<0>(t);
+    enum GrabType grab_type_2 = std::get<1>(t);
     std::stringstream ss;
     ss << grabtype_enum_to_string(grab_type_1) << " vs. " << grabtype_enum_to_string(grab_type_2);
     SCOPED_TRACE(ss.str());
@@ -827,13 +830,14 @@ INSTANTIATE_TEST_CASE_P(, PointerGrabTypeTest,
 
 #if HAVE_XI22
 class TouchGrabTest : public XITServerInputTest,
-                      public DeviceInterface {
+                      public DeviceEmulatedInterface {
 public:
-    /**
-     * Initializes a standard mouse device.
-     */
-    virtual void SetUp() {
-        SetDevice("tablets/N-Trig-MultiTouch.desc");
+    xorg::testing::emulated::Device& TouchDev() { return Dev(0); }
+    xorg::testing::emulated::Device& KeyboardDev() { return Dev(1); }
+
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         xi2_major_minimum = 2;
         xi2_minor_minimum = 2;
@@ -845,16 +849,22 @@ public:
      * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
      * the evemu device. The input from GetParam() is used as XkbLayout.
      */
-    virtual void SetUpConfigAndLog() {
+    void SetUpConfigAndLog() override {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               TouchDev().GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--kbd-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               KeyboardDev().GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 
     /**
@@ -911,31 +921,6 @@ public:
         delete[] mask.mask;
         XSync(dpy, False);
     }
-
-    virtual void TouchBegin(int x, int y) {
-        dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
-        TouchUpdate(x, y);
-    }
-
-    virtual void TouchUpdate(int x, int y, bool sync = true) {
-        dev->PlayOne(EV_ABS, ABS_X, x);
-        dev->PlayOne(EV_ABS, ABS_Y, y);
-        dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, x);
-        dev->PlayOne(EV_ABS, ABS_MT_POSITION_Y, y);
-        /* same values as the recordings file */
-        dev->PlayOne(EV_ABS, ABS_MT_ORIENTATION, 0);
-        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MAJOR, 468);
-        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MINOR, 306);
-        dev->PlayOne(EV_SYN, SYN_MT_REPORT, 0);
-        if (sync)
-            dev->PlayOne(EV_SYN, SYN_REPORT, 0);
-    }
-
-    virtual void TouchEnd() {
-        dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
-        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
-    }
-
 };
 
 TEST_F(TouchGrabTest, ActivePointerGrabOverPointerSelection)
@@ -950,30 +935,29 @@ TEST_F(TouchGrabTest, ActivePointerGrabOverPointerSelection)
     Window win = CreateWindow(dpy1, DefaultRootWindow(dpy1));
 
     SelectXI2Events(dpy1, XIAllMasterDevices, win,
-                    XI_ButtonPress,
-                    XI_ButtonRelease,
-                    XI_Motion,
-                    -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Motion });
     GrabPointer(dpy2, VIRTUAL_CORE_POINTER_ID, win);
 
-    TouchBegin(200, 200);
-    TouchUpdate(282, 282);
-    TouchEnd();
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchUpdate(282, 282, 0);
+    TouchDev().PlayTouchEnd(282, 282, 0);
 
+    ASSERT_EVENT(XIDeviceEvent, motion11, dpy2, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_EVENT(XIDeviceEvent, press, dpy2, GenericEvent, xi2_opcode, XI_ButtonPress);
-    ASSERT_EVENT(XIDeviceEvent, motion, dpy2, GenericEvent, xi2_opcode, XI_Motion);
-    ASSERT_EVENT(XIDeviceEvent, motion1, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, motion12, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, motion13, dpy2, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_EVENT(XIDeviceEvent, release, dpy2, GenericEvent, xi2_opcode, XI_ButtonRelease);
 
     ASSERT_TRUE(NoEventPending(dpy2));
 
-    TouchBegin(210, 210);
-    TouchUpdate(292, 292);
-    TouchEnd();
+    TouchDev().PlayTouchBegin(210, 210, 0);
+    TouchDev().PlayTouchUpdate(292, 292, 0);
+    TouchDev().PlayTouchEnd(292, 292, 0);
 
+    ASSERT_EVENT(XIDeviceEvent, motion21, dpy2, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_EVENT(XIDeviceEvent, press2, dpy2, GenericEvent, xi2_opcode, XI_ButtonPress);
-    ASSERT_EVENT(XIDeviceEvent, motion2, dpy2, GenericEvent, xi2_opcode, XI_Motion);
-    ASSERT_EVENT(XIDeviceEvent, motion3, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, motion22, dpy2, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EVENT(XIDeviceEvent, motion23, dpy2, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_EVENT(XIDeviceEvent, release2, dpy2, GenericEvent, xi2_opcode, XI_ButtonRelease);
 
     ASSERT_TRUE(NoEventPending(dpy2));
@@ -1015,8 +999,8 @@ TEST_F(TouchGrabTest, PassiveTouchGrabPassedToTouchClient)
     XISelectEvents(dpy2, win, &mask, 1);
     delete[] mask.mask;
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchEnd(200, 200, 0);
 
     ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
     ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
@@ -1083,8 +1067,8 @@ TEST_F(TouchGrabTest, TouchGrabPassedToCoreGrab)
                 GrabModeAsync, GrabModeAsync, None, None);
 
     for (int i = 0; i < 10; i++) {
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+        TouchDev().PlayTouchBegin(200, 200, 0);
+        TouchDev().PlayTouchEnd(200, 200, 0);
 
         ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
         ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
@@ -1131,8 +1115,8 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouch)
     delete[] mask.mask;
 
     for (int i = 0; i < 10; i++) {
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+        TouchDev().PlayTouchBegin(200, 200, 0);
+        TouchDev().PlayTouchEnd(200, 200, 0);
 
         ASSERT_EVENT(XIDeviceEvent, tbegin, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
         ASSERT_EVENT(XIDeviceEvent, tend, dpy1, GenericEvent, xi2_opcode, XI_TouchEnd);
@@ -1197,7 +1181,7 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
                                         subwin, False, &mask, 1, &mods));
     delete[] mask.mask;
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     /* C1 is owner, but all three get begin event */
     ASSERT_EVENT(XIDeviceEvent, tbegin1, dpy1, GenericEvent, xi2_opcode, XI_TouchBegin);
@@ -1216,7 +1200,8 @@ TEST_F(TouchGrabTest, TouchGrabPassedToTouchEarlyAccept)
     ASSERT_EVENT(XIDeviceEvent, towner2, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
 
     /* Physicall end touch */
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
+
     ASSERT_EVENT(XIDeviceEvent, tend2, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_TRUE(NoEventPending(dpy2));
 
@@ -1240,12 +1225,12 @@ TEST_F(TouchGrabTest, GrabMultipleTouchpoints)
 
     GrabDevice(dpy, deviceid, win);
 
-    /* ntrig has no slots, so the second update actually creates a new point */
-    TouchBegin(200, 200);
-    TouchUpdate(250, 250, false);
-    TouchUpdate(2500, 2500, true);
-    TouchUpdate(2700, 2700, true);
-    TouchEnd();
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchUpdate(250, 250, 0);
+    TouchDev().PlayTouchBegin(2500, 2500, 1);
+    TouchDev().PlayTouchUpdate(2600, 2600, 1);
+    TouchDev().PlayTouchEnd(250, 250, 0);
+    TouchDev().PlayTouchEnd(2700, 2700, 1);
 
     EXPECT_EVENT(XIDeviceEvent, tbegin1, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
     EXPECT_EVENT(XIDeviceEvent, tupdate1, dpy, GenericEvent, xi2_opcode, XI_TouchUpdate);
@@ -1255,10 +1240,78 @@ TEST_F(TouchGrabTest, GrabMultipleTouchpoints)
     EXPECT_EVENT(XIDeviceEvent, tend2, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
 }
 
+TEST_F(TouchGrabTest, DeviceGrabDeactivationReplayEmulatedEvents)
+{
+    XORG_TESTCASE("Client A actively grabs touch events on the device.\n"
+                  "Client B selects for pointer events.\n"
+                  "A touch begins and ends.\n"
+                  "Client A deactivates the active grab.\n"
+                  "https://gitlab.freedesktop.org/xorg/xserver/-/issues/7\n"
+                  "https://bugs.freedesktop.org/show_bug.cgi?id=96536\n");
+    ::Display *dpy = Display();
+    XSynchronize(dpy, True);
+
+    ::Display *dpy2 = NewClient();
+
+    /* Client A grabs the device */
+    XIEventMask mask;
+    mask.deviceid = VIRTUAL_CORE_POINTER_ID;
+    mask.mask_len = XIMaskLen(XI_TouchOwnership);
+    mask.mask = new unsigned char[mask.mask_len]();
+
+    XISetMask(mask.mask, XI_TouchBegin);
+    XISetMask(mask.mask, XI_TouchUpdate);
+    XISetMask(mask.mask, XI_TouchEnd);
+    XISetMask(mask.mask, XI_TouchOwnership);
+
+    ASSERT_EQ(Success, XIGrabDevice(dpy, VIRTUAL_CORE_POINTER_ID,
+                                    DefaultRootWindow(dpy), CurrentTime, None,
+                                    GrabModeAsync, GrabModeAsync,
+                                    False, &mask));
+
+    delete[] mask.mask;
+    XSync(dpy, False);
+
+    /* Client B selects for events on window */
+    Window win = CreateWindow(dpy2, DefaultRootWindow(dpy2));
+
+    mask.deviceid = XIAllMasterDevices;
+    mask.mask_len = XIMaskLen(XI_TouchEnd);
+    mask.mask = new unsigned char[mask.mask_len]();
+
+    XISetMask(mask.mask, XI_ButtonPress);
+    XISetMask(mask.mask, XI_Motion);
+    XISetMask(mask.mask, XI_ButtonRelease);
+
+    ASSERT_EQ(Success, XISelectEvents(dpy2, win, &mask, 1));
+
+    delete[] mask.mask;
+    XSync(dpy2, False);
+
+    /* Touch begins */
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchEnd(200, 200, 0);
+
+    /* Expect emulated motion and button press events on A */
+    ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
+    ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
+
+    /* No other events should come */
+    ASSERT_TRUE(NoEventPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy2));
+
+    /* Client A ungrabs */
+    XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
+    XSync(dpy, False);
+
+    ASSERT_TRUE(NoEventPending(dpy));
+    ASSERT_TRUE(NoEventPending(dpy2));
+}
 
 class TouchGrabTestOnLegacyClient : public TouchGrabTest {
     virtual void SetUp() {
-        SetDevice("tablets/N-Trig-MultiTouch.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         xi2_major_minimum = 2;
         xi2_minor_minimum = 0;
@@ -1285,32 +1338,32 @@ TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabUngrabDuringTouch)
     Window win = CreateWindow(dpy, DefaultRootWindow(dpy));
 
     SelectXI2Events(dpy, XIAllMasterDevices, win,
-                    XI_ButtonPress,
-                    XI_ButtonRelease,
-                    XI_Enter,
-                    XI_Leave,
-                    XI_Motion,
-                    -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Enter, XI_Leave, XI_Motion });
 
-    TouchBegin(200, 200);
-    TouchUpdate(202, 202);
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchUpdate(202, 202, 0);
 
-    EXPECT_EVENT(XIDeviceEvent, m1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    EXPECT_EVENT(XIDeviceEvent, m11, dpy, GenericEvent, xi2_opcode, XI_Motion);
     EXPECT_EVENT(XIDeviceEvent, p1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    EXPECT_EVENT(XIDeviceEvent, m12, dpy, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_TRUE(NoEventPending(dpy));
 
     GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, win);
-    TouchEnd();
 
+    TouchDev().PlayTouchEnd(202, 202, 0);
+
+    EXPECT_EVENT(XIDeviceEvent, m13, dpy, GenericEvent, xi2_opcode, XI_Motion);
     EXPECT_EVENT(XIDeviceEvent, r1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
 
-    TouchBegin(200, 200);
-    TouchUpdate(202, 202);
-    EXPECT_EVENT(XIDeviceEvent, m2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchUpdate(202, 202, 0);
+
+    EXPECT_EVENT(XIDeviceEvent, m21, dpy, GenericEvent, xi2_opcode, XI_Motion);
     EXPECT_EVENT(XIDeviceEvent, p2, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
+    EXPECT_EVENT(XIDeviceEvent, m22, dpy, GenericEvent, xi2_opcode, XI_Motion);
     XIUngrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, CurrentTime);
 
-    TouchEnd();
+    TouchDev().PlayTouchEnd(202, 202, 0);
 
     ASSERT_TRUE(NoEventPending(dpy));
 }
@@ -1356,10 +1409,12 @@ TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabOverPointerSelection)
     XISelectEvents(dpy, win, mask, 2);
     GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, win);
 
-    TouchBegin(200, 200);
-    TouchUpdate(202, 202);
-    TouchEnd();
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchUpdate(202, 202, 0);
+    TouchDev().PlayTouchEnd(202, 202, 0);
 
+    ASSERT_EVENT(XIDeviceEvent, motion1_dev_1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion1_dev_1->deviceid, deviceid);
     ASSERT_EVENT(XIDeviceEvent, press_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
     ASSERT_EQ(press_dev_1->deviceid, deviceid);
 
@@ -1368,13 +1423,18 @@ TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabOverPointerSelection)
     ASSERT_EVENT(XIDeviceEvent, press, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
     ASSERT_EQ(press->deviceid, VIRTUAL_CORE_POINTER_ID);
 
-    ASSERT_EVENT(XIDeviceEvent, motion_dev_1, dpy, GenericEvent, xi2_opcode, XI_Motion);
-    ASSERT_EQ(motion_dev_1->deviceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, motion2_dev_1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion2_dev_1->deviceid, deviceid);
+    ASSERT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion2->deviceid, VIRTUAL_CORE_POINTER_ID);
+
+    ASSERT_EVENT(XIDeviceEvent, motion3_dev_1, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion3_dev_1->deviceid, deviceid);
     ASSERT_EVENT(XIDeviceEvent, release_dev_1, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
     ASSERT_EQ(release_dev_1->deviceid, deviceid);
 
-    ASSERT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
-    ASSERT_EQ(motion2->deviceid, VIRTUAL_CORE_POINTER_ID);
+    ASSERT_EVENT(XIDeviceEvent, motion3, dpy, GenericEvent, xi2_opcode, XI_Motion);
+    ASSERT_EQ(motion3->deviceid, VIRTUAL_CORE_POINTER_ID);
     ASSERT_EVENT(XIDeviceEvent, release, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
     ASSERT_EQ(release->deviceid, VIRTUAL_CORE_POINTER_ID);
 
@@ -1386,7 +1446,8 @@ class TouchUngrabTest : public TouchGrabTest,
                         public ::testing::WithParamInterface<enum GrabType>
 {
     virtual void SetUp() {
-        SetDevice("tablets/N-Trig-MultiTouch.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         xi2_major_minimum = 2;
         switch(GetParam()) {
@@ -1452,7 +1513,7 @@ TEST_P(TouchUngrabTest, UngrabButtonDuringTouch)
             break;
     }
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     switch (grab_type) {
         case GRABTYPE_CORE:
@@ -1478,7 +1539,7 @@ TEST_P(TouchUngrabTest, UngrabButtonDuringTouch)
     }
 
     ASSERT_TRUE(NoEventPending(dpy));
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
+    TouchDev().PlayTouchUpdate(250, 250, 0);
 
     switch (grab_type) {
         case GRABTYPE_CORE:
@@ -1501,7 +1562,7 @@ TEST_P(TouchUngrabTest, UngrabButtonDuringTouch)
     }
 
     ASSERT_TRUE(NoEventPending(dpy));
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     switch (grab_type) {
         case GRABTYPE_CORE:
@@ -1593,9 +1654,9 @@ TEST_P(TouchGrabTestAllowSome, TouchGrabPassedToPassivePassedToRegular)
     XSelectInput(dpy3, win, ButtonPressMask|ButtonReleaseMask);
 
     for (int i = 0; i < 2; i++) {
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+        TouchDev().PlayTouchBegin(200, 200, 0);
+        TouchDev().PlayTouchUpdate(250, 250, 0);
+        TouchDev().PlayTouchEnd(250, 250, 0);
     }
 
     for (int i = 0; i < 2; i++) {
@@ -1661,7 +1722,7 @@ TEST_P(TouchGrabTestMultipleModes, SingleTouchGrabListenerAcceptRejectBeforeTouc
                                         root, False, &mask, 1, &mods));
     delete[] mask.mask;
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
     XIAllowTouchEvents(dpy, tbegin->deviceid, tbegin->detail, root, mode);
@@ -1672,7 +1733,7 @@ TEST_P(TouchGrabTestMultipleModes, SingleTouchGrabListenerAcceptRejectBeforeTouc
         ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
     }
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     if (mode == XIAcceptTouch) {
         ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
@@ -1713,8 +1774,8 @@ TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
     ASSERT_EQ(XIGrabTouchBegin(Display(), deviceid, win, False, &mask, 1, &modifier), Success);
     XIGrabDevice(Display(), deviceid, win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     XSync(Display(), False);
 
@@ -1762,13 +1823,13 @@ TEST_P(TouchGrabTestMultipleModes, ActiveAndPassiveGrab)
 INSTANTIATE_TEST_CASE_P(, TouchGrabTestMultipleModes, ::testing::Values(XIAcceptTouch, XIRejectTouch));
 
 class TouchGrabTestMultipleTaps : public TouchGrabTest,
-                                  public ::testing::WithParamInterface<std::tr1::tuple<int, int> > {};
+                                  public ::testing::WithParamInterface<std::tuple<int, int> > {};
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFastSuccession)
 {
-    std::tr1::tuple<int, int> t = GetParam();
-    int repeats = std::tr1::get<0>(t);
-    int mode = std::tr1::get<1>(t);
+    std::tuple<int, int> t = GetParam();
+    int repeats = std::get<0>(t);
+    int mode = std::get<1>(t);
 
     std::string strmode = (mode == GrabModeAsync) ? "GrabModeAsync" : "GrabModeSync";
     std::stringstream ss;
@@ -1806,8 +1867,8 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
     /* for this test to succeed, the server mustn't start processing until
        the last touch event physically ends, so no usleep here*/
     for (int i = 0; i < repeats; i++) {
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+        TouchDev().PlayTouchBegin(200, 200, 0);
+        TouchDev().PlayTouchEnd(250, 250, 0);
     }
 
     XSync(dpy1, False);
@@ -1833,9 +1894,9 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerEmulationMultipleTouchesFast
 
 TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
 {
-    std::tr1::tuple<int, int> param = GetParam();
-    int repeats = std::tr1::get<0>(param);
-    int mode = std::tr1::get<1>(param);
+    std::tuple<int, int> param = GetParam();
+    int repeats = std::get<0>(param);
+    int mode = std::get<1>(param);
 
     std::string strmode = (mode == GrabModeAsync) ? "GrabModeAsync" : "GrabModeSync";
     std::stringstream ss;
@@ -1884,8 +1945,8 @@ TEST_P(TouchGrabTestMultipleTaps, PassiveGrabPointerRelease)
     /* for this test to succeed, the server mustn't start processing until
        the last touch event physically ends, so no usleep here*/
     for (int i = 0; i < repeats; i++) {
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-        dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+        TouchDev().PlayTouchBegin(200, 200, 0);
+        TouchDev().PlayTouchEnd(250, 250, 0);
     }
 
     XSync(dpy1, False);
@@ -1992,7 +2053,7 @@ TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
     win[NCLIENTS-1] = w;
     SelectTouchOnWindow(dpys[NCLIENTS-1], w, true);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     int touchid = -1;
 
@@ -2024,7 +2085,7 @@ TEST_F(TouchOwnershipTest, OwnershipAfterRejectTouch)
         ASSERT_EQ(oe->touchid, (unsigned int)touchid);
     }
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     int last_owner = NCLIENTS-1;
     ASSERT_EVENT(XIDeviceEvent, tend, dpys[last_owner], GenericEvent, xi2_opcode, XI_TouchEnd);
@@ -2055,7 +2116,7 @@ TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
     Window win = CreateWindow(dpy2, DefaultRootWindow(dpy));
     SelectTouchOnWindow(dpy2, win, true);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     /* Expect touch begin to A */
     ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
@@ -2078,7 +2139,7 @@ TEST_F(TouchOwnershipTest, NoOwnershipAfterAcceptTouch)
     ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_EQ(B_end->detail, touchid);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_EQ(A_end->detail, touchid);
@@ -2106,7 +2167,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
     /* Client A grabs the device */
     GrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     /* Expect touch begin to A */
     ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
@@ -2128,7 +2189,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipAcceptTouch)
     ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_EQ(B_end->detail, touchid);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     ASSERT_EVENT(XIDeviceEvent, A_end, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_EQ(A_end->detail, touchid);
@@ -2156,7 +2217,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipRejectTouch)
     /* Client A grabs the device */
     GrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     /* Expect touch begin to A */
     ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
@@ -2182,7 +2243,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipRejectTouch)
     ASSERT_EVENT(XITouchOwnershipEvent, oe, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
     ASSERT_EQ(oe->touchid, (unsigned int)touchid);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
 
@@ -2209,7 +2270,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     /* Client A grabs the device */
     GrabDevice(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     /* Expect touch begin to A */
     ASSERT_EVENT(XIDeviceEvent, A_begin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
@@ -2233,7 +2294,7 @@ TEST_F(TouchOwnershipTest, ActiveGrabOwnershipUngrabDevice)
     ASSERT_EVENT(XITouchOwnershipEvent, oe, dpy2, GenericEvent, xi2_opcode, XI_TouchOwnership);
     ASSERT_EQ(oe->touchid, (unsigned int)touchid);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
     ASSERT_EQ(B_end->detail, touchid);
@@ -2261,7 +2322,7 @@ TEST_F(TouchOwnershipTest, ActivePointerGrabForWholeTouch)
     /* Client A grabs the device */
     GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     ASSERT_EVENT(XIDeviceEvent, A_btnpress, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
 
@@ -2270,7 +2331,7 @@ TEST_F(TouchOwnershipTest, ActivePointerGrabForWholeTouch)
     /* No ownership event on the wire */
     ASSERT_TRUE(NoEventPending(dpy2));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     ASSERT_EVENT(XIDeviceEvent, A_btnrelease, dpy, GenericEvent, xi2_opcode, XI_ButtonRelease);
 
@@ -2305,7 +2366,7 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
     /* Client A grabs the device */
     GrabPointer(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy));
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
 
     ASSERT_EVENT(XIDeviceEvent, A_btnpress, dpy, GenericEvent, xi2_opcode, XI_ButtonPress);
 
@@ -2319,7 +2380,7 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
 
     ASSERT_EVENT(XIDeviceEvent, B_end, dpy2, GenericEvent, xi2_opcode, XI_TouchEnd);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(250, 250, 0);
 
     ASSERT_TRUE(NoEventPending(dpy));
     ASSERT_TRUE(NoEventPending(dpy2));
@@ -2328,36 +2389,37 @@ TEST_F(TouchOwnershipTest, ActivePointerUngrabDuringTouch)
 #endif /* HAVE_XI22 */
 
 class GrabModeTest : public XITServerInputTest,
-                     public ::testing::WithParamInterface<int>
+                     public ::testing::WithParamInterface<int>,
+                     public DeviceEmulatedInterface
 {
 public:
-    std::auto_ptr<xorg::testing::evemu::Device> ptr;
-    std::auto_ptr<xorg::testing::evemu::Device> kbd;
+    xorg::testing::emulated::Device& PointerDev() { return Dev(0); }
+    xorg::testing::emulated::Device& KeyboardDev() { return Dev(1); }
 
-    virtual void SetUp() {
-        ptr = std::auto_ptr<xorg::testing::evemu::Device>(
-               new xorg::testing::evemu::Device(
-                   RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
-               ));
-        kbd = std::auto_ptr<xorg::testing::evemu::Device>(
-               new xorg::testing::evemu::Device(
-                   RECORDINGS_DIR "keyboards/AT-Translated-Set-2-Keyboard.desc"
-               ));
+
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         XITServerInputTest::SetUp();
     }
 
-    virtual void SetUpConfigAndLog() {
+    void SetUpConfigAndLog() override {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--pointer--",
+        config.AddInputSection("test", "--pointer--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + ptr->GetDeviceNode() + "\"");
-        config.AddInputSection("evdev", "--keyboard--",
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               PointerDev().GetOptions());
+        config.AddInputSection("test", "--keyboard--",
                                "Option \"CoreKeyboard\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + kbd->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               KeyboardDev().GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -2365,7 +2427,7 @@ TEST_P(GrabModeTest, PointerSyncKeyboardAsync)
 {
     XORG_TESTCASE("XI2 grab on the device with sync device, async paired device\n"
                   "play pointer event and keyboard events\n"
-                  "expect only the async device to send events\n")
+                  "expect only the async device to send events\n");
 
     ::Display *dpy = Display();
 
@@ -2384,11 +2446,11 @@ TEST_P(GrabModeTest, PointerSyncKeyboardAsync)
     XIGrabDevice(dpy, deviceid, DefaultRootWindow(dpy),
                  CurrentTime, None, GrabModeSync, GrabModeAsync, False, &mask);
 
-    ptr->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    ptr->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    PointerDev().PlayButtonDown(1);
+    PointerDev().PlayButtonUp(1);
 
-    kbd->PlayOne(EV_KEY, KEY_A, 1, true);
-    kbd->PlayOne(EV_KEY, KEY_A, 0, true);
+    KeyboardDev().PlayKeyDown(KEY_A);
+    KeyboardDev().PlayKeyUp(KEY_A);
 
     /* one device is frozen, we expect no events */
     if (deviceid == VIRTUAL_CORE_POINTER_ID) {

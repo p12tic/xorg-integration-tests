@@ -27,10 +27,10 @@
 #endif
 
 #include <stdexcept>
-#include <tr1/tuple>
+#include <tuple>
 
 #include "helpers.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 #include "xit-server-input-test.h"
 #include "xit-event.h"
 #include "xit-property.h"
@@ -42,10 +42,11 @@
 #include <X11/extensions/XInput2.h>
 
 class TouchTest : public XITServerInputTest,
-                  public DeviceInterface {
+                  public DeviceEmulatedInterface {
 protected:
     virtual void SetUp() {
-        SetDevice("tablets/N-Trig-MultiTouch.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         xi2_major_minimum = 2;
         xi2_minor_minimum = 2;
@@ -55,35 +56,64 @@ protected:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "N-Trig MultiTouch",
+        config.AddInputSection("test", "--device--",
                                "Option \"Emulate3Buttons\" \"off\""
                                "Option \"CorePointer\" \"on\""
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n"+
+                               Dev(0).GetOptions());
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("test", "--device-kbd--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
     }
 
-    virtual void TouchBegin(int x, int y) {
-        dev->PlayOne(EV_KEY, BTN_TOUCH, 1);
-        TouchUpdate(x, y);
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
+    }
+};
+
+class TouchTestWithMouse : public XITServerInputTest,
+                           public DeviceEmulatedInterface {
+protected:
+
+    xorg::testing::emulated::Device& TouchDev() { return Dev(0); }
+    xorg::testing::emulated::Device& MouseDev() { return Dev(1); }
+    xorg::testing::emulated::Device& KeyboardDev() { return Dev(2); }
+
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
+
+        xi2_major_minimum = 2;
+        xi2_minor_minimum = 2;
+
+        XITServerInputTest::SetUp();
     }
 
-    virtual void TouchUpdate(int x, int y) {
-        dev->PlayOne(EV_ABS, ABS_X, x);
-        dev->PlayOne(EV_ABS, ABS_Y, y);
-        dev->PlayOne(EV_ABS, ABS_MT_POSITION_X, x);
-        dev->PlayOne(EV_ABS, ABS_MT_POSITION_Y, y);
-        /* same values as the recordings file */
-        dev->PlayOne(EV_ABS, ABS_MT_ORIENTATION, 0);
-        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MAJOR, 468);
-        dev->PlayOne(EV_ABS, ABS_MT_TOUCH_MINOR, 306);
-        dev->PlayOne(EV_SYN, SYN_MT_REPORT, 0);
-        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    void SetUpConfigAndLog() override {
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("test", "--device--",
+                               "Option \"Emulate3Buttons\" \"off\""
+                               "Option \"CorePointer\" \"on\""
+                               "Option \"GrabDevice\" \"on\"\n"+
+                               Dev(0).GetOptions());
+        config.AddInputSection("test", "--device-mouse--",
+                               "Option \"CorePointer\" \"on\""
+                               "Option \"GrabDevice\" \"on\"\n"+
+                               Dev(1).GetOptions());
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("test", "--device-kbd--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(2).GetOptions());
+        config.WriteConfig();
     }
 
-    virtual void TouchEnd() {
-        dev->PlayOne(EV_KEY, BTN_TOUCH, 0);
-        dev->PlayOne(EV_SYN, SYN_REPORT, 0);
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -104,8 +134,8 @@ TEST_F(TouchTest, TouchEventFlags)
     XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
     delete[] mask.mask;
 
-    TouchBegin(100, 100);
-    TouchEnd();
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchEnd(100, 100, 0);
 
     ASSERT_EVENT(XIDeviceEvent, tbegin, dpy, GenericEvent, xi2_opcode, XI_TouchBegin);
     ASSERT_EVENT(XIDeviceEvent, tend, dpy, GenericEvent, xi2_opcode, XI_TouchEnd);
@@ -137,7 +167,22 @@ protected:
     }
 };
 
-TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
+class TouchTestXI2VersionWithMouse : public TouchTestWithMouse,
+                                     public ::testing::WithParamInterface<int> {
+protected:
+    virtual void SetUpConfigAndLog()
+    {
+        config.SetAutoAddDevices(true);
+        TouchTestWithMouse::SetUpConfigAndLog();
+    }
+
+    virtual void RequireXI2(int major, int minor, int *maj_ret, int *min_ret)
+    {
+        XITServerInputTest::RequireXI2(2, GetParam());
+    }
+};
+
+TEST_P(TouchTestXI2VersionWithMouse, XITouchscreenPointerEmulation)
 {
     XORG_TESTCASE("Register for button and motion events.\n"
                   "Create a touch and a pointer device.\n"
@@ -147,7 +192,8 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
                   "Release the touch point.\n"
                   "Moving the mouse now must have a zero button mask.\n");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
+    WaitForDevice("--device-mouse--");
 
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
@@ -163,25 +209,12 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
 
     XFlush(Display());
 
-    std::auto_ptr<xorg::testing::evemu::Device> mouse_device;
-    try {
-      mouse_device = std::auto_ptr<xorg::testing::evemu::Device>(
-          new xorg::testing::evemu::Device(
-              RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
-          );
-    } catch (std::runtime_error &error) {
-      std::cerr << "Failed to create evemu device, skipping test.\n";
-      return;
-    }
-
-    WaitForDevice("PIXART USB OPTICAL MOUSE");
-
     XEvent event;
     XGenericEventCookie *xcookie;
     XIDeviceEvent *device_event;
 
     /* Move the mouse, check that the button is not pressed. */
-    mouse_device->PlayOne(EV_REL, ABS_X, -1, 1);
+    MouseDev().PlayRelMotion(-1, 0);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -197,7 +230,7 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
 
 
     /* Touch the screen, wait for press event */
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    TouchDev().PlayTouchBegin(100, 100, 0);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -207,7 +240,7 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
 
 
     /* Move the mouse again, button 1 should now be pressed. */
-    mouse_device->PlayOne(EV_REL, ABS_X, -1, 1);
+    MouseDev().PlayRelMotion(-1, 0);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -223,7 +256,7 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
 
 
     /* Release the screen, wait for release event */
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchEnd(100, 100, 0);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -233,7 +266,7 @@ TEST_P(TouchTestXI2Version, XITouchscreenPointerEmulation)
 
 
     /* Move the mouse again, button 1 should now be released. */
-    mouse_device->PlayOne(EV_REL, ABS_X, -1, 1);
+    MouseDev().PlayRelMotion(-1, 0);
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
                                                            xi2_opcode,
@@ -257,14 +290,14 @@ TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndCore)
                   "The button mask in the button press event must be 0.\n"
                   "The button mask in the button release event must be set for button 1.");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     XSelectInput(Display(), DefaultRootWindow(Display()),
                  PointerMotionMask|ButtonPressMask|ButtonReleaseMask);
     XSync(Display(), False);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchEnd(100, 100, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            MotionNotify,
@@ -300,15 +333,15 @@ TEST_P(TouchTestXI2Version, NoEmulatedButton1MotionWithoutButtonPress)
                   "No motion event expected\n"
                   "https://bugs.freedesktop.org/show_bug.cgi?id=60394");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     ::Display *dpy = Display();
     XSelectInput(dpy, DefaultRootWindow(dpy), Button1MotionMask);
     XSync(dpy, False);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchUpdate(200, 200, 0);
+    Dev(0).PlayTouchEnd(200, 200, 0);
 
     ASSERT_TRUE(NoEventPending(dpy));
 }
@@ -317,17 +350,17 @@ TEST_P(TouchTestXI2Version, EmulatedButton1MotionMaskOnTouch)
 {
     XORG_TESTCASE("Select for core Pointer1Motion mask on the root window.\n"
                   "Create a pointer-emulating touch event.\n"
-                  "Expect a motion event with the button mask 1.\n")
+                  "Expect a motion event with the button mask 1.\n");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     ::Display *dpy = Display();
     XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask | Button1MotionMask);
     XSync(dpy, False);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchUpdate(200, 200, 0);
+    Dev(0).PlayTouchEnd(200, 200, 0);
 
     ASSERT_EVENT(XEvent, press, dpy, ButtonPress);
     ASSERT_EVENT(XEvent, motion, dpy, MotionNotify);
@@ -343,7 +376,7 @@ TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndXI2)
                   "The button mask in the button press event must be 0.\n"
                   "The button mask in the button release event must be set for button 1.");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -358,8 +391,8 @@ TEST_P(TouchTestXI2Version, EmulatedButtonMaskOnTouchBeginEndXI2)
     XSync(Display(), False);
     delete[] mask.mask;
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchEnd(100, 100, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -424,7 +457,7 @@ TEST_P(TouchTestXI2Version, XIQueryPointerTouchscreen)
                   " - button 1 state down for XI 2.0 and 2.1 clients\n"
                   " - button 1 state up for XI 2.2+ clients");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     XIEventMask mask;
     mask.deviceid = XIAllMasterDevices;
@@ -440,7 +473,7 @@ TEST_P(TouchTestXI2Version, XIQueryPointerTouchscreen)
 
     XFlush(Display());
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -483,70 +516,6 @@ TEST_P(TouchTestXI2Version, XIQueryPointerTouchscreen)
 #ifdef HAVE_XI22
 class TouchDeviceTest : public TouchTest {};
 
-TEST_F(TouchDeviceTest, DisabledDevice)
-{
-    XORG_TESTCASE("Disable device\n"
-                  "Send events\n"
-                  "Enable device\n"
-                  "Ensure no events are waiting")
-
-    ::Display *dpy = Display();
-
-    int deviceid;
-    ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
-
-    SelectXI2Events(dpy, XIAllMasterDevices, DefaultRootWindow(dpy),
-                    XI_TouchBegin, XI_TouchUpdate, XI_TouchEnd, -1);
-
-    ASSERT_PROPERTY(int, prop_enabled, dpy, deviceid, "Device Enabled");
-    prop_enabled.data[0] = 0;
-    prop_enabled.Update();
-
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
-
-    XSync(dpy, False);
-    prop_enabled.data[0] = 1;
-    prop_enabled.Update();
-
-    ASSERT_TRUE(NoEventPending(dpy));
-}
-
-TEST_F(TouchDeviceTest, TouchStartsInDisabledDevice)
-{
-    XORG_TESTCASE("Disable device\n"
-                  "Send touch start\n"
-                  "Enable device\n"
-                  "Continue with touch events\n"
-                  "Ensure no events are waiting")
-
-    ::Display *dpy = Display();
-
-    int deviceid;
-    ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
-
-    SelectXI2Events(dpy, XIAllMasterDevices, DefaultRootWindow(dpy),
-                    XI_TouchBegin, XI_TouchUpdate, XI_TouchEnd, -1);
-
-    ASSERT_PROPERTY(int, prop_enabled, dpy, deviceid, "Device Enabled");
-    prop_enabled.data[0] = 0;
-    prop_enabled.Update();
-
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-
-    XSync(dpy, False);
-    prop_enabled.data[0] = 1;
-    prop_enabled.Update();
-
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
-
-    ASSERT_TRUE(NoEventPending(dpy));
-
-    const std::string error = "unable to find touch point";
-    ASSERT_FALSE(SearchFileForString(server.GetLogFilePath(), error));
-}
-
-
 TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
 {
     XORG_TESTCASE("Register for touch events.\n"
@@ -570,9 +539,10 @@ TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
 
     XFlush(Display());
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
+
+    Dev(0).PlayTouchBegin(100, 100, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -613,7 +583,7 @@ TEST_F(TouchDeviceTest, DisableDeviceEndTouches)
  * @tparam The device ID
  */
 class XISelectEventsTouchTest : public TouchTest,
-                                public ::testing::WithParamInterface<std::tr1::tuple<int, int> >
+                                public ::testing::WithParamInterface<std::tuple<int, int> >
 {
 };
 
@@ -636,9 +606,9 @@ TEST_P(XISelectEventsTouchTest, TouchSelectionConflicts)
     XISetMask(mask.mask, XI_TouchUpdate);
     XISetMask(mask.mask, XI_TouchEnd);
 
-    std::tr1::tuple<int, int> t = GetParam();
-    int clientA_deviceid = std::tr1::get<0>(t);
-    int clientB_deviceid = std::tr1::get<1>(t);
+    std::tuple<int, int> t = GetParam();
+    int clientA_deviceid = std::get<0>(t);
+    int clientB_deviceid = std::get<1>(t);
 
     /* client A */
     mask.deviceid = clientA_deviceid;
@@ -723,7 +693,7 @@ TEST_F(TouchTest, TouchEventsButtonState)
                   "Create a pointer-emulating touch event.\n"
                   "The button mask in the touch begin, update, and end event must be 0.");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -738,8 +708,8 @@ TEST_F(TouchTest, TouchEventsButtonState)
     XSync(Display(), False);
     delete[] mask.mask;
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchEnd(100, 100, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -879,8 +849,8 @@ TEST_P(TouchEventHistoryTest, EventHistoryReplay) {
 
     XSync(Display(), False);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchEnd(100, 100, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -973,28 +943,7 @@ INSTANTIATE_TEST_CASE_P(, TouchEventHistoryTest,
                         ::testing::ValuesIn(generate_event_history_test_cases(WINDOW_HIERARCHY_DEPTH)));
 
 
-class TouchDeviceChangeTest : public TouchTest {
-protected:
-    virtual void SetUp() {
-        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
-                );
-
-        TouchTest::SetUp();
-    }
-
-    virtual void SetUpConfigAndLog() {
-        config.AddInputSection("evdev", "mouse",
-                               "Option \"CorePointer\" \"on\""
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"AccelerationProfile\" \"-1\""
-                               "Option \"Device\" \"" + mouse->GetDeviceNode() + "\"");
-        TouchTest::SetUpConfigAndLog();
-    }
-
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
-};
+class TouchDeviceChangeTest : public TouchTestWithMouse {};
 
 TEST_F(TouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
 {
@@ -1008,14 +957,15 @@ TEST_F(TouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
 
     double x, y;
     do {
-        mouse->PlayOne(EV_REL, REL_X, 10, false);
-        mouse->PlayOne(EV_REL, REL_Y, 10, true);
+        MouseDev().PlayRelMotion(10, 0);
+        MouseDev().PlayRelMotion(10, 0);
         QueryPointerPosition(dpy, &x, &y);
     } while(x < DisplayWidth(dpy, DefaultScreen(dpy)) - 1 &&
             y < DisplayHeight(dpy, DefaultScreen(dpy))- 1);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+
+    Dev(0).PlayTouchBegin(200, 200, 0);
+    Dev(0).PlayTouchEnd(200, 200, 0);
 
     double touch_x, touch_y;
 
@@ -1025,10 +975,10 @@ TEST_F(TouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
     ASSERT_NE(x, touch_x);
     ASSERT_NE(y, touch_y);
 
-    mouse->PlayOne(EV_REL, REL_X, 1, true);
+    MouseDev().PlayRelMotion(1, 0);
     QueryPointerPosition(dpy, &x, &y);
 
-    ASSERT_EQ(touch_x + 1, x);
+    ASSERT_LE(std::abs(touch_x - x), 2);
     ASSERT_EQ(touch_y, y);
 }
 
@@ -1041,8 +991,8 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventTouchToPointerSwitch)
 
     ::Display *dpy = Display();
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchEnd(100, 100, 0);
 
     XSync(dpy, False);
 
@@ -1056,7 +1006,7 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventTouchToPointerSwitch)
               XISelectEvents(Display(), DefaultRootWindow(Display()), &mask, 1));
     XSync(Display(), False);
     delete[] mask.mask;
-    mouse->PlayOne(EV_REL, REL_X, 1, true);
+    MouseDev().PlayRelMotion(1, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -1070,7 +1020,7 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventTouchToPointerSwitch)
     ASSERT_TRUE(XGetEventData(Display(), &ev.xcookie));
 
     int deviceid;
-    ASSERT_EQ(FindInputDeviceByName(dpy, "mouse", &deviceid), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device-mouse--", &deviceid), 1);
 
     XIDeviceChangedEvent *cev = reinterpret_cast<XIDeviceChangedEvent*>(ev.xcookie.data);
     ASSERT_EQ(cev->deviceid, VIRTUAL_CORE_POINTER_ID);
@@ -1085,11 +1035,11 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
                   "Touch and release from the touch device\n"
                   "Expect a DeviceChangedEvent for the touch device on the VCP\n");
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     ::Display *dpy = Display();
 
-    mouse->PlayOne(EV_REL, REL_X, 1, true);
+    MouseDev().PlayRelMotion(10, 0);
 
     XIEventMask mask;
     mask.deviceid = VIRTUAL_CORE_POINTER_ID;
@@ -1102,8 +1052,8 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
     XSync(dpy, False);
     delete[] mask.mask;
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(100, 100, 0);
+    Dev(0).PlayTouchEnd(100, 100, 0);
 
     XSync(dpy, False);
 
@@ -1119,7 +1069,7 @@ TEST_F(TouchDeviceChangeTest, DeviceChangedEventPointerToTouchSwitch)
     ASSERT_TRUE(XGetEventData(dpy, &ev.xcookie));
 
     int deviceid;
-    ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
 
     XIDeviceChangedEvent *cev = reinterpret_cast<XIDeviceChangedEvent*>(ev.xcookie.data);
     ASSERT_EQ(cev->deviceid, VIRTUAL_CORE_POINTER_ID);
@@ -1140,10 +1090,10 @@ TEST_F(TouchTest, JumpingCursorOnTransformationMatrix)
 
     ::Display *dpy = Display();
 
-    WaitForDevice("N-Trig MultiTouch");
+    WaitForDevice("--device--");
 
     int deviceid;
-    ASSERT_EQ(FindInputDeviceByName(dpy, "N-Trig MultiTouch", &deviceid), 1);
+    ASSERT_EQ(FindInputDeviceByName(dpy, "--device--", &deviceid), 1);
 
     Atom matrix_prop = XInternAtom(dpy, "Coordinate Transformation Matrix", True);
     ASSERT_NE(matrix_prop, (Atom)None);
@@ -1163,19 +1113,19 @@ TEST_F(TouchTest, JumpingCursorOnTransformationMatrix)
                      reinterpret_cast<unsigned char*>(matrix), 9);
     XSync(dpy, False);
 
-    TouchBegin(2745, 1639);
+    Dev(0).PlayTouchBegin(2745, 1639, 0);
 
     double x1, y1;
     double x2, y2;
 
     QueryPointerPosition(dpy, &x1, &y1);
-    TouchUpdate(5000,1639);
+    Dev(0).PlayTouchUpdate(5000, 1639, 0);
     QueryPointerPosition(dpy, &x2, &y2);
 
     ASSERT_NE(x1, x2);
     ASSERT_EQ(y1, y2);
 
-    TouchEnd();
+    Dev(0).PlayTouchEnd(5000, 1639, 0);
 
     /* Test with X coordinate scaled */
 
@@ -1188,18 +1138,19 @@ TEST_F(TouchTest, JumpingCursorOnTransformationMatrix)
                      reinterpret_cast<unsigned char*>(matrix), 9);
     XSync(dpy, False);
 
-    TouchBegin(2745, 1639);
+    Dev(0).PlayTouchBegin(2745, 1639, 0);
     QueryPointerPosition(dpy, &x1, &y1);
-    TouchUpdate(2745, 2000);
+    Dev(0).PlayTouchUpdate(2745, 2000, 0);
     QueryPointerPosition(dpy, &x2, &y2);
 
     ASSERT_EQ(x1, x2);
     ASSERT_NE(y1, y2);
 
-    TouchEnd();
+    Dev(0).PlayTouchEnd(2745, 2000, 0);
 }
 
 #endif /* HAVE_XI22 */
 
 INSTANTIATE_TEST_CASE_P(, TouchTestXI2Version, ::testing::Range(0, XI_2_Minor + 1));
+INSTANTIATE_TEST_CASE_P(, TouchTestXI2VersionWithMouse, ::testing::Range(0, XI_2_Minor + 1));
 

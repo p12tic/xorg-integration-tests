@@ -31,6 +31,7 @@
 #include <string>
 #include <xorg/gtest/xorg-gtest.h>
 #include "xorg-conf.h"
+#include <X11/extensions/XInput2.h>
 
 #include "xit-server.h"
 
@@ -184,9 +185,30 @@ bool SearchFileForString(const std::string &path, const std::string &substring);
 int double_cmp(double a, double b, int precision = 2);
 
 /**
- * Select for the list of events given in the varargs. Last element must be
- * -1.
+ * Select for the list of events given in the evtypes.
  */
-void SelectXI2Events(Display *dpy, int deviceid, Window win, ...);
+void SelectXI2Events(Display *dpy, int deviceid, Window win,
+                     const std::vector<int>& evtypes);
+
+/**
+ * Grab the specific device for event types given in evtypes
+ */
+void GrabXI2Device(::Display *dpy, int deviceid, Window grab_win, int grab_mode,
+                   int paired_device_mode, const std::vector<int>& evtypes);
+
+/**
+ * Builds a XI2 event mask
+ */
+class EventMaskBuilder {
+public:
+    EventMaskBuilder(int deviceid, const std::vector<int>& evtypes);
+
+    XIEventMask* GetMaskPtr() { return &mask; }
+
+private:
+    XIEventMask mask;
+    std::vector<unsigned char> storage;
+};
+
 #endif
 

@@ -437,8 +437,7 @@ TEST(WacomDriver, PrivToolDoubleFree)
     XOrgConfig config;
     XITServer server;
 
-    std::auto_ptr<xorg::testing::evemu::Device> stylus =
-        std::auto_ptr<xorg::testing::evemu::Device>(
+    auto stylus = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(RECORDINGS_DIR "tablets/Wacom-Intuos5-touch-M-Pen.desc")
                 );
 

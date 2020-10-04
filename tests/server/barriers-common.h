@@ -32,7 +32,7 @@
 #include <xorg/gtest/xorg-gtest.h>
 
 #include "xit-server-input-test.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 
 class BarrierBaseTest : public XITServerInputTest {
 public:
@@ -63,66 +63,66 @@ public:
 };
 
 class BarrierTest : public BarrierBaseTest,
-                    public DeviceInterface {
+                    public DeviceEmulatedInterface {
 public:
 
     /**
      * Initializes a standard mouse device.
      */
-    virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         BarrierBaseTest::SetUp();
     }
 
+    void StartServer() override {
+        BarrierBaseTest::StartServer();
+        WaitOpen();
+    }
+
+
     /**
-     * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
-     * the evemu device. The input from GetParam() is used as XkbLayout.
+     * Sets up an xorg.conf for a single emulated CoreKeyboard device based on
+     * the emulated device. The input from GetParam() is used as XkbLayout.
      */
-    virtual void SetUpConfigAndLog() {
+    void SetUpConfigAndLog() override {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n"
                                /* Disable pointer acceleration to allow for accurate
                                 * pointer positions with EV_REL events... */
-                               "Option \"AccelerationProfile\" \"-1\""
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"AccelerationProfile\" \"-1\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--device-kbd--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
     }
 };
 
-class BarrierDevices : public BarrierBaseTest {
+class BarrierDevices : public BarrierBaseTest,
+                       public DeviceEmulatedInterface {
 public:
-    std::auto_ptr<xorg::testing::evemu::Device> dev1;
-    std::auto_ptr<xorg::testing::evemu::Device> dev2;
-
     int master_id_1;
     int master_id_2;
 
-    virtual void SetUp() {
-        SetUpDevices();
-
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
 
         xi2_major_minimum = 2;
         xi2_minor_minimum = 3;
-
 
         BarrierBaseTest::SetUp();
         ConfigureDevices();
     }
 
-    virtual void SetUpDevices() {
-        dev1 = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
-                ));
-        dev2 = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc"
-                ));
+    void StartServer() override {
+        BarrierBaseTest::StartServer();
+        WaitOpen();
     }
 
     void ConfigureDevices() {
@@ -140,7 +140,7 @@ public:
         ASSERT_EQ(XIChangeHierarchy(dpy, &change, 1), Success) << "Couldn't add the new master device.";
         ASSERT_TRUE(xorg::testing::XServer::WaitForDevice(dpy, "New Master pointer")) << "Didn't get the new master pointer device.";
         ASSERT_TRUE(FindInputDeviceByName(dpy, "New Master pointer", &master_id_2)) << "Failed to find the new master pointer.";
-        ASSERT_TRUE(FindInputDeviceByName(dpy, "--device2--", &device_id_2)) << "Failed to find device2.";
+        ASSERT_TRUE(FindInputDeviceByName(dpy, "--device1--", &device_id_2)) << "Failed to find device2.";
 
         change.attach.type = XIAttachSlave;
         change.attach.deviceid = device_id_2;
@@ -165,22 +165,24 @@ public:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device1--",
-                               "Option \"Emulate3Buttons\" \"off\""
-                               "Option \"CorePointer\" \"on\""
+        config.AddInputSection("test", "--device0--",
+                               "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"AccelerationProfile\" \"-1\""
-                               "Option \"Device\" \"" + dev1->GetDeviceNode() + "\"");
-
-        config.AddInputSection("evdev", "--device2--",
-                               "Option \"Emulate3Buttons\" \"off\""
-                               "Option \"CorePointer\" \"on\""
+                               /* Disable pointer acceleration to allow for accurate
+                                * pointer positions with relative events... */
+                               "Option \"AccelerationProfile\" \"-1\"" +
+                               Dev(0).GetOptions());
+        config.AddInputSection("test", "--device1--",
+                               "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"AccelerationProfile\" \"-1\""
-                               "Option \"Device\" \"" + dev2->GetDeviceNode() + "\"");
-
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+                               /* Disable pointer acceleration to allow for accurate
+                                * pointer positions with relative events... */
+                               "Option \"AccelerationProfile\" \"-1\"\n" +
+                               Dev(1).GetOptions());
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("test", "--device2--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(2).GetOptions());
         config.WriteConfig();
     }
 };

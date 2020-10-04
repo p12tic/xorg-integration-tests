@@ -34,19 +34,20 @@
 
 #include "xit-server-input-test.h"
 #include "xit-event.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 #include "helpers.h"
 
 using namespace xorg::testing;
 
 class EventQueueTest : public XITServerInputTest,
-                       public DeviceInterface {
+                       public DeviceEmulatedInterface {
 public:
     /**
      * Initializes a standard mouse device.
      */
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XITServerInputTest::SetUp();
     }
 
@@ -56,14 +57,20 @@ public:
      */
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--kbd-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -73,7 +80,7 @@ TEST_F(EventQueueTest, mieqOverflow)
                   "Search the server log for the error message.\n");
 
     for (int i = 0; i < 2048; i++)
-        dev->PlayOne(EV_REL, REL_X, -1, true);
+        Dev(0).PlayRelMotion(-1, 0);
     XSync(Display(), False);
     ASSERT_EQ(server.GetState(), xorg::testing::Process::RUNNING);
 
@@ -138,13 +145,14 @@ TEST(MiscServerTest, DoubleSegfault)
 }
 
 class ScreenSaverTest : public XITServerInputTest,
-                        public DeviceInterface {
+                        public DeviceEmulatedInterface {
 public:
     /**
      * Initializes a standard mouse device.
      */
-    virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+    void SetUp() override {
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XITServerInputTest::SetUp();
 
         ASSERT_TRUE(XScreenSaverQueryExtension(Display(), &screensaver_opcode, &screensaver_error_base));
@@ -152,18 +160,24 @@ public:
 
     /**
      * Sets up an xorg.conf for a single evdev CoreKeyboard device based on
-     * the evemu device. The input from GetParam() is used as XkbLayout.
+     * the emulated device. The input from GetParam() is used as XkbLayout.
      */
-    virtual void SetUpConfigAndLog() {
+    void SetUpConfigAndLog() override {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--device-kbd--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 
     int screensaver_opcode;
@@ -269,23 +283,30 @@ class XSyncTest : public XITServerInputTest {
 };
 
 class IdletimerTest : public XSyncTest,
-                      public DeviceInterface {
+                      public DeviceEmulatedInterface {
 public:
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XSyncTest::SetUp();
     }
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--device-kbd--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 
     virtual XSyncCounter GetIdletimeCounter(::Display *dpy) {
@@ -320,7 +341,7 @@ public:
         XEvent ev;
         XSelectInput(dpy, DefaultRootWindow(dpy), PointerMotionMask);
         while (!XCheckMaskEvent(dpy, PointerMotionMask, &ev)) {
-            dev->PlayOne(EV_REL, REL_X, 10, true);
+            Dev(0).PlayRelMotion(10, 0);
             XSync(dpy, False);
             usleep(10000);
         }
@@ -485,11 +506,11 @@ TEST_F(IdletimerTest, NegativeTransition)
     neg_alarm = SetAbsoluteAlarm(dpy, idlecounter, threshold, XSyncNegativeTransition);
     ASSERT_GT(neg_alarm, (XSyncAlarm)None);
 
-    dev->PlayOne(EV_REL, REL_X, 10, true);
+    Dev(0).PlayRelMotion(10, 0);
     WaitForEvent(dpy);
     usleep(threshold * 1200);
 
-    dev->PlayOne(EV_REL, REL_X, 10, true);
+    Dev(0).PlayRelMotion(10, 0);
     WaitForEvent(dpy);
 
     ASSERT_EVENT(XSyncAlarmNotifyEvent, ev1, dpy, sync_event + XSyncAlarmNotify);
@@ -571,11 +592,11 @@ TEST_F(IdletimerTest, NegativeTransitionToZero)
     neg_alarm = SetAbsoluteAlarm(dpy, idlecounter, threshold, XSyncNegativeTransition);
     ASSERT_GT(neg_alarm, (XSyncAlarm)None);
 
-    dev->PlayOne(EV_REL, REL_X, 10, true);
+    Dev(0).PlayRelMotion(10, 0);
     WaitForEvent(dpy);
     usleep(10000);
 
-    dev->PlayOne(EV_REL, REL_X, 10, true);
+    Dev(0).PlayRelMotion(10, 0);
     WaitForEvent(dpy);
 
     ASSERT_EVENT(XSyncAlarmNotifyEvent, ev1, dpy, sync_event + XSyncAlarmNotify);

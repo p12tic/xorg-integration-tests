@@ -69,6 +69,8 @@ void XOrgConfig::WriteConfig(const std::string &path) {
             conffile << "    Screen 0 \"" << default_device << " screen\" 0 0\n";
         for (it = input_devices.begin(); it != input_devices.end(); it++)
             conffile << "    InputDevice \"" << *it << "\"\n";
+        for (it = server_layout_opts.begin(); it != server_layout_opts.end(); ++it)
+            conffile << *it << "\n";
         conffile << "EndSection\n";
     }
 
@@ -103,6 +105,11 @@ void XOrgConfig::AddDefaultScreenWithDriver(const std::string &driver,
                "    Device \"" << identifier << "\"\n"
                "EndSection\n";
     sections.push_back(section.str());
+}
+
+void XOrgConfig::AddServerLayoutOption(const std::string& option)
+{
+    server_layout_opts.push_back(option);
 }
 
 void XOrgConfig::AddInputSection(const std::string &driver,

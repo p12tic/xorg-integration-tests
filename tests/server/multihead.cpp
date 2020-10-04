@@ -40,22 +40,29 @@
 #include "xit-server-input-test.h"
 #include "xit-event.h"
 #include "helpers.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 
 using namespace xorg::testing;
 
-class MultiheadTest : public XITServerInputTest {
+class MultiheadTest : public XITServerInputTest,
+                      public DeviceEmulatedInterface {
 public:
-    virtual void SetUpConfigAndLog() {
+    void SetUpConfigAndLog() override {
         config.SetAutoAddDevices(true);
+        config.AddInputSection("test", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("test", "--keyboard-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
+        config.AddServerLayoutOption("    Screen         0 \"Screen0\"");
+        config.AddServerLayoutOption(std::string() +
+            "    Screen         1 \"Screen1\" " + (left_of ? "LeftOf" : "RightOf") + " \"Screen0\"");
+        config.AddServerLayoutOption(std::string() +
+            "	Option         \"Xinerama\" \"" +  (xinerama ? "on" : "off") +"\"");
         config.AppendRawConfig(std::string() +
-            "Section \"ServerLayout\"\n"
-            "	Identifier     \"X.org Configured\"\n"
-            "	Screen         0 \"Screen0\"\n"
-            "	Screen         1 \"Screen1\" " + (left_of ? "LeftOf" : "RightOf") + " \"Screen0\"\n"
-            "	Option         \"Xinerama\" \"" +  (xinerama ? "on" : "off") +"\"\n"
-            "EndSection\n"
-            "\n"
             "Section \"Device\"\n"
             "	Identifier  \"Card0\"\n"
             "	Driver      \"dummy\"\n"
@@ -79,7 +86,14 @@ public:
     }
 
     virtual void SetUp() {
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XITServerInputTest::SetUp();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 
 protected:
@@ -88,11 +102,9 @@ protected:
 };
 
 class ZaphodTest : public MultiheadTest,
-                   public DeviceInterface,
                    public ::testing::WithParamInterface<bool> {
 public:
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
         xinerama = false;
         left_of = GetParam();
         MultiheadTest::SetUp();
@@ -130,21 +142,14 @@ public:
 
     void MoveUntilMotionEvent(::Display *dpy, int direction)
     {
-        int limit = 0;
-        while (!XPending(dpy)) {
-            dev->PlayOne(EV_REL, REL_X, direction * 3, true);
-            XSync(dpy, False);
-            if (limit++ > 50) {
-                ADD_FAILURE() << "Expected events after pointer move";
-                return;
-            }
-        }
+        Dev(0).PlayRelMotion(direction * 30, 0);
+        XSync(dpy, False);
     }
 
     void FlushMotionEvents(::Display *dpy, int direction)
     {
         int limit = 0;
-        dev->PlayOne(EV_REL, REL_X, direction * 3, true);
+        Dev(0).PlayRelMotion(direction * 30, 0);
         XSync(dpy, False);
         while (XPending(dpy)) {
             XEvent ev;
@@ -198,7 +203,7 @@ public:
                         break;
                 }
             }
-            if (limit++ > 30) {
+            if (limit++ > 300) {
                 ADD_FAILURE() << "Expected to hit the screen edge\n";
                 return false;
             }
@@ -351,20 +356,20 @@ TEST_P(ZaphodTest, ScreenCrossingButtons)
     XSelectInput(ldpy, lwin, EnterWindowMask|LeaveWindowMask|ButtonPressMask|ButtonReleaseMask);
     XSelectInput(rdpy, rwin, EnterWindowMask|LeaveWindowMask|ButtonPressMask|ButtonReleaseMask);
 
-    dev->PlayOne(EV_REL, REL_X, -width * 2, true);
+    Dev(0).PlayRelMotion(-width * 2, 0);
 
     ASSERT_EVENT(XEnterWindowEvent, lwin_enter, ldpy, EnterNotify);
     ASSERT_EQ(lwin_enter->window, lwin);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_EVENT(XButtonPressedEvent, lwin_press, ldpy, ButtonPress);
     ASSERT_EQ(lwin_enter->window, lwin);
     ASSERT_EVENT(XButtonPressedEvent, lwin_release, ldpy, ButtonRelease);
     ASSERT_EQ(lwin_enter->window, lwin);
 
-    dev->PlayOne(EV_REL, REL_X, width * 2, true);
+    Dev(0).PlayRelMotion(width * 2, 0);
 
     ASSERT_EVENT(XLeaveWindowEvent, lwin_leave, ldpy, LeaveNotify);
     ASSERT_EQ(lwin_enter->window, lwin);
@@ -372,8 +377,8 @@ TEST_P(ZaphodTest, ScreenCrossingButtons)
     ASSERT_EVENT(XEnterWindowEvent, rwin_enter, rdpy, EnterNotify);
     ASSERT_EQ(rwin_enter->window, rwin);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_EVENT(XButtonPressedEvent, rwin_press, rdpy, ButtonPress);
     ASSERT_EQ(rwin_enter->window, rwin);
@@ -386,7 +391,6 @@ INSTANTIATE_TEST_CASE_P(, ZaphodTest, ::testing::Values(true, false));
 class XineramaTest : public ZaphodTest {
 public:
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE.desc");
         xinerama = true;
         left_of = GetParam();
         MultiheadTest::SetUp();
@@ -449,20 +453,20 @@ TEST_P(XineramaTest, ScreenCrossingButtons)
     XSelectInput(dpy, rwin, EnterWindowMask|LeaveWindowMask|ButtonPressMask|ButtonReleaseMask);
 
     WarpPointer(dpy, 201, height/2);
-    dev->PlayOne(EV_REL, REL_X, -10, true);
+    Dev(0).PlayRelMotion(-10, 0);
 
     ASSERT_EVENT(XEnterWindowEvent, lwin_enter, dpy, EnterNotify);
     ASSERT_EQ(lwin_enter->window, lwin);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_EVENT(XButtonPressedEvent, lwin_press, dpy, ButtonPress);
     ASSERT_EQ(lwin_enter->window, lwin);
     ASSERT_EVENT(XButtonPressedEvent, lwin_release, dpy, ButtonRelease);
     ASSERT_EQ(lwin_enter->window, lwin);
 
-    dev->PlayOne(EV_REL, REL_X, width, true);
+    Dev(0).PlayRelMotion(width, 0);
 
     ASSERT_EVENT(XLeaveWindowEvent, lwin_leave, dpy, LeaveNotify);
     ASSERT_EQ(lwin_enter->window, lwin);
@@ -470,8 +474,8 @@ TEST_P(XineramaTest, ScreenCrossingButtons)
     ASSERT_EVENT(XEnterWindowEvent, rwin_enter, dpy, EnterNotify);
     ASSERT_EQ(rwin_enter->window, rwin);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_EVENT(XButtonPressedEvent, rwin_press, dpy, ButtonPress);
     ASSERT_EQ(rwin_enter->window, rwin);
@@ -481,20 +485,28 @@ TEST_P(XineramaTest, ScreenCrossingButtons)
 
 INSTANTIATE_TEST_CASE_P(, XineramaTest, ::testing::Values(true, false));
 
-class ZaphodTouchDeviceChangeTest : public MultiheadTest,
-                                    public DeviceInterface {
+class ZaphodTouchDeviceChangeTest : public MultiheadTest {
 protected:
     virtual void SetUpConfigAndLog() {
         config.SetAutoAddDevices(true);
+        config.AddInputSection("test", "--device-touch--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
+        config.AddInputSection("test", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(1).GetOptions());
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("test", "--keyboard-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(2).GetOptions());
+        config.AddServerLayoutOption("    Screen         0 \"Screen0\"");
+        config.AddServerLayoutOption(std::string() +
+            "    Screen         1 \"Screen1\" " + (left_of ? "LeftOf" : "RightOf") + " \"Screen0\"");
+        config.AddServerLayoutOption(std::string() +
+            "	Option         \"Xinerama\" \"" +  (xinerama ? "on" : "off") +"\"");
         config.AppendRawConfig(std::string() +
-            "Section \"ServerLayout\"\n"
-            "	Identifier     \"X.org Configured\"\n"
-            "	Screen         0 \"Screen0\"\n"
-            "	Screen         1 \"Screen1\" " + (left_of ? "LeftOf" : "RightOf") + " \"Screen0\"\n"
-            "	Option         \"Xinerama\" \"" + (xinerama ? "on" : "off") + "\"\n"
-            "	InputDevice    \"mouse\" \"CorePointer\"\n"
-            "EndSection\n"
-            "\n"
             "Section \"Device\"\n"
             "	Identifier  \"Card0\"\n"
             "	Driver      \"dummy\"\n"
@@ -513,30 +525,20 @@ protected:
             "Section \"Screen\"\n"
             "	Identifier \"Screen1\"\n"
             "	Device     \"Card1\"\n"
-            "EndSection"
-            "\n"
-            "Section \"InputDevice\"\n"
-            "	Identifier  \"mouse\"\n"
-            "	Driver      \"evdev\"\n"
-            "	Option      \"AccelerationProfile\" \"-1\"\n"
-            "	Option      \"CorePointer\" \"on\"\n"
-            "	Option \"Device\" \"" + mouse->GetDeviceNode() + "\"\n"
             "EndSection\n");
         config.WriteConfig();
     }
 
     virtual void SetUp() {
-        SetDevice("tablets/N-Trig-MultiTouch.desc");
-
-        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
-                new xorg::testing::evemu::Device(
-                    RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
-                );
-
-        MultiheadTest::SetUp();
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
+        XITServerInputTest::SetUp();
     }
 
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
+    xorg::testing::emulated::Device& TouchDev() { return Dev(0); }
+    xorg::testing::emulated::Device& MouseDev() { return Dev(1); }
+    xorg::testing::emulated::Device& KeyboardDev() { return Dev(2); }
 };
 
 TEST_F(ZaphodTouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
@@ -551,14 +553,13 @@ TEST_F(ZaphodTouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
 
     double x, y;
     do {
-        mouse->PlayOne(EV_REL, REL_X, 10, false);
-        mouse->PlayOne(EV_REL, REL_Y, 10, true);
+        MouseDev().PlayRelMotion(10, 10);
         QueryPointerPosition(dpy, &x, &y);
     } while(x < DisplayWidth(dpy, DefaultScreen(dpy)) - 1 &&
             y < DisplayHeight(dpy, DefaultScreen(dpy))- 1);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    TouchDev().PlayTouchBegin(200, 200, 0);
+    TouchDev().PlayTouchEnd(200, 200, 0);
 
     double touch_x, touch_y;
 
@@ -568,9 +569,9 @@ TEST_F(ZaphodTouchDeviceChangeTest, NoCursorJumpsOnTouchToPointerSwitch)
     ASSERT_NE(x, touch_x);
     ASSERT_NE(y, touch_y);
 
-    mouse->PlayOne(EV_REL, REL_X, 1, true);
+    MouseDev().PlayRelMotion(1, 0);
     QueryPointerPosition(dpy, &x, &y);
 
-    ASSERT_EQ(touch_x + 1, x);
+    ASSERT_LE(std::abs(touch_x - x), 2);
     ASSERT_EQ(touch_y, y);
 }

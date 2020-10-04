@@ -300,19 +300,26 @@ int double_cmp(double a, double b, int precision)
     return (ai > bi) ? 1 : (ai < bi) ? -1 : 0;
 }
 
-void SelectXI2Events(::Display *dpy, int deviceid, Window win, ...)
+void SelectXI2Events(::Display *dpy, int deviceid, Window win, const std::vector<int>& evtypes)
 {
-    va_list arg;
-    int evtype;
+    EventMaskBuilder mask{deviceid, evtypes};
+    XISelectEvents(dpy, win, mask.GetMaskPtr(), 1);
+}
 
-    XIEventMask mask;
-    unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
+void GrabXI2Device(::Display *dpy, int deviceid, Window grab_win, int grab_mode,
+                   int paired_device_mode, const std::vector<int>& evtypes)
+{
+    EventMaskBuilder mask{deviceid, evtypes};
+    XIGrabDevice(dpy, deviceid, grab_win, CurrentTime, None, grab_mode, paired_device_mode, False,
+                 mask.GetMaskPtr());
+}
+
+EventMaskBuilder::EventMaskBuilder(int deviceid, const std::vector<int>& evtypes)
+{
     mask.deviceid = deviceid;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = m;
-    va_start(arg, win);
-    while ((evtype = va_arg(arg, int)) != -1)
-        XISetMask(mask.mask, evtype);
-    va_end(arg);
-    XISelectEvents(dpy, win, &mask, 1);
+    storage.resize(mask.mask_len, 0);
+    mask.mask = storage.data();
+    for (auto event : evtypes)
+        XISetMask(mask.mask, event);
 }

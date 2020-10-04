@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2013 Red Hat, Inc.
+ * Copyright (C) 2020 Povilas Kanapickas <povilas@radix.lt>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,31 +22,28 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "device-emulated-interface.h"
+#include <stdexcept>
+#include <string>
 
-#ifndef _DEVICE_INTERFACE_H_
-#define _DEVICE_INTERFACE_H_
+void DeviceEmulatedInterface::AddDevice(xorg::testing::emulated::DeviceType device_type)
+{
+    devices.push_back(std::unique_ptr<xorg::testing::emulated::Device>(
+        new xorg::testing::emulated::Device("xit-events-" + std::to_string(devices.size()),
+                                            device_type)));
+}
 
-#include <xorg/gtest/xorg-gtest.h>
-#include <memory>
+xorg::testing::emulated::Device& DeviceEmulatedInterface::Dev(unsigned i)
+{
+    if (i >= devices.size()) {
+        throw std::runtime_error("Device does not exist");
+    }
+    return *devices[i];
+}
 
-/**
- * A test fixture for testing input drivers. This class automates basic
- * device setup throught the server config file.
- *
- * Do not instanciate this class directly, subclass it from the test case
- * instead. For simple test cases, use SimpleInputDriverTest.
- */
-class DeviceInterface {
-protected:
-    /**
-     * The evemu device to generate events.
-     */
-    std::unique_ptr<xorg::testing::evemu::Device> dev;
-
-    virtual void SetDevice(const std::string& path, const std::string &basedir = RECORDINGS_DIR);
-};
-
-#endif
+void DeviceEmulatedInterface::WaitOpen()
+{
+    for (const auto& dev : devices) {
+        dev->WaitOpen();
+    }
+}

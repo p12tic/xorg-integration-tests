@@ -238,7 +238,7 @@ TEST_P(SmoothScrollingTest, SmoothScrolling)
     }
 
     SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_ButtonPress, XI_ButtonRelease, XI_Motion, -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Motion });
 
     dev->PlayOne(EV_REL, axis, direction, true);
     dev->PlayOne(EV_REL, axis, direction, true);
@@ -336,7 +336,7 @@ TEST_P(SmoothScrollingTest, SmoothScrollingButtonInverted)
     }
 
     SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_ButtonPress, XI_ButtonRelease, XI_Motion, -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Motion });
 
     dev->PlayOne(EV_REL, axis, direction, true);
     dev->PlayOne(EV_REL, axis, direction, true);
@@ -850,12 +850,12 @@ INSTANTIATE_TEST_CASE_P(, PointerRelativeRotationMatrixTest, ::testing::Range(0,
 class DeviceChangedTest : public XITServerInputTest {
 public:
     virtual void SetUp() {
-        mouse = std::auto_ptr<xorg::testing::evemu::Device>(
+        mouse = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "/mice/PIXART-USB-OPTICAL-MOUSE.desc")
                 );
 
-        touchpad = std::auto_ptr<xorg::testing::evemu::Device>(
+        touchpad = std::unique_ptr<xorg::testing::evemu::Device>(
                 new xorg::testing::evemu::Device(
                     RECORDINGS_DIR "/touchpads/SynPS2-Synaptics-TouchPad.desc")
                 );
@@ -880,8 +880,8 @@ public:
         config.WriteConfig();
     }
 
-    std::auto_ptr<xorg::testing::evemu::Device> mouse;
-    std::auto_ptr<xorg::testing::evemu::Device> touchpad;
+    std::unique_ptr<xorg::testing::evemu::Device> mouse;
+    std::unique_ptr<xorg::testing::evemu::Device> touchpad;
 };
 
 
@@ -992,7 +992,7 @@ enum MatrixType {
 
 class PointerAbsoluteTransformationMatrixTest : public XITServerInputTest,
                                                 public DeviceInterface,
-                                                public ::testing::WithParamInterface<std::tr1::tuple<enum ::MatrixType, int> > {
+                                                public ::testing::WithParamInterface<std::tuple<enum ::MatrixType, int> > {
 public:
     virtual void SetUp() {
         SetDevice("tablets/Wacom-Intuos4-6x9.desc");
@@ -1020,9 +1020,9 @@ public:
     }
 
     virtual void SetUpConfigAndLog() {
-        std::tr1::tuple<enum MatrixType, int> t = GetParam();
-        enum MatrixType mtype = std::tr1::get<0>(t);
-        int nscreens = std::tr1::get<1>(t);
+        std::tuple<enum MatrixType, int> t = GetParam();
+        enum MatrixType mtype = std::get<0>(t);
+        int nscreens = std::get<1>(t);
 
         std::string opts = EvdevOptions(mtype);
 
@@ -1083,9 +1083,9 @@ public:
 
 TEST_P(PointerAbsoluteTransformationMatrixTest, XI2ValuatorData)
 {
-    std::tr1::tuple<enum MatrixType, int> t = GetParam();
-    enum MatrixType mtype = std::tr1::get<0>(t);
-    int nscreens = std::tr1::get<1>(t);
+    std::tuple<enum MatrixType, int> t = GetParam();
+    enum MatrixType mtype = std::get<0>(t);
+    int nscreens = std::get<1>(t);
 
     std::string matrix;
     switch(mtype) {
@@ -1246,8 +1246,7 @@ TEST_F(KeyboardTest, FocusTestAttachedSlave)
 
     Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
     XISetFocus(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, CurrentTime);
-    SelectXI2Events(dpy, VIRTUAL_CORE_KEYBOARD_ID, win,
-                    XI_KeyPress, XI_KeyRelease, -1);
+    SelectXI2Events(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, { XI_KeyPress, XI_KeyRelease });
 
     dev->PlayOne(EV_KEY, KEY_A, 1, true);
     dev->PlayOne(EV_KEY, KEY_A, 0, true);
@@ -1276,8 +1275,7 @@ TEST_F(KeyboardTest, FocusTestAttachedSlaveSeparateFocus)
     ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
 
     Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
-    SelectXI2Events(dpy, deviceid, win,
-                    XI_KeyPress, XI_KeyRelease, -1);
+    SelectXI2Events(dpy, deviceid, win, { XI_KeyPress, XI_KeyRelease });
 
     dev->PlayOne(EV_KEY, KEY_A, 1, true);
     dev->PlayOne(EV_KEY, KEY_A, 0, true);
@@ -1320,8 +1318,7 @@ TEST_F(KeyboardTest, FocusTestFloatingSlave)
 
     Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
     XISetFocus(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, CurrentTime);
-    SelectXI2Events(dpy, deviceid, win,
-                    XI_KeyPress, XI_KeyRelease, -1);
+    SelectXI2Events(dpy, deviceid, win, { XI_KeyPress, XI_KeyRelease });
 
     dev->PlayOne(EV_KEY, KEY_A, 1, true);
     dev->PlayOne(EV_KEY, KEY_A, 0, true);

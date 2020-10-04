@@ -27,10 +27,10 @@
 #endif
 
 #include <stdexcept>
-#include <tr1/tuple>
+#include <tuple>
 
 #include "helpers.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 #include "xit-server-input-test.h"
 #include "xit-event.h"
 
@@ -56,23 +56,30 @@ public:
 };
 
 class DGAPointerTest : public DGATest,
-                       public DeviceInterface {
+                       public DeviceEmulatedInterface {
 public:
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         DGATest::SetUp();
     }
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--kbd-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -98,7 +105,7 @@ TEST_F(DGAPointerTest, StuckPointerButtonDuringGrab)
     XDGAMode *modes = XDGAQueryModes(dpy, DefaultScreen(dpy), &nmodes);
     ASSERT_GT(nmodes, 0);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
+    Dev(0).PlayButtonDown(1);
 
     ASSERT_EVENT(XButtonEvent, press, dpy, ButtonPress);
 
@@ -109,7 +116,7 @@ TEST_F(DGAPointerTest, StuckPointerButtonDuringGrab)
     XAllowEvents(dpy, AsyncPointer, CurrentTime);
     XFlush(dpy);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_EVENT(XDGAButtonEvent, dga_release, dpy, dga_event_base + ButtonRelease);
 
@@ -127,8 +134,9 @@ TEST_F(DGAPointerTest, StuckPointerButtonDuringGrab)
     XDGASetMode(dpy, 0, 0);
     XFlush(dpy);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, true);
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, true);
+    Dev(0).PlayButtonDown(1);
+    Dev(0).PlayButtonUp(1);
+
     ASSERT_EVENT(XButtonEvent, press2, dpy, ButtonPress);
     ASSERT_EVENT(XButtonEvent, release2, dpy, ButtonRelease);
 }

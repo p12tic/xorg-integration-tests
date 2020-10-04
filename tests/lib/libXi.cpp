@@ -35,23 +35,23 @@
 
 #include <xit-server-input-test.h>
 #include <xit-property.h>
-#include <device-interface.h>
+#include <device-emulated-interface.h>
 
 #include "helpers.h"
 #include "xit-event.h"
 
 /**
- * Test for libXi-related bugs. Initialises a single evdev pointer device ready
- * for uinput-events.
+ * Test for libXi-related bugs. Initialises a single emulated pointer device.
  */
 class libXiTest : public XITServerInputTest,
-                  public DeviceInterface {
+                  public DeviceEmulatedInterface {
 public:
     /**
      * Initializes a standard mouse device with two wheels.
      */
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XITServerInputTest::SetUp();
     }
 
@@ -62,16 +62,22 @@ public:
     virtual void SetUpConfigAndLog() {
 
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "keyboard-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--keyboard-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
     }
 
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
+    }
 };
 
 TEST_F(libXiTest, DisplayNotGarbage)
@@ -92,7 +98,7 @@ TEST_F(libXiTest, DisplayNotGarbage)
     XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
     XSync(dpy, False);
 
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    Dev(0).PlayRelMotion(-1, 0);
 
     ASSERT_TRUE(xorg::testing::XServer::WaitForEventOfType(Display(),
                                                            GenericEvent,
@@ -120,10 +126,9 @@ TEST_F(libXiTest, SerialNumberNotGarbage)
 
 
     /* XIDeviceEvent */
-    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_Motion, -1);
-    dev->PlayOne(EV_REL, REL_X, -1, true);
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy), { XI_Motion });
+    Dev(0).PlayRelMotion(-1, 0);
+    Dev(0).PlayRelMotion(-1, 0);
 
     ASSERT_EVENT(XIDeviceEvent, motion1, dpy, GenericEvent, xi2_opcode, XI_Motion);
     ASSERT_EVENT(XIDeviceEvent, motion2, dpy, GenericEvent, xi2_opcode, XI_Motion);
@@ -131,16 +136,18 @@ TEST_F(libXiTest, SerialNumberNotGarbage)
 
     XSync(dpy, True);
 
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    Dev(0).PlayRelMotion(-1, 0);
+
     ASSERT_EVENT(XIDeviceEvent, motion3, dpy, GenericEvent, xi2_opcode, XI_Motion);
     EXPECT_LT(motion2->serial, motion3->serial);
 
     /* XIRawEvent */
     XSync(dpy, True);
-    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_RawMotion, -1);
-    dev->PlayOne(EV_REL, REL_X, -1, true);
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy), { XI_RawMotion });
+
+    Dev(0).PlayRelMotion(-1, 0);
+    Dev(0).PlayRelMotion(-1, 0);
+
     ASSERT_EVENT(XIDeviceEvent, raw1, dpy, GenericEvent, xi2_opcode, XI_RawMotion);
     ASSERT_EVENT(XIDeviceEvent, raw2, dpy, GenericEvent, xi2_opcode, XI_RawMotion);
     EXPECT_GT(raw2->serial, motion3->serial);
@@ -148,14 +155,15 @@ TEST_F(libXiTest, SerialNumberNotGarbage)
 
     XSync(dpy, True);
 
-    dev->PlayOne(EV_REL, REL_X, -1, true);
+    Dev(0).PlayRelMotion(-1, 0);
+
     ASSERT_EVENT(XIDeviceEvent, raw3, dpy, GenericEvent, xi2_opcode, XI_RawMotion);
     EXPECT_LT(raw2->serial, raw3->serial);
 
     /* XIPropertyEvent, XIHierarchyEvent */
     XSync(dpy, True);
     SelectXI2Events(dpy, XIAllDevices, DefaultRootWindow(dpy),
-                    XI_HierarchyChanged, XI_PropertyEvent, -1);
+                    { XI_HierarchyChanged, XI_PropertyEvent });
 
     int deviceid;
     FindInputDeviceByName(dpy, "--device--", &deviceid);
@@ -176,16 +184,43 @@ TEST_F(libXiTest, SerialNumberNotGarbage)
 }
 
 #if HAVE_XI22
-class libXiTouchTest : public libXiTest {
+class libXiTouchTest : public XITServerInputTest,
+                       public DeviceEmulatedInterface {
 public:
     /**
-     * Initializes a standard mouse device with two wheels.
+     * Initializes a touchpad device
      */
     virtual void SetUp() {
-        SetDevice("tablets/N-Trig-MultiTouch.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::TOUCH);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XITServerInputTest::SetUp();
     }
+
+    /**
+     * Sets up an xorg.conf for a single evdev CorePointer device based on
+     * the evemu device.
+     */
+    virtual void SetUpConfigAndLog() {
+
+        config.AddDefaultScreenWithDriver();
+        config.AddInputSection("test", "--device--",
+                               "Option \"CorePointer\" \"on\"\n"
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
+        /* add default keyboard device to avoid server adding our device again */
+        config.AddInputSection("test", "--keyboard-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
+        config.WriteConfig();
+    }
+
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
+    }
 };
+
 
 TEST_F(libXiTouchTest, CopyRawTouchEvent)
 {
@@ -209,9 +244,9 @@ TEST_F(libXiTouchTest, CopyRawTouchEvent)
     XISelectEvents(dpy, DefaultRootWindow(dpy), &mask, 1);
     XSync(dpy, False);
 
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_begin.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_update.events");
-    dev->Play(RECORDINGS_DIR "tablets/N-Trig-MultiTouch.touch_1_end.events");
+    Dev(0).PlayTouchBegin(200, 200, 0);
+    Dev(0).PlayTouchUpdate(210, 210, 0);
+    Dev(0).PlayTouchEnd(210, 210, 0);
 
     XSync(dpy, False);
     ASSERT_GT(XPending(dpy), 0);

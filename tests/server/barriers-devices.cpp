@@ -38,7 +38,7 @@
 
 #if HAVE_FIXES5
 
-using namespace xorg::testing::evemu;
+using namespace xorg::testing::emulated;
 
 static Bool
 QueryPointerPosition(Display *dpy, int device_id,
@@ -87,10 +87,13 @@ TEST_F(BarrierDevices, BarrierBlocksCorrectDevices)
 
     /* Make sure that the VCP is blocked when going across
      * the barrier, but the other device is not. */
-    dev1->PlayOne(EV_REL, REL_X, 100, True);
+
+    Dev(0).PlayRelMotion(100, 0);
+
     ASSERT_PTR_POS(master_id_1, 49, 30);
 
-    dev2->PlayOne(EV_REL, REL_X, 100, True);
+    Dev(1).PlayRelMotion(100, 0);
+
     ASSERT_PTR_POS(master_id_2, 130, 30);
 
     /* Assume that if all the other warp and directions tests

@@ -106,7 +106,7 @@ TEST_F(BarrierSimpleTest, MultipleClientSecurity)
     XSync(dpy1, False);
     XSync(dpy2, False);
 
-    dev->PlayOne(EV_REL, REL_X, -40, True);
+    Dev(0).PlayRelMotion(-40, 0);
 
     XITEvent<XIBarrierEvent> event(dpy1, GenericEvent, xi2_opcode, XI_BarrierHit);
     ASSERT_EQ(XPending(dpy2), 0);

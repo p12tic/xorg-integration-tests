@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2013 Red Hat, Inc.
+ * Copyright (C) 2020 Povilas Kanapickas <povilas@radix.lt>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,31 +22,26 @@
  *
  */
 
-#if HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#ifndef _DEVICE_INTERFACE_H_
-#define _DEVICE_INTERFACE_H_
+#ifndef DEVICE_EMULATED_INTERFACE_H_
+#define DEVICE_EMULATED_INTERFACE_H_
 
 #include <xorg/gtest/xorg-gtest.h>
-#include <memory>
 
 /**
- * A test fixture for testing input drivers. This class automates basic
- * device setup throught the server config file.
+ * A test fixture for testing X server input processing.
  *
  * Do not instanciate this class directly, subclass it from the test case
- * instead. For simple test cases, use SimpleInputDriverTest.
+ * instead.
  */
-class DeviceInterface {
+class DeviceEmulatedInterface {
 protected:
-    /**
-     * The evemu device to generate events.
-     */
-    std::unique_ptr<xorg::testing::evemu::Device> dev;
+    std::vector<std::unique_ptr<xorg::testing::emulated::Device>> devices;
 
-    virtual void SetDevice(const std::string& path, const std::string &basedir = RECORDINGS_DIR);
+    xorg::testing::emulated::Device& Dev(unsigned i);
+
+    void WaitOpen();
+
+    void AddDevice(xorg::testing::emulated::DeviceType device_type);
 };
 
 #endif

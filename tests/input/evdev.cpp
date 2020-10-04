@@ -31,7 +31,7 @@
 #include <fstream>
 #include <xorg/gtest/xorg-gtest.h>
 #include <linux/input.h>
-#include <tr1/tuple>
+#include <tuple>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -962,7 +962,7 @@ enum config_type {
 
 class EvdevTouchRotationTest : public EvdevTouchTest,
                                public
-                               ::testing::WithParamInterface<std::tr1::tuple<enum config_type, enum directions> > {
+                               ::testing::WithParamInterface<std::tuple<enum config_type, enum directions> > {
 public:
     void GetRotationSettings(enum directions dir, unsigned char *swap_axes,
                              unsigned char *invert_x, unsigned char *invert_y)
@@ -992,9 +992,9 @@ public:
     }
 
     virtual void SetUpConfigAndLog() {
-        std::tr1::tuple<enum config_type, enum directions> t = GetParam();
-        enum config_type config_type = std::tr1::get<0>(t);
-        enum directions dir = std::tr1::get<1>(t);
+        std::tuple<enum config_type, enum directions> t = GetParam();
+        enum config_type config_type = std::get<0>(t);
+        enum directions dir = std::get<1>(t);
 
         unsigned char swap_axes = 0, invert_x = 0, invert_y = 0;
         if (config_type == XORG_CONF)
@@ -1035,9 +1035,9 @@ public:
 
 TEST_P(EvdevTouchRotationTest, AxisSwapInversion)
 {
-    std::tr1::tuple<enum config_type, enum directions> t = GetParam();
-    enum config_type config_type = std::tr1::get<0>(t);
-    enum directions dir = std::tr1::get<1>(t);
+    std::tuple<enum config_type, enum directions> t = GetParam();
+    enum config_type config_type = std::get<0>(t);
+    enum directions dir = std::get<1>(t);
 
     XORG_TESTCASE("Init a touch device.\n"
                   "Set rotation/axis inversion properties\n"
@@ -1569,9 +1569,9 @@ TEST_F(EvdevDuplicateTest, TooManyDevices)
                   "Server must not crash\n");
 
     const int NDEVICES = 50;
-    std::auto_ptr<xorg::testing::evemu::Device> devices[NDEVICES];
+    std::unique_ptr<xorg::testing::evemu::Device> devices[NDEVICES];
     for (int i = 0; i < NDEVICES; i++) {
-        devices[i] = std::auto_ptr<xorg::testing::evemu::Device>(
+        devices[i] = std::unique_ptr<xorg::testing::evemu::Device>(
                          new xorg::testing::evemu::Device(RECORDINGS_DIR "mice/PIXART-USB-OPTICAL-MOUSE.desc")
                      );
     }

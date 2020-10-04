@@ -36,7 +36,7 @@
 
 #include "xorg-conf.h"
 #include "xit-server-input-test.h"
-#include "device-interface.h"
+#include "device-emulated-interface.h"
 #include "xit-server.h"
 #include "xit-event.h"
 #include "helpers.h"
@@ -147,27 +147,34 @@ TEST(XTest, DisabledDevicesCtl)
 }
 
 class XTestPhysicalDeviceTest : public XITServerInputTest,
-                                public DeviceInterface {
+                                public DeviceEmulatedInterface {
 public:
     /**
      * Initializes a standard mouse device.
      */
     virtual void SetUp() {
-        SetDevice("mice/PIXART-USB-OPTICAL-MOUSE-HWHEEL.desc");
+        AddDevice(xorg::testing::emulated::DeviceType::POINTER);
+        AddDevice(xorg::testing::emulated::DeviceType::KEYBOARD);
         XITServerInputTest::SetUp();
     }
 
     virtual void SetUpConfigAndLog() {
 
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("evdev", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
-                               "Option \"GrabDevice\" \"on\"\n"
-                               "Option \"Device\" \"" + dev->GetDeviceNode() + "\"");
+                               "Option \"GrabDevice\" \"on\"\n" +
+                               Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("kbd", "kbd-device",
-                               "Option \"CoreKeyboard\" \"on\"\n");
+        config.AddInputSection("test", "--kbd-device--",
+                               "Option \"CoreKeyboard\" \"on\"\n" +
+                               Dev(1).GetOptions());
         config.WriteConfig();
+    }
+
+    void StartServer() override {
+        XITServerInputTest::StartServer();
+        WaitOpen();
     }
 };
 
@@ -184,14 +191,14 @@ TEST_F(XTestPhysicalDeviceTest, ReleaseXTestOnPhysicalRelease)
 
     XSelectInput(dpy, DefaultRootWindow(dpy), ButtonPressMask|ButtonReleaseMask);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 1, True);
+    Dev(0).PlayButtonDown(1);
 
     ASSERT_EVENT(XButtonEvent, press, dpy, ButtonPress);
     ASSERT_EQ(press->button, 1U);
 
     XTestFakeButtonEvent(dpy, 1, 1, 0);
 
-    dev->PlayOne(EV_KEY, BTN_LEFT, 0, True);
+    Dev(0).PlayButtonUp(1);
 
     ASSERT_EVENT(XButtonEvent, release, dpy, ButtonRelease);
     ASSERT_EQ(release->button, 1U);
