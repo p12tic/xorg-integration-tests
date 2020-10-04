@@ -302,12 +302,24 @@ int double_cmp(double a, double b, int precision)
 
 void SelectXI2Events(::Display *dpy, int deviceid, Window win, const std::vector<int>& evtypes)
 {
-    XIEventMask mask;
-    unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
+    EventMaskBuilder mask{deviceid, evtypes};
+    XISelectEvents(dpy, win, mask.GetMaskPtr(), 1);
+}
+
+void GrabXI2Device(::Display *dpy, int deviceid, Window grab_win, int grab_mode,
+                   int paired_device_mode, const std::vector<int>& evtypes)
+{
+    EventMaskBuilder mask{deviceid, evtypes};
+    XIGrabDevice(dpy, deviceid, grab_win, CurrentTime, None, grab_mode, paired_device_mode, False,
+                 mask.GetMaskPtr());
+}
+
+EventMaskBuilder::EventMaskBuilder(int deviceid, const std::vector<int>& evtypes)
+{
     mask.deviceid = deviceid;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
-    mask.mask = m;
-    for (auto evtype : evtypes)
-        XISetMask(mask.mask, evtype);
-    XISelectEvents(dpy, win, &mask, 1);
+    storage.resize(mask.mask_len, 0);
+    mask.mask = storage.data();
+    for (auto event : evtypes)
+        XISetMask(mask.mask, event);
 }
