@@ -300,19 +300,14 @@ int double_cmp(double a, double b, int precision)
     return (ai > bi) ? 1 : (ai < bi) ? -1 : 0;
 }
 
-void SelectXI2Events(::Display *dpy, int deviceid, Window win, ...)
+void SelectXI2Events(::Display *dpy, int deviceid, Window win, const std::vector<int>& evtypes)
 {
-    va_list arg;
-    int evtype;
-
     XIEventMask mask;
     unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
     mask.deviceid = deviceid;
     mask.mask_len = XIMaskLen(XI_LASTEVENT);
     mask.mask = m;
-    va_start(arg, win);
-    while ((evtype = va_arg(arg, int)) != -1)
+    for (auto evtype : evtypes)
         XISetMask(mask.mask, evtype);
-    va_end(arg);
     XISelectEvents(dpy, win, &mask, 1);
 }

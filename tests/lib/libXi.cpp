@@ -126,8 +126,7 @@ TEST_F(libXiTest, SerialNumberNotGarbage)
 
 
     /* XIDeviceEvent */
-    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_Motion, -1);
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy), { XI_Motion });
     Dev(0).PlayRelMotion(-1, 0);
     Dev(0).PlayRelMotion(-1, 0);
 
@@ -144,8 +143,7 @@ TEST_F(libXiTest, SerialNumberNotGarbage)
 
     /* XIRawEvent */
     XSync(dpy, True);
-    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_RawMotion, -1);
+    SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy), { XI_RawMotion });
 
     Dev(0).PlayRelMotion(-1, 0);
     Dev(0).PlayRelMotion(-1, 0);
@@ -165,7 +163,7 @@ TEST_F(libXiTest, SerialNumberNotGarbage)
     /* XIPropertyEvent, XIHierarchyEvent */
     XSync(dpy, True);
     SelectXI2Events(dpy, XIAllDevices, DefaultRootWindow(dpy),
-                    XI_HierarchyChanged, XI_PropertyEvent, -1);
+                    { XI_HierarchyChanged, XI_PropertyEvent });
 
     int deviceid;
     FindInputDeviceByName(dpy, "--device--", &deviceid);

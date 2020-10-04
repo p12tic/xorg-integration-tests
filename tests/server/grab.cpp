@@ -935,10 +935,7 @@ TEST_F(TouchGrabTest, ActivePointerGrabOverPointerSelection)
     Window win = CreateWindow(dpy1, DefaultRootWindow(dpy1));
 
     SelectXI2Events(dpy1, XIAllMasterDevices, win,
-                    XI_ButtonPress,
-                    XI_ButtonRelease,
-                    XI_Motion,
-                    -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Motion });
     GrabPointer(dpy2, VIRTUAL_CORE_POINTER_ID, win);
 
     TouchDev().PlayTouchBegin(200, 200, 0);
@@ -1341,12 +1338,7 @@ TEST_F(TouchGrabTestOnLegacyClient, ActivePointerGrabUngrabDuringTouch)
     Window win = CreateWindow(dpy, DefaultRootWindow(dpy));
 
     SelectXI2Events(dpy, XIAllMasterDevices, win,
-                    XI_ButtonPress,
-                    XI_ButtonRelease,
-                    XI_Enter,
-                    XI_Leave,
-                    XI_Motion,
-                    -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Enter, XI_Leave, XI_Motion });
 
     TouchDev().PlayTouchBegin(200, 200, 0);
     TouchDev().PlayTouchUpdate(202, 202, 0);

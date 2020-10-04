@@ -238,7 +238,7 @@ TEST_P(SmoothScrollingTest, SmoothScrolling)
     }
 
     SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_ButtonPress, XI_ButtonRelease, XI_Motion, -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Motion });
 
     dev->PlayOne(EV_REL, axis, direction, true);
     dev->PlayOne(EV_REL, axis, direction, true);
@@ -336,7 +336,7 @@ TEST_P(SmoothScrollingTest, SmoothScrollingButtonInverted)
     }
 
     SelectXI2Events(dpy, VIRTUAL_CORE_POINTER_ID, DefaultRootWindow(dpy),
-                    XI_ButtonPress, XI_ButtonRelease, XI_Motion, -1);
+                    { XI_ButtonPress, XI_ButtonRelease, XI_Motion });
 
     dev->PlayOne(EV_REL, axis, direction, true);
     dev->PlayOne(EV_REL, axis, direction, true);
@@ -1246,8 +1246,7 @@ TEST_F(KeyboardTest, FocusTestAttachedSlave)
 
     Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
     XISetFocus(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, CurrentTime);
-    SelectXI2Events(dpy, VIRTUAL_CORE_KEYBOARD_ID, win,
-                    XI_KeyPress, XI_KeyRelease, -1);
+    SelectXI2Events(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, { XI_KeyPress, XI_KeyRelease });
 
     dev->PlayOne(EV_KEY, KEY_A, 1, true);
     dev->PlayOne(EV_KEY, KEY_A, 0, true);
@@ -1276,8 +1275,7 @@ TEST_F(KeyboardTest, FocusTestAttachedSlaveSeparateFocus)
     ASSERT_TRUE(FindInputDeviceByName(dpy, "--device--", &deviceid));
 
     Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
-    SelectXI2Events(dpy, deviceid, win,
-                    XI_KeyPress, XI_KeyRelease, -1);
+    SelectXI2Events(dpy, deviceid, win, { XI_KeyPress, XI_KeyRelease });
 
     dev->PlayOne(EV_KEY, KEY_A, 1, true);
     dev->PlayOne(EV_KEY, KEY_A, 0, true);
@@ -1320,8 +1318,7 @@ TEST_F(KeyboardTest, FocusTestFloatingSlave)
 
     Window win = CreateWindow(dpy, None, 0, 0, 10, 10);
     XISetFocus(dpy, VIRTUAL_CORE_KEYBOARD_ID, win, CurrentTime);
-    SelectXI2Events(dpy, deviceid, win,
-                    XI_KeyPress, XI_KeyRelease, -1);
+    SelectXI2Events(dpy, deviceid, win, { XI_KeyPress, XI_KeyRelease });
 
     dev->PlayOne(EV_KEY, KEY_A, 1, true);
     dev->PlayOne(EV_KEY, KEY_A, 0, true);

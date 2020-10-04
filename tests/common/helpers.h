@@ -184,9 +184,9 @@ bool SearchFileForString(const std::string &path, const std::string &substring);
 int double_cmp(double a, double b, int precision = 2);
 
 /**
- * Select for the list of events given in the varargs. Last element must be
- * -1.
+ * Select for the list of events given in the evtypes.
  */
-void SelectXI2Events(Display *dpy, int deviceid, Window win, ...);
+void SelectXI2Events(Display *dpy, int deviceid, Window win,
+                     const std::vector<int>& evtypes);
 #endif
 
