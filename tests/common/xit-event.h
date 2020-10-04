@@ -90,7 +90,7 @@ public:
 template<typename EventType>
 XITEvent<EventType>::XITEvent(::Display *dpy, int type, int opcode, int evtype)
 {
-    if (!xorg::testing::XServer::WaitForEventOfType(dpy, type, opcode, evtype)) {
+    if (!xorg::testing::XServer::WaitForEvent(dpy)) {
         ADD_FAILURE() << "Event not received before timeout";
         ev = NULL;
         return;
