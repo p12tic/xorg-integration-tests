@@ -52,6 +52,10 @@ PKG_CHECK_MODULES(XI22, [inputproto >= 2.2] [xi >= 1.6],
 PKG_CHECK_MODULES(XI23, [inputproto >= 2.2.99] [xi >= 1.6.99],
                   AC_DEFINE(HAVE_XI23, 1, [XI 2.3 available]),
                   [noop=noop])
+# FIXME FIXME: versions
+PKG_CHECK_MODULES(XI24, [inputproto >= 2.2.99] [xi >= 1.6.99],
+                  AC_DEFINE(HAVE_XI24, 1, [XI 2.4 available]),
+                  [noop=noop])
 PKG_CHECK_MODULES(XTEST, [xtst])
 PKG_CHECK_MODULES(XFIXES, [xfixes])
 PKG_CHECK_MODULES(XFIXES5, [xfixes >= 5.0],

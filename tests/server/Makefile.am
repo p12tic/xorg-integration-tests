@@ -5,7 +5,9 @@ TESTS=$(noinst_PROGRAMS)
 
 server_SOURCES = \
                  dga.cpp \
+                 gestures.cpp \
                  grab.cpp \
+                 grab-gestures.cpp \
                  xigrabbutton.cpp \
                  touch.cpp \
                  xtest.cpp \
