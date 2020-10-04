@@ -87,7 +87,7 @@ public:
      */
     void SetUpConfigAndLog() override {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("emulated", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n"
                                /* Disable pointer acceleration to allow for accurate
@@ -95,7 +95,7 @@ public:
                                "Option \"AccelerationProfile\" \"-1\"\n" +
                                Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--device-kbd--",
+        config.AddInputSection("test", "--device-kbd--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                Dev(1).GetOptions());
         config.WriteConfig();
@@ -165,14 +165,14 @@ public:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("emulated", "--device0--",
+        config.AddInputSection("test", "--device0--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n"
                                /* Disable pointer acceleration to allow for accurate
                                 * pointer positions with relative events... */
                                "Option \"AccelerationProfile\" \"-1\"" +
                                Dev(0).GetOptions());
-        config.AddInputSection("emulated", "--device1--",
+        config.AddInputSection("test", "--device1--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n"
                                /* Disable pointer acceleration to allow for accurate
@@ -180,7 +180,7 @@ public:
                                "Option \"AccelerationProfile\" \"-1\"\n" +
                                Dev(1).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--device2--",
+        config.AddInputSection("test", "--device2--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                Dev(2).GetOptions());
         config.WriteConfig();

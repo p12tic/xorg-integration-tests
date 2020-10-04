@@ -161,12 +161,12 @@ public:
     virtual void SetUpConfigAndLog() {
 
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("emulated", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n" +
                                Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--kbd-device--",
+        config.AddInputSection("test", "--kbd-device--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                Dev(1).GetOptions());
         config.WriteConfig();

@@ -49,12 +49,12 @@ class MultiheadTest : public XITServerInputTest,
 public:
     void SetUpConfigAndLog() override {
         config.SetAutoAddDevices(true);
-        config.AddInputSection("emulated", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n" +
                                Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--keyboard-device--",
+        config.AddInputSection("test", "--keyboard-device--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                Dev(1).GetOptions());
         config.AddServerLayoutOption("    Screen         0 \"Screen0\"");
@@ -489,16 +489,16 @@ class ZaphodTouchDeviceChangeTest : public MultiheadTest {
 protected:
     virtual void SetUpConfigAndLog() {
         config.SetAutoAddDevices(true);
-        config.AddInputSection("emulated", "--device-touch--",
+        config.AddInputSection("test", "--device-touch--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n" +
                                Dev(0).GetOptions());
-        config.AddInputSection("emulated", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n" +
                                Dev(1).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--keyboard-device--",
+        config.AddInputSection("test", "--keyboard-device--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                Dev(2).GetOptions());
         config.AddServerLayoutOption("    Screen         0 \"Screen0\"");

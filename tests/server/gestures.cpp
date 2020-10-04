@@ -399,19 +399,19 @@ public:
 
     void SetUpConfigAndLog() override {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("emulated", "--touchpad-device--",
+        config.AddInputSection("test", "--touchpad-device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n" +
                                TouchPadDev().GetOptions());
-        config.AddInputSection("emulated", "--touch-device--",
+        config.AddInputSection("test", "--touch-device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n" +
                                TouchDev().GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--kbd-device--",
+        config.AddInputSection("test", "--kbd-device--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                KeyboardDev().GetOptions());
-        config.AddInputSection("emulated", "--touchpad2-device--",
+        config.AddInputSection("test", "--touchpad2-device--",
                                "Option \"CorePointer\" \"on\"\n"
                                "Option \"GrabDevice\" \"on\"\n" +
                                TouchPad2Dev().GetOptions());

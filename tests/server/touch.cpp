@@ -56,13 +56,13 @@ protected:
 
     virtual void SetUpConfigAndLog() {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("emulated", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"Emulate3Buttons\" \"off\""
                                "Option \"CorePointer\" \"on\""
                                "Option \"GrabDevice\" \"on\"\n"+
                                Dev(0).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--device-kbd--",
+        config.AddInputSection("test", "--device-kbd--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                Dev(1).GetOptions());
         config.WriteConfig();
@@ -95,17 +95,17 @@ protected:
 
     void SetUpConfigAndLog() override {
         config.AddDefaultScreenWithDriver();
-        config.AddInputSection("emulated", "--device--",
+        config.AddInputSection("test", "--device--",
                                "Option \"Emulate3Buttons\" \"off\""
                                "Option \"CorePointer\" \"on\""
                                "Option \"GrabDevice\" \"on\"\n"+
                                Dev(0).GetOptions());
-        config.AddInputSection("emulated", "--device-mouse--",
+        config.AddInputSection("test", "--device-mouse--",
                                "Option \"CorePointer\" \"on\""
                                "Option \"GrabDevice\" \"on\"\n"+
                                Dev(1).GetOptions());
         /* add default keyboard device to avoid server adding our device again */
-        config.AddInputSection("emulated", "--device-kbd--",
+        config.AddInputSection("test", "--device-kbd--",
                                "Option \"CoreKeyboard\" \"on\"\n" +
                                Dev(2).GetOptions());
         config.WriteConfig();
